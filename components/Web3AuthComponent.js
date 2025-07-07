@@ -5,6 +5,8 @@ import { Web3Auth } from "@web3auth/modal";
 import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
 import { CHAIN_NAMESPACES } from "@web3auth/base";
 import { ethers } from "ethers";
+import styles from "../components/Web3AuthComponent.module.css"; // ← Import the CSS module
+
 
 const clientId = process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID;
 
@@ -75,20 +77,22 @@ export default function Web3AuthComponent() {
     alert(`Address: ${address}`);
   };
 
-  return (
-    <div style={{ padding: 24 }}>
-      <h2>Web3Auth + Next.js (JS)</h2>
-      {!provider ? (
-        <button onClick={login}>Login</button>
-      ) : (
+    return (
+    <div className={styles.container}>
+        <h1 className={styles.title}>MVP Wallet - Test Phase 2</h1>
+        <h2 className={styles.subtitle}>Tech: Web3Auth + Next.js (JS)</h2>
+        {!provider ? (
+        <button className={styles.button} onClick={login}>Login via Telegram</button>
+        ) : (
         <>
-          <button onClick={getAccounts}>Get Address</button>
-          <button onClick={logout}>Logout</button>
+            <button onClick={getAccounts}>Get Address</button>
+            <button onClick={logout}>Logout</button>
         </>
-      )}
-      {user && (
+        )}
+        {user && (
         <pre style={{ marginTop: 20 }}>{JSON.stringify(user, null, 2)}</pre>
-      )}
+        )}
     </div>
-  );
+    );
+
 }
