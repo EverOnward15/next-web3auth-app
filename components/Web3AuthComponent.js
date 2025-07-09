@@ -88,11 +88,11 @@ export default function Web3AuthComponent() {
     script.setAttribute("data-size", "large");
     script.setAttribute("data-userpic", "false");
     script.setAttribute("data-request-access", "write");
-    // script.setAttribute("data-callback", "onTelegramAuth");
-    script.setAttribute(
-  "data-auth-url",
-  "https://next-web3auth-app.vercel.app/api/telegram-auth"
-); // 🔥 Add this line
+    script.setAttribute("data-callback", "onTelegramAuth");
+//     script.setAttribute(
+//   "data-auth-url",
+//   "https://next-web3auth-app.vercel.app/api/telegram-auth"
+// ); 
 script.async = true;
 
     document.getElementById("telegram-login")?.appendChild(script);
