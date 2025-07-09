@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Telegram Login Widget Test</title>
+</head>
+<body>
+  <h2>Telegram Login Test</h2>
+
+  <div id="telegram-login-container"></div>
+
+  <script>
+    window.onTelegramAuth = function(user) {
+      console.log("Telegram user authenticated:");
+      console.log(user);
+
+      // Optional: show it on the page
+      const pre = document.createElement("pre");
+      pre.textContent = JSON.stringify(user, null, 2);
+      document.body.appendChild(pre);
+    };
+
+    (function () {
+      const script = document.createElement("script");
+      script.src = "https://telegram.org/js/telegram-widget.js?7";
+
+      // 🔧 Change this to your bot's username (without the @)
+      script.setAttribute("data-telegram-login", "WebThreeWallet_Bot");
+
+      script.setAttribute("data-size", "large");
+      script.setAttribute("data-userpic", "false");
+      script.setAttribute("data-request-access", "write");
+      script.setAttribute("data-callback", "onTelegramAuth");
+      script.async = true;
+
+      document.getElementById("telegram-login-container").appendChild(script);
+    })();
+  </script>
+</body>
+</html>
