@@ -60,7 +60,7 @@ export default function Web3AuthComponent() {
       }
 
       try {
-        
+
         const openloginAdapter = new OpenloginAdapter({
           adapterSettings: {
             network: "testnet",
@@ -83,8 +83,9 @@ export default function Web3AuthComponent() {
             chainId: "0x1", // Example: Ethereum Mainnet
             rpcTarget: "https://mainnet.infura.io/v3/INFURA_PROJECT_ID",
           },
-          adapters: [openloginAdapter], // ✅ directly passed here
         });
+
+        web3authInstance.configureAdapter(openloginAdapter);
 
         await web3authInstance.initModal();
 
