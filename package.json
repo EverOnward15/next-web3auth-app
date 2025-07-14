@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "^2.2.0",
     "@tkey/core": "^16.0.1-alpha.0",
     "@tkey/web-storage": "^16.0.1-alpha.0",
     "@web3auth/base": "^9.7.0",
