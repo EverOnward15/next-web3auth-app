@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import fs from "fs";
 
 // Load your RSA private key (PEM format)
-const privateKey = fs.readFileSync("./private.key", "utf8"); // or use process.env.RSA_PRIVATE_KEY
+const privateKey = fs.readFileSync("./private.pem", "utf8"); // or use process.env.RSA_PRIVATE_KEY
 
 const payload = {
   sub: "123456789", // Telegram user ID
