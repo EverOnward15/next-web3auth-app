@@ -43,7 +43,7 @@ const token = jwt.sign(
   {
     sub: id,
     aud: "web3auth",
-    iss: "https://yourdomain.com/api/telegram-auth", // your backend API issuer
+    iss: "https://next-web3auth-app.vercel.app/api/telegram-auth", // your backend API issuer
     id,
     first_name,
     last_name,
