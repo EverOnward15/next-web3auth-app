@@ -27,17 +27,18 @@ export default function Web3AuthComponent() {
       try {
         const web3authInstance = new Web3Auth({
           clientId,
-          web3AuthNetwork: "mainnet",
-          chainConfig: {
-            chainNamespace: CHAIN_NAMESPACES.EIP155,
-            chainId: "0x1",
-            rpcTarget: "https://rpc.ankr.com/eth",
-          },
+          web3AuthNetwork: "sapphire_devnet",
+        chainConfig: {
+  chainNamespace: CHAIN_NAMESPACES.EIP155,
+  chainId: "0x5", // for Goerli testnet, or check what Sapphire Devnet uses
+  rpcTarget: "https://rpc.ankr.com/eth_goerli",
+}
+
         });
 
         const openloginAdapter = new OpenloginAdapter({
           adapterSettings: {
-            network: "mainnet",
+            network: "sapphire_devnet",
             uxMode: "popup",
           },
         });
