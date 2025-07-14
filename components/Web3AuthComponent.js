@@ -67,7 +67,7 @@ export default function Web3AuthComponent() {
           clientId,
           web3AuthNetwork: "testnet",
         chainConfig: {
-  chainNamespace: "other",
+  chainNamespace: CHAIN_NAMESPACES.OTHER,
 }
         });
 
@@ -85,7 +85,15 @@ export default function Web3AuthComponent() {
           },
         });
 
-        web3authInstance.configureAdapter(openloginAdapter);
+
+// 👇 NEW: Add adapter using .configureAdapter() before initModal()
+web3authInstance.configureAdapter(openloginAdapter);
+// OR 👇 BETTER in v6+
+web3authInstance.initModal({
+  modalConfig: {
+    // optional config here
+  },
+});
         await web3authInstance.initModal();
 
         setWeb3auth(web3authInstance);
