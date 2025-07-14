@@ -17,6 +17,7 @@ import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
+const clientId = process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID;
 
 const ECPair = ECPairFactory(tinysecp);
 
@@ -154,6 +155,16 @@ function Web3AuthInner({ clientId }) {
 
 export default function Web3AuthComponent() {
 
+  if (!clientId) {
+    if (typeof window === "undefined") {
+      // On the server (during prerender), throw a clear error
+      throw new Error("NEXT_PUBLIC_WEB3AUTH_CLIENT_ID is not defined");
+    } else {
+      // On the client, show a warning
+      return <div>Error: Missing Web3Auth clientId</div>;
+    }
+  }
+
   const web3AuthOptions = {
   clientId: process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID,
     chainConfig: {
@@ -168,7 +179,7 @@ export default function Web3AuthComponent() {
 
   return (
 <Web3AuthProvider config={web3AuthOptions}>
-  <Web3AuthInner />
+  <Web3AuthInner clientId={clientId}/>
 </Web3AuthProvider>
 
 
