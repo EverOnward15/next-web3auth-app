@@ -35,13 +35,12 @@ const web3authInstance = new Web3Auth({
 });
 
 
-const openloginAdapter = new OpenloginAdapter({
-  adapterSettings: {
-    network: "testnet",
-    uxMode: "popup",
-  },
-});
-
+        const openloginAdapter = new OpenloginAdapter({
+          adapterSettings: {
+            network: "testnet",
+            uxMode: "popup",
+          },
+        });
 
         web3authInstance.configureAdapter(openloginAdapter);
         await web3authInstance.initModal();
