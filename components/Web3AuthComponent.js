@@ -6,6 +6,9 @@ import {
   useWeb3Auth,
 } from "@web3auth/modal/react";
 
+import { Web3Auth } from "@web3auth/modal";
+import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
+
 import * as bitcoin from "bitcoinjs-lib";
 import { ECPairFactory } from "ecpair";
 import * as tinysecp from "tiny-secp256k1";
@@ -19,8 +22,7 @@ if (typeof window !== "undefined") {
 
 const ECPair = ECPairFactory(tinysecp);
 
-// ✅ Replace with your actual Web3Auth client ID
-const CLIENT_ID = "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY"; 
+const CLIENT_ID = "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
 
 function deriveBTCWallet(provider) {
   return provider
@@ -158,15 +160,24 @@ export default function Web3AuthComponent() {
 
   return (
     <Web3AuthProvider
-      clientId={CLIENT_ID}
-      chainConfig={{
-        chainNamespace: "eip155",
-        chainId: "0x13881", // Mumbai testnet
-        rpcTarget: "https://rpc-mumbai.maticvigil.com",
+      web3AuthOptions={{
+        clientId: CLIENT_ID,
+        chainConfig: {
+          chainNamespace: "eip155",
+          chainId: "0x13881", // Mumbai testnet
+          rpcTarget: "https://rpc-mumbai.maticvigil.com",
+        },
+        uiConfig: {
+          theme: "dark",
+          loginMethodsOrder: ["google", "facebook"],
+          appName: "MyMVPWallet",
+        },
       }}
-      openloginAdapterSettings={{
-        network: "testnet",
-      }}
+      openloginAdapter={new OpenloginAdapter({
+        adapterSettings: {
+          network: "testnet",
+        },
+      })}
     >
       <Web3AuthInner />
     </Web3AuthProvider>
