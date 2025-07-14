@@ -176,11 +176,9 @@ export default function Web3AuthComponent() {
   };
 
   return (
-    <Web3AuthProvider
-      web3AuthOptions={web3AuthOptions}
-      openloginAdapterSettings={web3AuthOptions.openloginAdapterSettings}
-    >
-      <Web3AuthInner clientId={clientId} />
-    </Web3AuthProvider>
+  <Web3AuthProvider web3AuthOptions={web3AuthOptions}>
+  <Web3AuthInner clientId={clientId} />
+</Web3AuthProvider>
+
   );
 }
