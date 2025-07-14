@@ -9,9 +9,15 @@ import * as bip39 from 'bip39';
 import * as bip32 from 'bip32';
 import TKey from "@tkey/core";
 import WebStorageModule from "@tkey/web-storage";
+import { ECPairFactory } from 'ecpair';
+import * as tinysecp from 'tiny-secp256k1';
+
+
 import styles from "../components/Web3AuthComponent.module.css";
 
 const clientId = process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID;
+const ECPair = ECPairFactory(tinysecp);
+
 
 export default function Web3AuthComponent() {
   const [web3auth, setWeb3auth] = useState(null);
@@ -30,9 +36,10 @@ export default function Web3AuthComponent() {
   const privateKeyBuffer = Buffer.from(privateKeyHex, "hex");
 
   // Generate BTC address
-  const keyPair = bitcoin.ECPair.fromPrivateKey(privateKeyBuffer, {
-    network: bitcoin.networks.testnet, // use 'bitcoin' for mainnet
-  });
+  const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {
+  network: bitcoin.networks.testnet,
+});
+
 
   const { address } = bitcoin.payments.p2pkh({
     pubkey: keyPair.publicKey,
@@ -192,7 +199,7 @@ const getAccounts = async () => {
       <h2 className={styles.subtitle}>Tech: Web3Auth + Next.js (JS)</h2>
 
       {!provider ? (
-        <button className={styles.button} onClick={login}>
+        <button className={styles.button} onClick={loginWithTelegramJWT}>
           Login via Web3Auth
         </button>
       ) : (
