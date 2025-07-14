@@ -60,55 +60,56 @@ export default function Web3AuthComponent() {
 
     init();
   }, []);
+useEffect(() => {
+  const script = document.createElement("script");
+  script.src = "https://telegram.org/js/telegram-web-app.js";
+  script.async = true;
+  script.onload = () => {
+    if (window.Telegram?.WebApp) {
+      const tg = window.Telegram.WebApp;
+      tg.ready();
 
-  // Inject Telegram Widget on mount
-  useEffect(() => {
-    window.onTelegramAuth = async function (userData) {
-      setTelegramUser(userData);
-      console.log("Telegram user data:", userData);
+      const userData = tg.initDataUnsafe?.user;
+      if (userData) {
+        setTelegramUser(userData);
+        console.log("Telegram WebApp user:", userData);
 
-      try {
-        const res = await fetch("/api/telegram-jwt", {
+        // Optional: Send to backend to generate JWT
+        fetch("/api/telegram-jwt", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(userData),
-        });
-
-        const data = await res.json();
-        setJwtToken(data.token);
-        console.log("JWT token:", data.token);
-      } catch (error) {
-        console.error("Error calling local JWT API:", error);
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            setJwtToken(data.token);
+            console.log("JWT token from Telegram WebApp:", data.token);
+          })
+          .catch((err) => console.error("JWT error:", err));
+      } else {
+        console.warn("No user data in Telegram context");
       }
-    };
-
-    const script = document.createElement("script");
-    script.src = "https://telegram.org/js/telegram-widget.js?7";
-    script.setAttribute("data-telegram-login", process.env.NEXT_PUBLIC_TELEGRAM_BOT || "WebThreeWallet_Bot");
-    script.setAttribute("data-size", "large");
-    script.setAttribute("data-userpic", "false");
-    script.setAttribute("data-request-access", "write");
-    script.setAttribute("data-callback", "onTelegramAuth");
-//     script.setAttribute(
-//   "data-auth-url",
-//   "https://next-web3auth-app.vercel.app/api/telegram-auth"
-// ); 
-script.async = true;
-
-    document.getElementById("telegram-login")?.appendChild(script);
-  }, []);
-
-  const login = async () => {
-    if (!web3auth) return;
-    try {
-      const provider = await web3auth.connect();
-      setProvider(provider);
-      const userInfo = await web3auth.getUserInfo();
-      setUser(userInfo);
-    } catch (err) {
-      console.error("Web3Auth login error:", err);
+    } else {
+      console.warn("Telegram WebApp not available");
     }
   };
+  document.body.appendChild(script);
+}, []);
+
+
+const login = async () => {
+  if (!web3auth) return;
+  try {
+    const provider = await web3auth.connect();
+    setProvider(provider);
+    const userInfo = await web3auth.getUserInfo();
+    setUser(userInfo);
+  } catch (err) {
+    console.error("Web3Auth login error:", err);
+  }
+};
+
+
 
   const logout = async () => {
     if (!web3auth) return;
