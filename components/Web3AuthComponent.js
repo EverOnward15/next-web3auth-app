@@ -1,11 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Web3AuthProvider,
-  useWeb3Auth,
-} from "@web3auth/modal/react";
-
 import { Web3Auth } from "@web3auth/modal";
 import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
 
@@ -41,18 +36,49 @@ function deriveBTCWallet(provider) {
     });
 }
 
-function Web3AuthInner() {
-  const {
-    web3auth,
-    provider,
-    user,
-    login,
-    logout,
-  } = useWeb3Auth();
-
+export default function Web3AuthComponent() {
+  const [web3auth, setWeb3auth] = useState(null);
+  const [provider, setProvider] = useState(null);
+  const [user, setUser] = useState(null);
   const [telegramUser, setTelegramUser] = useState(null);
   const [jwtToken, setJwtToken] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const web3authInstance = new Web3Auth({
+          clientId: CLIENT_ID,
+          chainConfig: {
+            chainNamespace: "eip155",
+            chainId: "0x13881", // Mumbai
+            rpcTarget: "https://rpc-mumbai.maticvigil.com",
+          },
+          uiConfig: {
+            theme: "dark",
+            loginMethodsOrder: ["google", "facebook"],
+            appName: "MyMVPWallet",
+          },
+        });
+
+        const openloginAdapter = new OpenloginAdapter({
+          adapterSettings: {
+            network: "testnet",
+          },
+        });
+
+        web3authInstance.configureAdapter(openloginAdapter);
+        await web3authInstance.initModal();
+
+        setWeb3auth(web3authInstance);
+        setProvider(web3authInstance.provider);
+      } catch (err) {
+        console.error("Web3Auth init error:", err);
+      }
+    };
+
+    init();
+  }, []);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -83,11 +109,11 @@ function Web3AuthInner() {
   }, []);
 
   const handleLogin = async () => {
+    if (!web3auth) return;
     try {
       setIsLoggingIn(true);
-      if (jwtToken && login) {
-        console.log("Logging in with JWT");
-        await login("openlogin", {
+      if (jwtToken) {
+        await web3auth.connectTo("openlogin", {
           loginProvider: "jwt",
           extraLoginOptions: {
             id_token: jwtToken,
@@ -96,14 +122,24 @@ function Web3AuthInner() {
           },
         });
       } else {
-        console.log("Logging in with default Web3Auth");
-        await login();
+        await web3auth.connect();
       }
+
+      setProvider(web3auth.provider);
+      const userInfo = await web3auth.getUserInfo();
+      setUser(userInfo);
     } catch (err) {
       console.error("Login error:", err);
     } finally {
       setIsLoggingIn(false);
     }
+  };
+
+  const handleLogout = async () => {
+    if (!web3auth) return;
+    await web3auth.logout();
+    setUser(null);
+    setProvider(null);
   };
 
   const handleGetAccounts = async () => {
@@ -138,7 +174,7 @@ function Web3AuthInner() {
           <button className={styles.button} onClick={handleGetAccounts}>
             Get Address
           </button>
-          <button className={styles.button} onClick={() => logout()}>
+          <button className={styles.button} onClick={handleLogout}>
             Logout
           </button>
         </>
@@ -165,36 +201,5 @@ function Web3AuthInner() {
         </>
       )}
     </div>
-  );
-}
-
-export default function Web3AuthComponent() {
-  if (!CLIENT_ID) {
-    return <div>Error: Web3Auth client ID is missing</div>;
-  }
-
-  return (
-    <Web3AuthProvider
-      web3AuthOptions={{
-        clientId: CLIENT_ID,
-        chainConfig: {
-          chainNamespace: "eip155",
-          chainId: "0x13881", // Mumbai testnet
-          rpcTarget: "https://rpc-mumbai.maticvigil.com",
-        },
-        uiConfig: {
-          theme: "dark",
-          loginMethodsOrder: ["google", "facebook"],
-          appName: "MyMVPWallet",
-        },
-      }}
-      openloginAdapter={new OpenloginAdapter({
-        adapterSettings: {
-          network: "testnet",
-        },
-      })}
-    >
-      <Web3AuthInner />
-    </Web3AuthProvider>
   );
 }
