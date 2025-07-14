@@ -19,8 +19,8 @@ if (typeof window !== "undefined") {
 
 const ECPair = ECPairFactory(tinysecp);
 
-// ✅ Move this to env var if possible
-const CLIENT_ID = "BJMWhIYvMib6oGOh5c5MdFNV-..."; // Your actual ID
+// ✅ Replace with your actual Web3Auth client ID
+const CLIENT_ID = "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY"; 
 
 function deriveBTCWallet(provider) {
   return provider
@@ -156,20 +156,18 @@ export default function Web3AuthComponent() {
     return <div>Error: Web3Auth client ID is missing</div>;
   }
 
-  const web3AuthOptions = {
-    clientId: CLIENT_ID,
-    chainConfig: {
-      chainNamespace: "eip155",
-      chainId: "0x13881",
-      rpcTarget: "https://rpc-mumbai.maticvigil.com",
-    },
-    openloginAdapterSettings: {
-      network: "testnet",
-    },
-  };
-
   return (
-    <Web3AuthProvider config={web3AuthOptions}>
+    <Web3AuthProvider
+      clientId={CLIENT_ID}
+      chainConfig={{
+        chainNamespace: "eip155",
+        chainId: "0x13881", // Mumbai testnet
+        rpcTarget: "https://rpc-mumbai.maticvigil.com",
+      }}
+      openloginAdapterSettings={{
+        network: "testnet",
+      }}
+    >
       <Web3AuthInner />
     </Web3AuthProvider>
   );
