@@ -18,27 +18,6 @@ if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
 
-  useEffect(() => {
-    setClientId(process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID || null);
-  }, []);
-
-  if (!clientId) {
-    // Render loading or nothing until clientId is set
-    return <div>Loading...</div>;
-  }
-
-const web3AuthOptions = {
-  clientId,
-  chainConfig: {
-    chainNamespace: "eip155",
-    chainId: "0x13881", // Mumbai testnet
-    rpcTarget: "https://rpc-mumbai.maticvigil.com",
-  },
-  openloginAdapterSettings: {
-    network: "testnet",
-  },
-};
-
 const ECPair = ECPairFactory(tinysecp);
 
 function deriveBTCWallet(provider) {
@@ -58,7 +37,7 @@ function deriveBTCWallet(provider) {
     });
 }
 
-function Web3AuthInner() {
+function Web3AuthInner({ clientId }) {
   const {
     web3auth,
     provider,
@@ -117,8 +96,13 @@ function Web3AuthInner() {
         `https://blockstream.info/testnet/api/address/${btcWallet.address}`
       );
       const data = await res.json();
-      const balance = data.chain_stats.funded_txo_sum - data.chain_stats.spent_txo_sum;
-      alert(`BTC Address: ${btcWallet.address}\nBalance: ${balance / 1e8} tBTC`);
+      const balance =
+        data.chain_stats.funded_txo_sum - data.chain_stats.spent_txo_sum;
+      alert(
+        `BTC Address: ${btcWallet.address}\nBalance: ${
+          balance / 1e8
+        } tBTC`
+      );
     } catch (err) {
       alert("Error fetching BTC info: " + err.message);
     }
@@ -169,12 +153,34 @@ function Web3AuthInner() {
 }
 
 export default function Web3AuthComponent() {
+  const [clientId, setClientId] = useState(null);
+
+  useEffect(() => {
+    setClientId(process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID || null);
+  }, []);
+
+  if (!clientId) {
+    return <div>Loading...</div>;
+  }
+
+  const web3AuthOptions = {
+    clientId,
+    chainConfig: {
+      chainNamespace: "eip155",
+      chainId: "0x13881", // Mumbai testnet
+      rpcTarget: "https://rpc-mumbai.maticvigil.com",
+    },
+    openloginAdapterSettings: {
+      network: "testnet",
+    },
+  };
+
   return (
     <Web3AuthProvider
       {...web3AuthOptions}
       openloginAdapterSettings={web3AuthOptions.openloginAdapterSettings}
     >
-      <Web3AuthInner />
+      <Web3AuthInner clientId={clientId} />
     </Web3AuthProvider>
   );
 }
