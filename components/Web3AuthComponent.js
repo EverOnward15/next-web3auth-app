@@ -18,7 +18,14 @@ if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
 
-const clientId = process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID;
+  useEffect(() => {
+    setClientId(process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID || null);
+  }, []);
+
+  if (!clientId) {
+    // Render loading or nothing until clientId is set
+    return <div>Loading...</div>;
+  }
 
 const web3AuthOptions = {
   clientId,
