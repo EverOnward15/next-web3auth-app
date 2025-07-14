@@ -12,14 +12,15 @@ import * as tinysecp from "tiny-secp256k1";
 
 import styles from "../components/Web3AuthComponent.module.css";
 
-// Add Buffer polyfill for Next.js environment
 import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
-const clientId = "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJL";
 
 const ECPair = ECPairFactory(tinysecp);
+
+// ✅ Move this to env var if possible
+const CLIENT_ID = "BJMWhIYvMib6oGOh5c5MdFNV-..."; // Your actual ID
 
 function deriveBTCWallet(provider) {
   return provider
@@ -38,7 +39,7 @@ function deriveBTCWallet(provider) {
     });
 }
 
-function Web3AuthInner({ clientId }) {
+function Web3AuthInner() {
   const {
     web3auth,
     provider,
@@ -61,7 +62,6 @@ function Web3AuthInner({ clientId }) {
         const userData = tg.initDataUnsafe?.user;
         if (userData) {
           setTelegramUser(userData);
-
           fetch("/api/telegram-jwt", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -100,9 +100,7 @@ function Web3AuthInner({ clientId }) {
       const balance =
         data.chain_stats.funded_txo_sum - data.chain_stats.spent_txo_sum;
       alert(
-        `BTC Address: ${btcWallet.address}\nBalance: ${
-          balance / 1e8
-        } tBTC`
+        `BTC Address: ${btcWallet.address}\nBalance: ${balance / 1e8} tBTC`
       );
     } catch (err) {
       alert("Error fetching BTC info: " + err.message);
@@ -154,22 +152,15 @@ function Web3AuthInner({ clientId }) {
 }
 
 export default function Web3AuthComponent() {
-
-  if (!clientId) {
-    if (typeof window === "undefined") {
-      // On the server (during prerender), throw a clear error
-      throw new Error("NEXT_PUBLIC_WEB3AUTH_CLIENT_ID is not defined");
-    } else {
-      // On the client, show a warning
-      return <div>Error: Missing Web3Auth clientId</div>;
-    }
+  if (!CLIENT_ID) {
+    return <div>Error: Web3Auth client ID is missing</div>;
   }
 
   const web3AuthOptions = {
-    clientId,
+    clientId: CLIENT_ID,
     chainConfig: {
       chainNamespace: "eip155",
-      chainId: "0x13881", // Mumbai testnet
+      chainId: "0x13881",
       rpcTarget: "https://rpc-mumbai.maticvigil.com",
     },
     openloginAdapterSettings: {
@@ -178,10 +169,8 @@ export default function Web3AuthComponent() {
   };
 
   return (
-<Web3AuthProvider config={web3AuthOptions}>
-  <Web3AuthInner clientId={clientId}/>
-</Web3AuthProvider>
-
-
+    <Web3AuthProvider config={web3AuthOptions}>
+      <Web3AuthInner />
+    </Web3AuthProvider>
   );
 }
