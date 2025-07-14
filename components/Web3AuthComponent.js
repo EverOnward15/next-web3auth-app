@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Web3Auth } from "@web3auth/modal";
+import { Web3Auth } from "@web3auth/core";
 import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
 
 import * as bitcoin from "bitcoinjs-lib";
@@ -49,15 +49,11 @@ export default function Web3AuthComponent() {
       try {
         const web3authInstance = new Web3Auth({
           clientId: CLIENT_ID,
+          web3AuthNetwork: "testnet",
           chainConfig: {
             chainNamespace: "eip155",
             chainId: "0x13881", // Mumbai
             rpcTarget: "https://rpc-mumbai.maticvigil.com",
-          },
-          uiConfig: {
-            theme: "dark",
-            loginMethodsOrder: ["google", "facebook"],
-            appName: "MyMVPWallet",
           },
         });
 
@@ -68,7 +64,7 @@ export default function Web3AuthComponent() {
         });
 
         web3authInstance.configureAdapter(openloginAdapter);
-        await web3authInstance.initModal();
+        await web3authInstance.init();
 
         setWeb3auth(web3authInstance);
         setProvider(web3authInstance.provider);
@@ -113,21 +109,21 @@ export default function Web3AuthComponent() {
     try {
       setIsLoggingIn(true);
       if (jwtToken) {
-        await web3auth.connectTo("openlogin", {
+        const provider = await web3auth.connectTo(openloginAdapter.name, {
           loginProvider: "jwt",
           extraLoginOptions: {
             id_token: jwtToken,
-            verifierIdField: "sub",
             domain: "next-web3auth-app.vercel.app",
+            verifierIdField: "sub",
           },
         });
-      } else {
-        await web3auth.connect();
-      }
 
-      setProvider(web3auth.provider);
-      const userInfo = await web3auth.getUserInfo();
-      setUser(userInfo);
+        setProvider(provider);
+        const userInfo = await web3auth.getUserInfo();
+        setUser(userInfo);
+      } else {
+        alert("JWT not available. Please wait or check Telegram.");
+      }
     } catch (err) {
       console.error("Login error:", err);
     } finally {
@@ -162,12 +158,12 @@ export default function Web3AuthComponent() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>MVP Wallet Login - Test Phase 4</h1>
-      <h2 className={styles.subtitle}>Tech: Web3Auth + Next.js (JS)</h2>
+      <h1 className={styles.title}>MVP Wallet Login - JWT Core</h1>
+      <h2 className={styles.subtitle}>Tech: Web3Auth Core + Next.js</h2>
 
       {!provider ? (
         <button className={styles.button} onClick={handleLogin} disabled={isLoggingIn}>
-          {jwtToken ? "Login via Telegram (JWT)" : "Login via Web3Auth"}
+          {jwtToken ? "Login via Telegram (JWT)" : "Waiting for Telegram Login..."}
         </button>
       ) : (
         <>
