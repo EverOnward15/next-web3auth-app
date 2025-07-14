@@ -30,10 +30,9 @@ export default function Web3AuthComponent() {
           web3AuthNetwork: "sapphire_devnet",
         chainConfig: {
   chainNamespace: CHAIN_NAMESPACES.EIP155,
-  chainId: "0x5", // for Goerli testnet, or check what Sapphire Devnet uses
-  rpcTarget: "https://rpc.ankr.com/eth_goerli",
+  chainId: "0x13881", // for Goerli testnet, or check what Sapphire Devnet uses
+  rpcTarget: "https://80001.rpc.thirdweb.com",
 }
-
         });
 
         const openloginAdapter = new OpenloginAdapter({
@@ -135,7 +134,7 @@ const login = async () => {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>MVP Wallet - Test Phase 2</h1>
+      <h1 className={styles.title}>MVP Wallet Login - Test Phase 4</h1>
       <h2 className={styles.subtitle}>Tech: Web3Auth + Next.js (JS)</h2>
 
       {!provider ? (
