@@ -155,9 +155,11 @@ function Web3AuthInner({ clientId }) {
 export default function Web3AuthComponent() {
   const [clientId, setClientId] = useState(null);
 
-  useEffect(() => {
-    setClientId(process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID || null);
-  }, []);
+useEffect(() => {
+  console.log("Loaded clientId:", process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID);
+  setClientId(process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID || null);
+}, []);
+
 
   if (!clientId) {
     return <div>Loading...</div>;
