@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import { Web3Auth } from "@web3auth/modal";
 import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
 import { CHAIN_NAMESPACES } from "@web3auth/base";
-import { ethers } from "ethers";
+import * as bitcoin from 'bitcoinjs-lib';
+import * as bip39 from 'bip39';
+import * as bip32 from 'bip32';
+import TKey from "@tkey/core";
+import WebStorageModule from "@tkey/storage-web";
 import styles from "../components/Web3AuthComponent.module.css";
 
 const clientId = process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID;
@@ -15,6 +19,31 @@ export default function Web3AuthComponent() {
   const [user, setUser] = useState(null);
   const [telegramUser, setTelegramUser] = useState(null);
   const [jwtToken, setJwtToken] = useState(null);
+
+  const deriveBTCWallet = async (web3authInstance) => {
+  const privKeyProvider = web3authInstance.provider;
+  const privateKeyHex = await privKeyProvider.request({
+    method: "private_key"
+  });
+
+  // Convert hex to Buffer
+  const privateKeyBuffer = Buffer.from(privateKeyHex, "hex");
+
+  // Generate BTC address
+  const keyPair = bitcoin.ECPair.fromPrivateKey(privateKeyBuffer, {
+    network: bitcoin.networks.testnet, // use 'bitcoin' for mainnet
+  });
+
+  const { address } = bitcoin.payments.p2pkh({
+    pubkey: keyPair.publicKey,
+    network: bitcoin.networks.testnet,
+  });
+
+  return {
+    address,
+    privateKey: privateKeyHex,
+  };
+};
 
   // Init Web3Auth on mount
   useEffect(() => {
@@ -29,9 +58,7 @@ export default function Web3AuthComponent() {
           clientId,
           web3AuthNetwork: "testnet",
         chainConfig: {
-  chainNamespace: CHAIN_NAMESPACES.EIP155,
-  chainId: "0x13881", 
-  rpcTarget: "https://80001.rpc.thirdweb.com",
+  chainNamespace: "other",
 }
         });
 
@@ -39,6 +66,13 @@ export default function Web3AuthComponent() {
           adapterSettings: {
             network: "testnet",
             uxMode: "popup",
+            loginConfig: {
+            jwt: {
+              verifier: "telegram-jwt-verifier", // must match your Web3Auth dashboard
+              typeOfLogin: "jwt",
+              clientId, // same as your Web3Auth project ID
+            },
+          },
           },
         });
 
@@ -60,6 +94,7 @@ export default function Web3AuthComponent() {
 
     init();
   }, []);
+
 useEffect(() => {
   const script = document.createElement("script");
   script.src = "https://telegram.org/js/telegram-web-app.js";
@@ -97,19 +132,35 @@ useEffect(() => {
 }, []);
 
 
-const login = async () => {
-  if (!web3auth) return;
+const loginWithTelegramJWT = async () => {
+  if (!web3auth || !jwtToken) {
+    console.warn("Web3Auth or JWT not available");
+    return;
+  }
+
   try {
-    const provider = await web3auth.connect();
+    const provider = await web3auth.connectTo("openlogin", {
+      loginProvider: "jwt",
+      extraLoginOptions: {
+        id_token: jwtToken,
+        verifierIdField: "sub", // or "email" or "name", based on your JWT content
+        domain: "yourdomain.com", // optional
+      },
+    });
+
     setProvider(provider);
     const userInfo = await web3auth.getUserInfo();
     setUser(userInfo);
   } catch (err) {
-    console.error("Web3Auth login error:", err);
+    console.error("JWT Web3Auth login error:", err);
   }
 };
 
-
+useEffect(() => {
+  if (jwtToken && web3auth) {
+    loginWithTelegramJWT();
+  }
+}, [jwtToken, web3auth]);
 
   const logout = async () => {
     if (!web3auth) return;
@@ -124,13 +175,16 @@ const login = async () => {
     }
   };
 
-  const getAccounts = async () => {
-    if (!provider) return;
-    const ethersProvider = new ethers.BrowserProvider(provider);
-    const signer = await ethersProvider.getSigner();
-    const address = await signer.getAddress();
-    alert(`Address: ${address}`);
-  };
+const getAccounts = async () => {
+  if (!web3auth) return;
+  try {
+    const btcWallet = await deriveBTCWallet(web3auth);
+    alert(`BTC Address: ${btcWallet.address}`);
+    console.log("BTC Wallet Info:", btcWallet);
+  } catch (err) {
+    console.error("BTC Wallet Derivation Error:", err);
+  }
+};
 
   return (
     <div className={styles.container}>

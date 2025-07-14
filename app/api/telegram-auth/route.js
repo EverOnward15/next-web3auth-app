@@ -1,6 +1,9 @@
 // app/api/telegram-auth/route.js
-
+import { readFileSync } from "fs";
+import path from "path";
 import jwt from "jsonwebtoken";
+
+const privateKey = readFileSync(path.join(process.cwd(), "private.pem")); // adjust path as needed
 
 // For POST requests (e.g. from frontend apps)
 export async function POST(request) {
@@ -36,16 +39,23 @@ export async function POST(request) {
   }
 
   const jwtSecret = process.env.JWT_SECRET;
-  const token = jwt.sign(
-    {
-      id,
-      first_name,
-      last_name,
-      username,
-      photo_url,
-    },
-    jwtSecret,
-    { expiresIn: "1h" }
+const token = jwt.sign(
+  {
+    sub: id,
+    aud: "web3auth",
+    iss: "https://yourdomain.com/api/telegram-auth", // your backend API issuer
+    id,
+    first_name,
+    last_name,
+    username,
+    photo_url,
+  },
+  privateKey,
+  {
+    algorithm: "RS256",
+    expiresIn: "1h",
+    keyid: "telegram-key-1", // must match 'kid' in JWKS
+  }
   );
 
   return Response.json({ token, user: { id, first_name, last_name, username, photo_url } });
