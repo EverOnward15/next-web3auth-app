@@ -8,7 +8,7 @@ import * as bitcoin from 'bitcoinjs-lib';
 import * as bip39 from 'bip39';
 import * as bip32 from 'bip32';
 import TKey from "@tkey/core";
-import WebStorageModule from "@tkey/storage-web";
+import WebStorageModule from "@tkey/web-storage";
 import styles from "../components/Web3AuthComponent.module.css";
 
 const clientId = process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID;
