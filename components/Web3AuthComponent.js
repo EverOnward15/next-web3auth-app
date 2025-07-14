@@ -67,7 +67,9 @@ export default function Web3AuthComponent() {
           clientId,
           web3AuthNetwork: "testnet",
         chainConfig: {
-  chainNamespace: CHAIN_NAMESPACES.OTHER,
+    chainNamespace: "eip155", // Or "solana", etc.
+    chainId: "0x1",           // Example: Ethereum Mainnet
+    rpcTarget: "https://mainnet.infura.io/v3/INFURA_PROJECT_ID"
 }
         });
 
