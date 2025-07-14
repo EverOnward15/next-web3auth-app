@@ -166,7 +166,7 @@ export default function Web3AuthComponent() {
   }
 
   const web3AuthOptions = {
-  clientId: process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID,
+    clientId,
     chainConfig: {
       chainNamespace: "eip155",
       chainId: "0x13881", // Mumbai testnet
