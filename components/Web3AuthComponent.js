@@ -17,7 +17,7 @@ import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
-const clientId = process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID;
+const clientId = "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJL";
 
 const ECPair = ECPairFactory(tinysecp);
 
