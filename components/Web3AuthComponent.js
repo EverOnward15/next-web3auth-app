@@ -52,6 +52,7 @@ function Web3AuthInner() {
 
   const [telegramUser, setTelegramUser] = useState(null);
   const [jwtToken, setJwtToken] = useState(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -70,7 +71,10 @@ function Web3AuthInner() {
             body: JSON.stringify(userData),
           })
             .then((res) => res.json())
-            .then((data) => setJwtToken(data.token))
+            .then((data) => {
+              setJwtToken(data.token);
+              console.log("Received JWT Token:", data.token);
+            })
             .catch((err) => console.error("JWT error:", err));
         }
       }
@@ -78,18 +82,29 @@ function Web3AuthInner() {
     document.body.appendChild(script);
   }, []);
 
-  useEffect(() => {
-    if (jwtToken && web3auth) {
-      login("openlogin", {
-        loginProvider: "jwt",
-        extraLoginOptions: {
-          id_token: jwtToken,
-          verifierIdField: "sub",
-          domain: "next-web3auth-app.vercel.app",
-        },
-      }).catch(console.error);
+  const handleLogin = async () => {
+    try {
+      setIsLoggingIn(true);
+      if (jwtToken && login) {
+        console.log("Logging in with JWT");
+        await login("openlogin", {
+          loginProvider: "jwt",
+          extraLoginOptions: {
+            id_token: jwtToken,
+            verifierIdField: "sub",
+            domain: "next-web3auth-app.vercel.app",
+          },
+        });
+      } else {
+        console.log("Logging in with default Web3Auth");
+        await login();
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+    } finally {
+      setIsLoggingIn(false);
     }
-  }, [jwtToken, login, web3auth]);
+  };
 
   const handleGetAccounts = async () => {
     if (!provider) return;
@@ -115,8 +130,8 @@ function Web3AuthInner() {
       <h2 className={styles.subtitle}>Tech: Web3Auth + Next.js (JS)</h2>
 
       {!provider ? (
-        <button className={styles.button} onClick={() => login()}>
-          Login via Web3Auth
+        <button className={styles.button} onClick={handleLogin} disabled={isLoggingIn}>
+          {jwtToken ? "Login via Telegram (JWT)" : "Login via Web3Auth"}
         </button>
       ) : (
         <>
