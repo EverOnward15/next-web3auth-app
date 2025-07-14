@@ -24,16 +24,16 @@ export default function Web3AuthComponent() {
         return;
       }
 
-const web3authInstance = new Web3Auth({
-  clientId,
-  web3AuthNetwork: "testnet", // not sapphire_devnet unless you have a sapphire key
-  chainConfig: {
-    chainNamespace: CHAIN_NAMESPACES.EIP155,
-    chainId: "0x13881", 
-    rpcTarget: "https://80001.rpc.thirdweb.com",
-  },
-});
-
+      try {
+        const web3authInstance = new Web3Auth({
+          clientId,
+          web3AuthNetwork: "testnet",
+        chainConfig: {
+  chainNamespace: CHAIN_NAMESPACES.EIP155,
+  chainId: "0x13881", 
+  rpcTarget: "https://80001.rpc.thirdweb.com",
+}
+        });
 
         const openloginAdapter = new OpenloginAdapter({
           adapterSettings: {
