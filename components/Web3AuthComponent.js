@@ -56,7 +56,9 @@ export default function Web3AuthComponent() {
   useEffect(() => {
     const init = async () => {
       if (!clientId) {
+        console.log("Web3Auth clientID missing.");
         console.warn("Web3Auth clientId missing");
+        alert("Web3Auth clientID missing.")
         return;
       }
 
@@ -96,6 +98,7 @@ export default function Web3AuthComponent() {
         }
       } catch (err) {
         console.error("Web3Auth init error:", err);
+        alert("Web3Auth init error:" + err);
       }
     };
 
@@ -114,7 +117,7 @@ useEffect(() => {
       const userData = tg.initDataUnsafe?.user;
       if (userData) {
         setTelegramUser(userData);
-        console.log("Telegram WebApp user:", userData);
+        alert("Telegram WebApp user:", userData);
 
         // Optional: Send to backend to generate JWT
         fetch("/api/telegram-jwt", {
@@ -125,14 +128,19 @@ useEffect(() => {
           .then((res) => res.json())
           .then((data) => {
             setJwtToken(data.token);
-            console.log("JWT token from Telegram WebApp:", data.token);
+            alert("JWT token from Telegram WebApp:", data.token);
           })
-          .catch((err) => console.error("JWT error:", err));
+          .catch((err) => {
+  console.error("JWT error:", err);
+  alert("JWT Error: " + err.message);
+});
       } else {
         console.warn("No user data in Telegram context");
+        alert("No user data in Telegram context");
       }
     } else {
       console.warn("Telegram WebApp not available");
+      alert("Telegram WebApp not available");
     }
   };
   document.body.appendChild(script);
@@ -142,6 +150,7 @@ useEffect(() => {
 const loginWithTelegramJWT = async () => {
   if (!web3auth || !jwtToken) {
     console.warn("Web3Auth or JWT not available");
+    alert("Web3Auth or JWT not available", + err);
     return;
   }
 
@@ -151,15 +160,17 @@ const loginWithTelegramJWT = async () => {
       extraLoginOptions: {
         id_token: jwtToken,
         verifierIdField: "sub", // or "email" or "name", based on your JWT content
-        domain: "yourdomain.com", // optional
+        domain: "https://next-web3auth-app.vercel.app/api/jwks", // optional
       },
     });
 
     setProvider(provider);
     const userInfo = await web3auth.getUserInfo();
     setUser(userInfo);
+    alert("Login successful. Web3Auth user: " + JSON.stringify(userInfo));
   } catch (err) {
     console.error("JWT Web3Auth login error:", err);
+    alert("JWT Web3Auth login error" + err.message);
   }
 };
 
@@ -179,19 +190,28 @@ useEffect(() => {
       setJwtToken(null);
     } catch (err) {
       console.error("Web3Auth logout error:", err);
+      alert("Web3Auth logout error:" + err);
     }
   };
 
-const getAccounts = async () => {
-  if (!web3auth) return;
-  try {
-    const btcWallet = await deriveBTCWallet(web3auth);
-    alert(`BTC Address: ${btcWallet.address}`);
-    console.log("BTC Wallet Info:", btcWallet);
-  } catch (err) {
-    console.error("BTC Wallet Derivation Error:", err);
-  }
-};
+  const getAccounts = async () => {
+    if (!web3auth) return;
+    try {
+      const btcWallet = await deriveBTCWallet(web3auth);
+      const address = btcWallet.address;
+
+      const res = await fetch(`https://blockstream.info/testnet/api/address/${address}`);
+      const data = await res.json();
+
+      const balance = data.chain_stats.funded_txo_sum - data.chain_stats.spent_txo_sum;
+
+      alert(`BTC Address: ${address}\nBalance: ${balance / 1e8} tBTC`);
+      console.log("BTC Wallet Info:", btcWallet, "Balance:", balance);
+    } catch (err) {
+      console.error("BTC Wallet Derivation Error:", err);
+      alert("BTC Wallet Derivation Error:" + err);
+    }
+  };
 
   return (
     <div className={styles.container}>
