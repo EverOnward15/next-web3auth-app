@@ -153,20 +153,9 @@ function Web3AuthInner({ clientId }) {
 }
 
 export default function Web3AuthComponent() {
-  const [clientId, setClientId] = useState(null);
-
-useEffect(() => {
-  console.log("Loaded clientId:", process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID);
-  setClientId(process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID || null);
-}, []);
-
-
-  if (!clientId) {
-    return <div>Loading...</div>;
-  }
 
   const web3AuthOptions = {
-    clientId,
+  clientId: process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID,
     chainConfig: {
       chainNamespace: "eip155",
       chainId: "0x13881", // Mumbai testnet
@@ -179,8 +168,9 @@ useEffect(() => {
 
   return (
 <Web3AuthProvider config={web3AuthOptions}>
-  <Web3AuthInner clientId={clientId} />
+  <Web3AuthInner />
 </Web3AuthProvider>
+
 
   );
 }
