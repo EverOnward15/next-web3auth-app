@@ -11,7 +11,20 @@ import { ECPairFactory } from "ecpair";
 import * as tinysecp from "tiny-secp256k1";
 
 import styles from "../components/Web3AuthComponent.module.css";
-import { clientId, web3AuthOptions } from "../lib/web3authConfig";
+
+const clientId = process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID;
+
+const web3AuthOptions = {
+  clientId,
+  chainConfig: {
+    chainNamespace: "eip155",
+    chainId: "0x13881", // Mumbai testnet
+    rpcTarget: "https://rpc-mumbai.maticvigil.com",
+  },
+  openloginAdapterSettings: {
+    network: "testnet",
+  },
+};
 
 const ECPair = ECPairFactory(tinysecp);
 
@@ -44,7 +57,6 @@ function Web3AuthInner() {
   const [telegramUser, setTelegramUser] = useState(null);
   const [jwtToken, setJwtToken] = useState(null);
 
-  // Load Telegram WebApp script and fetch JWT token
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://telegram.org/js/telegram-web-app.js";
@@ -71,7 +83,6 @@ function Web3AuthInner() {
     document.body.appendChild(script);
   }, []);
 
-  // Auto-login with JWT when token and web3auth are ready
   useEffect(() => {
     if (jwtToken && web3auth) {
       login("openlogin", {
