@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { Web3AuthModal } from "@web3auth/modal";
+import { Web3Auth } from "@web3auth/modal";
 import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
 import { CHAIN_NAMESPACES } from "@web3auth/base";
 import * as bitcoin from 'bitcoinjs-lib';
@@ -63,7 +63,7 @@ export default function Web3AuthComponent() {
       }
 
       try {
-        const web3authInstance = new Web3AuthModal({
+        const web3authInstance = new Web3Auth({
           clientId,
           web3AuthNetwork: "testnet",
         chainConfig: {
