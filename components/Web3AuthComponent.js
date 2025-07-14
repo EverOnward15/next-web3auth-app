@@ -70,7 +70,8 @@ export default function Web3AuthComponent() {
     chainNamespace: "eip155", // Or "solana", etc.
     chainId: "0x1",           // Example: Ethereum Mainnet
     rpcTarget: "https://mainnet.infura.io/v3/INFURA_PROJECT_ID"
-}
+},
+  adapters: [openloginAdapter], // ✅ directly passed here
         });
 
         const openloginAdapter = new OpenloginAdapter({
@@ -87,16 +88,7 @@ export default function Web3AuthComponent() {
           },
         });
 
-
-// 👇 NEW: Add adapter using .configureAdapter() before initModal()
-web3authInstance.configureAdapter(openloginAdapter);
-// OR 👇 BETTER in v6+a
-       await web3authInstance.initModal({
-  modalConfig: {
-    // Optional: Customize modal login options here
-  },
-  adapters: [openloginAdapter],
-});
+       await web3authInstance.initModal();
 
         setWeb3auth(web3authInstance);
 
