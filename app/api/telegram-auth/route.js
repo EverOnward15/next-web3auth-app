@@ -3,7 +3,7 @@ import { readFileSync } from "fs";
 import path from "path";
 import jwt from "jsonwebtoken";
 
-const privateKey = readFileSync(path.join(process.cwd(), "private.pem")); // adjust path as needed
+const privateKey = process.env.PRIVATE_KEY.replace(/\\n/g, '\n');
 
 // For POST requests (e.g. from frontend apps)
 export async function POST(request) {
