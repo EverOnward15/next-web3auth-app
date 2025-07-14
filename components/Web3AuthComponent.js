@@ -89,11 +89,6 @@ export default function Web3AuthComponent() {
 // 👇 NEW: Add adapter using .configureAdapter() before initModal()
 web3authInstance.configureAdapter(openloginAdapter);
 // OR 👇 BETTER in v6+a
-web3authInstance.initModal({
-  modalConfig: {
-    // optional config here
-  },
-});
         await web3authInstance.initModal();
 
         setWeb3auth(web3authInstance);
@@ -158,7 +153,7 @@ useEffect(() => {
 const loginWithTelegramJWT = async () => {
   if (!web3auth || !jwtToken) {
     console.warn("Web3Auth or JWT not available");
-    alert("Web3Auth or JWT not available", + err);
+    alert("Web3Auth or JWT not available");
     return;
   }
 
@@ -168,7 +163,7 @@ const loginWithTelegramJWT = async () => {
       extraLoginOptions: {
         id_token: jwtToken,
         verifierIdField: "sub", // or "email" or "name", based on your JWT content
-        domain: "https://next-web3auth-app.vercel.app/api/jwks", // optional
+        domain: "next-web3auth-app.vercel.app", // optional
       },
     });
 
@@ -183,10 +178,16 @@ const loginWithTelegramJWT = async () => {
 };
 
 useEffect(() => {
-  if (jwtToken && web3auth) {
-    loginWithTelegramJWT();
-  }
+  const delayLogin = async () => {
+    if (jwtToken && web3auth) {
+      // optional: small delay
+      await new Promise(res => setTimeout(res, 500));
+      loginWithTelegramJWT();
+    }
+  };
+  delayLogin();
 }, [jwtToken, web3auth]);
+
 
   const logout = async () => {
     if (!web3auth) return;
