@@ -91,7 +91,12 @@ export default function Web3AuthComponent() {
 // 👇 NEW: Add adapter using .configureAdapter() before initModal()
 web3authInstance.configureAdapter(openloginAdapter);
 // OR 👇 BETTER in v6+a
-        await web3authInstance.initModal();
+       await web3authInstance.initModal({
+  modalConfig: {
+    // Optional: Customize modal login options here
+  },
+  adapters: [openloginAdapter],
+});
 
         setWeb3auth(web3authInstance);
 
