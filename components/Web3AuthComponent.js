@@ -12,6 +12,12 @@ import * as tinysecp from "tiny-secp256k1";
 
 import styles from "../components/Web3AuthComponent.module.css";
 
+// Add Buffer polyfill for Next.js environment
+import { Buffer } from "buffer";
+if (typeof window !== "undefined") {
+  window.Buffer = Buffer;
+}
+
 const clientId = process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID;
 
 const web3AuthOptions = {
