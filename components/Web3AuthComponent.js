@@ -90,7 +90,9 @@ export default function Web3AuthComponent() {
             .then((res) => res.json())
             .then((data) => {
               setJwtToken(data.token);
+              alert(data);
               alert(data.token);
+              alert("JWT data received");
               console.log("Received JWT Token:", data.token);
             })
             .catch((err) => console.error("JWT error:", err));
