@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Web3Auth } from "@web3auth/mpc-core-kit";
+import { Web3AuthMPCCoreKit } from "@web3auth/mpc-core-kit";
 import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
 
 import * as bitcoin from "bitcoinjs-lib";
@@ -14,6 +14,9 @@ import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
+
+const [adapter, setAdapter] = useState(null);
+
 
 const ECPair = ECPairFactory(tinysecp);
 
@@ -47,21 +50,18 @@ export default function Web3AuthComponent() {
   useEffect(() => {
     const init = async () => {
       try {
-        const web3authInstance = new Web3Auth({
-          clientId: CLIENT_ID,
-          web3AuthNetwork: "testnet",
-          chainConfig: {
-            chainNamespace: "eip155",
-            chainId: "0x13881", // Mumbai
-            rpcTarget: "https://rpc-mumbai.maticvigil.com",
-          },
-        });
+const web3authInstance = new Web3AuthMPCCoreKit({
+  web3AuthClientId: CLIENT_ID,
+  web3AuthNetwork: WEB3AUTH_NETWORK.DEVNET, // or use "WEB3AUTH_NETWORK.TESTNET" if you import the enum
+  manualSync: true,
+});
 
         const openloginAdapter = new OpenloginAdapter({
           adapterSettings: {
             network: "testnet",
           },
         });
+        setAdapter(openloginAdapter);
 
         web3authInstance.configureAdapter(openloginAdapter);
         await web3authInstance.init();
@@ -87,7 +87,7 @@ export default function Web3AuthComponent() {
         const userData = tg.initDataUnsafe?.user;
         if (userData) {
           setTelegramUser(userData);
-          fetch("/api/telegram-jwt", {
+          fetch("/api/jwks", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(userData),
@@ -111,10 +111,10 @@ const handleLogin = async () => {
 
     if (jwtToken) {
       const provider = await web3auth.connectTo(openloginAdapter.name, {
-        loginProvider: "jwt",
+        loginProvider: "telegram-jwt-verifier",
         extraLoginOptions: {
           id_token: jwtToken,
-          domain: "next-web3auth-app.vercel.app",
+          domain: "next-web3auth-app.vercel.app/api/jwks",
           verifierIdField: "sub",
         },
       });
