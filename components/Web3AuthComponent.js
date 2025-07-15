@@ -176,6 +176,27 @@ if (!jwtToken) {
       <h1 className={styles.title}>MVP Wallet Login - JWT Kit</h1>
       <h2 className={styles.subtitle}>Tech: Web3Auth Core + Next.js</h2>
 
+    {telegramUser && (
+      <div style={{ marginBottom: "20px", textAlign: "center" }}>
+        <p style={{ fontSize: "18px" }}>
+          Welcome, <strong>{telegramUser.first_name}</strong>!
+        </p>
+        {telegramUser.photo_url && (
+          <img
+            src={telegramUser.photo_url}
+            alt={`${telegramUser.first_name}'s profile`}
+            style={{
+              borderRadius: "50%",
+              width: "100px",
+              height: "100px",
+              objectFit: "cover",
+              marginTop: "10px",
+            }}
+          />
+        )}
+      </div>
+    )}
+
       {!provider ? (
         <button
           className={styles.button}
