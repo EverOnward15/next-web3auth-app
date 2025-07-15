@@ -54,7 +54,6 @@ export default function Web3AuthComponent() {
           web3AuthNetwork: WEB3AUTH_NETWORK.DEVNET, // or use "WEB3AUTH_NETWORK.TESTNET" if you import the enum
           manualSync: true,
           tssLib: tssLib,
-          storage: window.storage,
         });
 
         await web3authInstance.init();
