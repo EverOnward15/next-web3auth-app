@@ -82,7 +82,7 @@ export default function Web3AuthComponent() {
         const userData = tg.initDataUnsafe?.user;
         if (userData) {
           setTelegramUser(userData);
-          fetch("/api/jwks", {
+          fetch("/api/token", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(userData),
@@ -101,10 +101,16 @@ export default function Web3AuthComponent() {
   }, []);
 
   const handleLogin = async () => {
-    if (!web3auth || !jwtToken) {
-      alert("Web3Auth not ready or JWT missing");
-      return;
-    }
+if (!web3auth) {
+  alert("Web3Auth not ready");
+  console.warn("web3auth is", web3auth);
+  return;
+}
+if (!jwtToken) {
+  alert("JWT token missing");
+  console.warn("jwtToken is", jwtToken);
+  return;
+}
 
     try {
       setIsLoggingIn(true);
