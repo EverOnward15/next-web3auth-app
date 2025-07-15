@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Web3Auth } from "@web3auth/core";
+import { Web3Auth } from "@web3auth/mpc-core-kit";
 import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
 
 import * as bitcoin from "bitcoinjs-lib";
@@ -104,32 +104,45 @@ export default function Web3AuthComponent() {
     document.body.appendChild(script);
   }, []);
 
-  const handleLogin = async () => {
-    if (!web3auth) return;
-    try {
-      setIsLoggingIn(true);
-      if (jwtToken) {
-        const provider = await web3auth.connectTo(openloginAdapter.name, {
-          loginProvider: "jwt",
-          extraLoginOptions: {
-            id_token: jwtToken,
-            domain: "next-web3auth-app.vercel.app",
-            verifierIdField: "sub",
-          },
-        });
+const handleLogin = async () => {
+  if (!web3auth) return;
+  try {
+    setIsLoggingIn(true);
 
-        setProvider(provider);
-        const userInfo = await web3auth.getUserInfo();
-        setUser(userInfo);
+    if (jwtToken) {
+      const provider = await web3auth.connectTo(openloginAdapter.name, {
+        loginProvider: "jwt",
+        extraLoginOptions: {
+          id_token: jwtToken,
+          domain: "next-web3auth-app.vercel.app",
+          verifierIdField: "sub",
+        },
+      });
+
+      setProvider(provider);
+
+      const userInfo = await web3auth.getUserInfo();
+      setUser(userInfo);
+
+      // ✅ Confirm Share A returned
+      const privateKey = await provider.request({ method: "private_key" });
+      if (privateKey) {
+        alert("Key returned: " + privateKey.slice(0, 10) + "...");
+        console.log("Private Key:", privateKey);
       } else {
-        alert("JWT not available. Please wait or check Telegram.");
+        alert("No key returned.");
       }
-    } catch (err) {
-      console.error("Login error:", err);
-    } finally {
-      setIsLoggingIn(false);
+
+    } else {
+      alert("JWT not available. Please wait or check Telegram.");
     }
-  };
+  } catch (err) {
+    console.error("Login error:", err);
+    alert("Login failed: " + err.message);
+  } finally {
+    setIsLoggingIn(false);
+  }
+};
 
   const handleLogout = async () => {
     if (!web3auth) return;
