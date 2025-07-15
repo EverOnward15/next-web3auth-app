@@ -69,6 +69,7 @@ const web3authInstance = new Web3AuthMPCCoreKit({
         setProvider(web3authInstance.provider);
       } catch (err) {
         console.error("Web3Auth init error:", err);
+        alert("Web3 Auth init error: " +err);
       }
     };
 
@@ -94,6 +95,7 @@ const web3authInstance = new Web3AuthMPCCoreKit({
             .then((res) => res.json())
             .then((data) => {
               setJwtToken(data.token);
+              alert(data.token);
               console.log("Received JWT Token:", data.token);
             })
             .catch((err) => console.error("JWT error:", err));
@@ -170,7 +172,7 @@ const handleLogin = async () => {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>MVP Wallet Login - JWT Core</h1>
+      <h1 className={styles.title}>MVP Wallet Login - JWT Kit</h1>
       <h2 className={styles.subtitle}>Tech: Web3Auth Core + Next.js</h2>
 
       {!provider ? (
