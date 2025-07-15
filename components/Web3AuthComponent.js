@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Web3AuthMPCCoreKit, WEB3AUTH_NETWORK  } from "@web3auth/mpc-core-kit";
+import { Web3AuthMPCCoreKit, WEB3AUTH_NETWORK } from "@web3auth/mpc-core-kit";
 import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
 import { tssLib } from "@toruslabs/tss-dkls-lib";
-
+import { WALLET_CONNECTORS, AUTH_CONNECTION } from "@web3auth/mpc-core-kit";
 
 import * as bitcoin from "bitcoinjs-lib";
 import { ECPairFactory } from "ecpair";
@@ -17,26 +17,24 @@ if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
 
-
 const ECPair = ECPairFactory(tinysecp);
 
-const CLIENT_ID = "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
+const CLIENT_ID =
+  "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
 
 function deriveBTCWallet(provider) {
-  return provider
-    .request({ method: "private_key" })
-    .then((privateKeyHex) => {
-      const privateKeyBuffer = Buffer.from(privateKeyHex, "hex");
-      const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {
-        network: bitcoin.networks.testnet,
-      });
-      const { address } = bitcoin.payments.p2pkh({
-        pubkey: keyPair.publicKey,
-        network: bitcoin.networks.testnet,
-      });
-
-      return { address, privateKey: privateKeyHex };
+  return provider.request({ method: "private_key" }).then((privateKeyHex) => {
+    const privateKeyBuffer = Buffer.from(privateKeyHex, "hex");
+    const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {
+      network: bitcoin.networks.testnet,
     });
+    const { address } = bitcoin.payments.p2pkh({
+      pubkey: keyPair.publicKey,
+      network: bitcoin.networks.testnet,
+    });
+
+    return { address, privateKey: privateKeyHex };
+  });
 }
 
 export default function Web3AuthComponent() {
@@ -51,29 +49,21 @@ export default function Web3AuthComponent() {
   useEffect(() => {
     const init = async () => {
       try {
-const web3authInstance = new Web3AuthMPCCoreKit({
-  web3AuthClientId: CLIENT_ID,
-  web3AuthNetwork: WEB3AUTH_NETWORK.DEVNET, // or use "WEB3AUTH_NETWORK.TESTNET" if you import the enum
-  manualSync: true,
-    tssLib: tssLib,
-      storage: window.storage,
-});
-
-        const openloginAdapter = new OpenloginAdapter({
-          adapterSettings: {
-            network: "testnet",
-          },
+        const web3authInstance = new Web3AuthMPCCoreKit({
+          web3AuthClientId: CLIENT_ID,
+          web3AuthNetwork: WEB3AUTH_NETWORK.DEVNET, // or use "WEB3AUTH_NETWORK.TESTNET" if you import the enum
+          manualSync: true,
+          tssLib: tssLib,
+          storage: window.storage,
         });
-        setAdapter(openloginAdapter);
 
-        web3authInstance.configureAdapter(openloginAdapter);
         await web3authInstance.init();
 
         setWeb3auth(web3authInstance);
         setProvider(web3authInstance.provider);
       } catch (err) {
         console.error("Web3Auth init error:", err);
-        alert("Web3 Auth init error: " +err);
+        alert("Web3 Auth init error: " + err);
       }
     };
 
@@ -109,18 +99,21 @@ const web3authInstance = new Web3AuthMPCCoreKit({
     document.body.appendChild(script);
   }, []);
 
-const handleLogin = async () => {
-  if (!web3auth) return;
-  try {
-    setIsLoggingIn(true);
+  const handleLogin = async () => {
+    if (!web3auth || !jwtToken) {
+      alert("Web3Auth not ready or JWT missing");
+      return;
+    }
 
-    if (jwtToken) {
-      const provider = await web3auth.connectTo(openloginAdapter.name, {
-        loginProvider: "telegram-jwt-verifier",
+    try {
+      setIsLoggingIn(true);
+
+      const provider = await web3auth.connectTo(WALLET_CONNECTORS.AUTH, {
+        authConnection: AUTH_CONNECTION.CUSTOM,
+        authConnectionId: "telegram-jwt-verifier", // This must match the verifier set in your Web3Auth dashboard
+        idToken: jwtToken,
         extraLoginOptions: {
-          id_token: jwtToken,
-          domain: "next-web3auth-app.vercel.app/api/jwks",
-          verifierIdField: "sub",
+          isUserIdCaseSensitive: false,
         },
       });
 
@@ -129,7 +122,6 @@ const handleLogin = async () => {
       const userInfo = await web3auth.getUserInfo();
       setUser(userInfo);
 
-      // ✅ Confirm Share A returned
       const privateKey = await provider.request({ method: "private_key" });
       if (privateKey) {
         alert("Key returned: " + privateKey.slice(0, 10) + "...");
@@ -137,17 +129,13 @@ const handleLogin = async () => {
       } else {
         alert("No key returned.");
       }
-
-    } else {
-      alert("JWT not available. Please wait or check Telegram.");
+    } catch (err) {
+      console.error("Login error:", err);
+      alert("Login failed: " + err.message);
+    } finally {
+      setIsLoggingIn(false);
     }
-  } catch (err) {
-    console.error("Login error:", err);
-    alert("Login failed: " + err.message);
-  } finally {
-    setIsLoggingIn(false);
-  }
-};
+  };
 
   const handleLogout = async () => {
     if (!web3auth) return;
@@ -180,8 +168,14 @@ const handleLogin = async () => {
       <h2 className={styles.subtitle}>Tech: Web3Auth Core + Next.js</h2>
 
       {!provider ? (
-        <button className={styles.button} onClick={handleLogin} disabled={isLoggingIn}>
-          {jwtToken ? "Login via Telegram (JWT)" : "Waiting for Telegram Login..."}
+        <button
+          className={styles.button}
+          onClick={handleLogin}
+          disabled={isLoggingIn}
+        >
+          {jwtToken
+            ? "Login via Telegram (JWT)"
+            : "Waiting for Telegram Login..."}
         </button>
       ) : (
         <>
