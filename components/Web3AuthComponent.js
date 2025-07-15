@@ -15,8 +15,6 @@ if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
 
-const [adapter, setAdapter] = useState(null);
-
 
 const ECPair = ECPairFactory(tinysecp);
 
@@ -46,6 +44,7 @@ export default function Web3AuthComponent() {
   const [telegramUser, setTelegramUser] = useState(null);
   const [jwtToken, setJwtToken] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [adapter, setAdapter] = useState(null);
 
   useEffect(() => {
     const init = async () => {
