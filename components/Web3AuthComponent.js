@@ -5,6 +5,7 @@ import { Web3AuthMPCCoreKit, WEB3AUTH_NETWORK } from "@web3auth/mpc-core-kit";
 import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
 import { tssLib } from "@toruslabs/tss-dkls-lib";
 import { WALLET_CONNECTORS, AUTH_CONNECTION } from "@web3auth/mpc-core-kit";
+import { StorageKey } from "@web3auth/base";
 
 import * as bitcoin from "bitcoinjs-lib";
 import { ECPairFactory } from "ecpair";
@@ -54,6 +55,7 @@ export default function Web3AuthComponent() {
           web3AuthNetwork: WEB3AUTH_NETWORK.DEVNET, // or use "WEB3AUTH_NETWORK.TESTNET" if you import the enum
           manualSync: true,
           tssLib: tssLib,
+          storageKey: StorageKey.LOCAL, // <--- this is what you're missing
         });
 
         await web3authInstance.init();
