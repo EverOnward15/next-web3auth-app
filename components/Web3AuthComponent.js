@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Web3AuthMPCCoreKit, WEB3AUTH_NETWORK  } from "@web3auth/mpc-core-kit";
 import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
+import { tssLib } from "@toruslabs/tss-dkls-lib";
+
 
 import * as bitcoin from "bitcoinjs-lib";
 import { ECPairFactory } from "ecpair";
@@ -53,6 +55,8 @@ const web3authInstance = new Web3AuthMPCCoreKit({
   web3AuthClientId: CLIENT_ID,
   web3AuthNetwork: WEB3AUTH_NETWORK.DEVNET, // or use "WEB3AUTH_NETWORK.TESTNET" if you import the enum
   manualSync: true,
+    tssLib: tssLib,
+      storage: window.storage,
 });
 
         const openloginAdapter = new OpenloginAdapter({
