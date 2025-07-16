@@ -22,16 +22,29 @@ const CLIENT_ID =
 
 function deriveBTCWallet(provider) {
   return provider.request({ method: "private_key" }).then((privateKeyHex) => {
+    const existingWallet = localStorage.getItem("btc_wallet");
+
+    if (existingWallet) {
+      const wallet = JSON.parse(existingWallet);
+      alert("Wallet already exists:\n" + wallet.address);
+      return wallet;
+    }
+
     const privateKeyBuffer = Buffer.from(privateKeyHex, "hex");
     const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {
       network: bitcoin.networks.testnet,
     });
+
     const { address } = bitcoin.payments.p2pkh({
       pubkey: keyPair.publicKey,
       network: bitcoin.networks.testnet,
     });
 
-    return { address, privateKey: privateKeyHex };
+    const wallet = { address, privateKey: privateKeyHex };
+    localStorage.setItem("btc_wallet", JSON.stringify(wallet));
+
+    alert("Wallet created:\n" + address);
+    return wallet;
   });
 }
 
@@ -42,7 +55,6 @@ export default function Web3AuthComponent() {
   const [telegramUser, setTelegramUser] = useState(null);
   const [jwtToken, setJwtToken] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [adapter, setAdapter] = useState(null);
 
   useEffect(() => {
     const init = async () => {
@@ -118,6 +130,11 @@ export default function Web3AuthComponent() {
       idToken: jwtToken,
     });
 
+    // Save session to localStorage
+    localStorage.setItem("web3auth_logged_in", "true");
+    localStorage.setItem("telegram_id", telegramUser.id.toString());
+    localStorage.setItem("jwt_token", jwtToken);
+
     setProvider(provider);
 
     const userInfo = await web3auth.getUserInfo();
@@ -137,24 +154,59 @@ export default function Web3AuthComponent() {
   }
 };
 
+useEffect(() => {
+  const tryRestoreSession = async () => {
+    if (!web3auth) return;
+
+    const isLoggedIn = localStorage.getItem("web3auth_logged_in");
+    const storedToken = localStorage.getItem("jwt_token");
+    const storedVerifierId = localStorage.getItem("telegram_id");
+
+    if (isLoggedIn && storedToken && storedVerifierId) {
+      try {
+        const provider = await web3auth.loginWithJWT({
+          verifier: "telegram-jwt-verifier",
+          verifierId: storedVerifierId,
+          idToken: storedToken,
+        });
+
+        setProvider(provider);
+
+        const userInfo = await web3auth.getUserInfo();
+        setUser(userInfo);
+        setJwtToken(storedToken);
+      } catch (err) {
+        console.error("Session restore failed:", err);
+        localStorage.clear(); // fallback
+      }
+    }
+  };
+
+  tryRestoreSession();
+}, [web3auth]);
 
   const handleLogout = async () => {
     if (!web3auth) return;
     await web3auth.logout();
     setUser(null);
     setProvider(null);
+    localStorage.clear(); // Clear session
   };
 
   const handleGetAccounts = async () => {
     if (!provider) return;
+
     try {
       const btcWallet = await deriveBTCWallet(provider);
+
       const res = await fetch(
         `https://blockstream.info/testnet/api/address/${btcWallet.address}`
       );
       const data = await res.json();
+
       const balance =
         data.chain_stats.funded_txo_sum - data.chain_stats.spent_txo_sum;
+
       alert(
         `BTC Address: ${btcWallet.address}\nBalance: ${balance / 1e8} tBTC`
       );
@@ -209,6 +261,10 @@ export default function Web3AuthComponent() {
           </button>
         </>
       )}
+
+      <button className={styles.button} onClick={() => deriveBTCWallet(provider)}>
+          Create BTC Wallet
+      </button>
 
       {user && (
         <>
