@@ -199,13 +199,18 @@ export default function Web3AuthComponent() {
     if (!web3auth) return;
     await web3auth.logout();
       // Optional force cleanup
-    await web3auth.init();
+        try {
+    await web3auth.init();   
     localStorage.clear(); // Clear session
+    setSkipRestore(true);
     setUser(null);
     setProvider(null);
     setIsLoggingIn(null);
     setJwtToken(null);
     window.location.reload(); // <-- optional fallback
+        } catch(err) {
+          alert("Logout error: "+ err);
+        }
   };
 
   const handleGetAccounts = async () => {
