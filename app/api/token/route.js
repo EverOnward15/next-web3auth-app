@@ -17,6 +17,7 @@ export async function POST(req) {
       .setIssuedAt()
       .setExpirationTime("30m")
       .setAudience("web3auth") // ✅ ADD THIS
+      .setIssuer("https://next-web3auth-app.vercel.app/api/telegram-auth") // ✅ ADD THIS LINE
       .setSubject(String(body.sub || body.id)) // 🔧 Cast to string
       .sign(privateKey);
 
