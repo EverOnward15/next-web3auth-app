@@ -51,6 +51,8 @@ export default function Web3AuthComponent() {
   const [telegramUser, setTelegramUser] = useState(null);
   const [jwtToken, setJwtToken] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [skipRestore, setSkipRestore] = useState(false);
+
 
   useEffect(() => {
     const init = async () => {
@@ -164,7 +166,7 @@ export default function Web3AuthComponent() {
 
   useEffect(() => {
     const tryRestoreSession = async () => {
-      if (!web3auth) return;
+      if (!web3auth || skipRestore) return;
 
       const isLoggedIn = localStorage.getItem("web3auth_logged_in");
       const storedToken = localStorage.getItem("jwt_token");
@@ -196,9 +198,14 @@ export default function Web3AuthComponent() {
   const handleLogout = async () => {
     if (!web3auth) return;
     await web3auth.logout();
+      // Optional force cleanup
+    await web3auth.init();
+    localStorage.clear(); // Clear session
     setUser(null);
     setProvider(null);
-    localStorage.clear(); // Clear session
+    setIsLoggingIn(null);
+    setJwtToken(null);
+    window.location.reload(); // <-- optional fallback
   };
 
   const handleGetAccounts = async () => {
