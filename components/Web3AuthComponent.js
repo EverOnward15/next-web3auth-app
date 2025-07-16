@@ -1,25 +1,21 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { Web3Auth } from "@web3auth/single-factor-auth";
 // import { tssLib } from "@toruslabs/tss-dkls-lib";
-
 import * as bitcoin from "bitcoinjs-lib";
 import { ECPairFactory } from "ecpair";
 import * as tinysecp from "tiny-secp256k1";
-
 import styles from "../components/Web3AuthComponent.module.css";
-
+import { CommonPrivateKeyProvider } from "@web3auth/base-provider";
 import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
-
 const ECPair = ECPairFactory(tinysecp);
-
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
 
+/*------------------ Start of Code --------------------*/
 function deriveBTCWallet(provider) {
   return provider.request({ method: "private_key" }).then((privateKeyHex) => {
     const existingWallet = localStorage.getItem("btc_wallet");
@@ -56,27 +52,41 @@ export default function Web3AuthComponent() {
   const [jwtToken, setJwtToken] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-useEffect(() => {
-  const init = async () => {
-    try {
-      const web3authInstance = new Web3Auth({
-        clientId: CLIENT_ID,
-        web3AuthNetwork: "devnet", // or "testnet", "mainnet"
-      });
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const privateKeyProvider = new CommonPrivateKeyProvider({
+          config: {
+            chainConfig: {
+              chainNamespace: "other",
+              chainId: "0x1", // Dummy, required
+              rpcTarget: "", // Not needed for BTC
+              displayName: "Bitcoin",
+              blockExplorerUrl: "https://blockstream.info/testnet/",
+              ticker: "BTC",
+              tickerName: "Bitcoin",
+            },
+          },
+        });
 
-      await web3authInstance.init();
-      
-      setWeb3auth(web3authInstance);
-      setProvider(web3authInstance.provider);
-    } catch (err) {
-      console.error("Web3Auth init error:", err);
-      alert("Web3 Auth init error: " + err);
-    }
-  };
+        const web3authInstance = new Web3Auth({
+          clientId: CLIENT_ID,
+          web3AuthNetwork: "devnet",
+          privateKeyProvider,
+        });
 
-  init();
-}, []);
+        await web3authInstance.init();
 
+        setWeb3auth(web3authInstance);
+        setProvider(web3authInstance.provider);
+      } catch (err) {
+        console.error("Web3Auth init error:", err);
+        alert("Web3 Auth init error: " + err.message);
+      }
+    };
+
+    init();
+  }, []);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -110,78 +120,78 @@ useEffect(() => {
   }, []);
 
   const handleLogin = async () => {
-  if (!web3auth) {
-    alert("Web3Auth not ready");
-    return;
-  }
-  if (!jwtToken) {
-    alert("JWT token missing");
-    return;
-  }
-
-  try {
-    setIsLoggingIn(true);
-
-    const provider = await web3auth.loginWithJWT({
-      verifier: "telegram-jwt-verifier", // must match the verifier name from your Web3Auth dashboard
-      verifierId: telegramUser.id.toString(), // can also use telegramUser.username
-      idToken: jwtToken,
-    });
-
-    // Save session to localStorage
-    localStorage.setItem("web3auth_logged_in", "true");
-    localStorage.setItem("telegram_id", telegramUser.id.toString());
-    localStorage.setItem("jwt_token", jwtToken);
-
-    setProvider(provider);
-
-    const userInfo = await web3auth.getUserInfo();
-    setUser(userInfo);
-
-    const privateKey = await provider.request({ method: "private_key" });
-    if (privateKey) {
-      alert("Key returned: " + privateKey.slice(0, 10) + "...");
-    } else {
-      alert("No key returned.");
+    if (!web3auth) {
+      alert("Web3Auth not ready");
+      return;
     }
-  } catch (err) {
-    console.error("Login error:", err);
-    alert("Login failed: " + err.message);
-  } finally {
-    setIsLoggingIn(false);
-  }
-};
+    if (!jwtToken) {
+      alert("JWT token missing");
+      return;
+    }
 
-useEffect(() => {
-  const tryRestoreSession = async () => {
-    if (!web3auth) return;
+    try {
+      setIsLoggingIn(true);
 
-    const isLoggedIn = localStorage.getItem("web3auth_logged_in");
-    const storedToken = localStorage.getItem("jwt_token");
-    const storedVerifierId = localStorage.getItem("telegram_id");
+      const provider = await web3auth.loginWithJWT({
+        verifier: "telegram-jwt-verifier", // must match the verifier name from your Web3Auth dashboard
+        verifierId: telegramUser.id.toString(), // can also use telegramUser.username
+        idToken: jwtToken,
+      });
 
-    if (isLoggedIn && storedToken && storedVerifierId) {
-      try {
-        const provider = await web3auth.loginWithJWT({
-          verifier: "telegram-jwt-verifier",
-          verifierId: storedVerifierId,
-          idToken: storedToken,
-        });
+      // Save session to localStorage
+      localStorage.setItem("web3auth_logged_in", "true");
+      localStorage.setItem("telegram_id", telegramUser.id.toString());
+      localStorage.setItem("jwt_token", jwtToken);
 
-        setProvider(provider);
+      setProvider(provider);
 
-        const userInfo = await web3auth.getUserInfo();
-        setUser(userInfo);
-        setJwtToken(storedToken);
-      } catch (err) {
-        console.error("Session restore failed:", err);
-        localStorage.clear(); // fallback
+      const userInfo = await web3auth.getUserInfo();
+      setUser(userInfo);
+
+      const privateKey = await provider.request({ method: "private_key" });
+      if (privateKey) {
+        alert("Key returned: " + privateKey.slice(0, 10) + "...");
+      } else {
+        alert("No key returned.");
       }
+    } catch (err) {
+      console.error("Login error:", err);
+      alert("Login failed: " + err.message);
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
-  tryRestoreSession();
-}, [web3auth]);
+  useEffect(() => {
+    const tryRestoreSession = async () => {
+      if (!web3auth) return;
+
+      const isLoggedIn = localStorage.getItem("web3auth_logged_in");
+      const storedToken = localStorage.getItem("jwt_token");
+      const storedVerifierId = localStorage.getItem("telegram_id");
+
+      if (isLoggedIn && storedToken && storedVerifierId) {
+        try {
+          const provider = await web3auth.loginWithJWT({
+            verifier: "telegram-jwt-verifier",
+            verifierId: storedVerifierId,
+            idToken: storedToken,
+          });
+
+          setProvider(provider);
+
+          const userInfo = await web3auth.getUserInfo();
+          setUser(userInfo);
+          setJwtToken(storedToken);
+        } catch (err) {
+          console.error("Session restore failed:", err);
+          localStorage.clear(); // fallback
+        }
+      }
+    };
+
+    tryRestoreSession();
+  }, [web3auth]);
 
   const handleLogout = async () => {
     if (!web3auth) return;
@@ -218,26 +228,26 @@ useEffect(() => {
       <h1 className={styles.title}>MVP Wallet Login - JWT Kit</h1>
       <h2 className={styles.subtitle}>Tech: Web3Auth Core + Next.js</h2>
 
-    {telegramUser && (
-      <div style={{ marginBottom: "20px", textAlign: "center" }}>
-        <p style={{ fontSize: "18px" }}>
-          Welcome, <strong>{telegramUser.first_name}</strong>!
-        </p>
-        {telegramUser.photo_url && (
-          <img
-            src={telegramUser.photo_url}
-            alt={`${telegramUser.first_name}'s profile`}
-            style={{
-              borderRadius: "50%",
-              width: "100px",
-              height: "100px",
-              objectFit: "cover",
-              marginTop: "10px",
-            }}
-          />
-        )}
-      </div>
-    )}
+      {telegramUser && (
+        <div style={{ marginBottom: "20px", textAlign: "center" }}>
+          <p style={{ fontSize: "18px" }}>
+            Welcome, <strong>{telegramUser.first_name}</strong>!
+          </p>
+          {telegramUser.photo_url && (
+            <img
+              src={telegramUser.photo_url}
+              alt={`${telegramUser.first_name}'s profile`}
+              style={{
+                borderRadius: "50%",
+                width: "100px",
+                height: "100px",
+                objectFit: "cover",
+                marginTop: "10px",
+              }}
+            />
+          )}
+        </div>
+      )}
 
       {!provider ? (
         <button
@@ -260,8 +270,11 @@ useEffect(() => {
         </>
       )}
 
-      <button className={styles.button} onClick={() => deriveBTCWallet(provider)}>
-          Create BTC Wallet
+      <button
+        className={styles.button}
+        onClick={() => deriveBTCWallet(provider)}
+      >
+        Create BTC Wallet
       </button>
 
       {user && (
