@@ -16,6 +16,7 @@ export async function POST(req) {
       .setProtectedHeader({ alg: "RS256", kid: "telegram-key-1" })
       .setIssuedAt()
       .setExpirationTime("30m")
+      .setAudience(process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID) // ✅ ADD THIS
       .setSubject(String(body.sub || body.id)) // 🔧 Cast to string
       .sign(privateKey);
 
