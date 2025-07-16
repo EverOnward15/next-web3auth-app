@@ -2,10 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Web3AuthMPCCoreKit, WEB3AUTH_NETWORK } from "@web3auth/mpc-core-kit";
-import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
 import { tssLib } from "@toruslabs/tss-dkls-lib";
-import { WALLET_CONNECTORS, AUTH_CONNECTION } from "@web3auth/mpc-core-kit";
-// import { StorageKey } from "@web3auth/base";
 
 import * as bitcoin from "bitcoinjs-lib";
 import { ECPairFactory } from "ecpair";
@@ -103,48 +100,43 @@ export default function Web3AuthComponent() {
   }, []);
 
   const handleLogin = async () => {
-if (!web3auth) {
-  alert("Web3Auth not ready");
-  console.warn("web3auth is", web3auth);
-  return;
-}
-if (!jwtToken) {
-  alert("JWT token missing");
-  console.warn("jwtToken is", jwtToken);
-  return;
-}
+  if (!web3auth) {
+    alert("Web3Auth not ready");
+    return;
+  }
+  if (!jwtToken) {
+    alert("JWT token missing");
+    return;
+  }
 
-    try {
-      setIsLoggingIn(true);
+  try {
+    setIsLoggingIn(true);
 
-      const provider = await web3auth.connectTo(WALLET_CONNECTORS.AUTH, {
-        authConnection: AUTH_CONNECTION.CUSTOM,
-        authConnectionId: "telegram-jwt-verifier", // This must match the verifier set in your Web3Auth dashboard
-        idToken: jwtToken,
-        extraLoginOptions: {
-          isUserIdCaseSensitive: false,
-        },
-      });
+    const provider = await web3auth.loginWithJWT({
+      verifier: "telegram-jwt-verifier", // must match the verifier name from your Web3Auth dashboard
+      verifierId: telegramUser.id.toString(), // can also use telegramUser.username
+      idToken: jwtToken,
+    });
 
-      setProvider(provider);
+    setProvider(provider);
 
-      const userInfo = await web3auth.getUserInfo();
-      setUser(userInfo);
+    const userInfo = await web3auth.getUserInfo();
+    setUser(userInfo);
 
-      const privateKey = await provider.request({ method: "private_key" });
-      if (privateKey) {
-        alert("Key returned: " + privateKey.slice(0, 10) + "...");
-        console.log("Private Key:", privateKey);
-      } else {
-        alert("No key returned.");
-      }
-    } catch (err) {
-      console.error("Login error:", err);
-      alert("Login failed: " + err.message);
-    } finally {
-      setIsLoggingIn(false);
+    const privateKey = await provider.request({ method: "private_key" });
+    if (privateKey) {
+      alert("Key returned: " + privateKey.slice(0, 10) + "...");
+    } else {
+      alert("No key returned.");
     }
-  };
+  } catch (err) {
+    console.error("Login error:", err);
+    alert("Login failed: " + err.message);
+  } finally {
+    setIsLoggingIn(false);
+  }
+};
+
 
   const handleLogout = async () => {
     if (!web3auth) return;
