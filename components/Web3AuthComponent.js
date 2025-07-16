@@ -73,7 +73,7 @@ export default function Web3AuthComponent() {
 
         const web3authInstance = new Web3Auth({
           clientId: CLIENT_ID,
-          web3AuthNetwork: WEB3AUTH_NETWORK.DEVNET,
+        web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
           privateKeyProvider,
         });
 
