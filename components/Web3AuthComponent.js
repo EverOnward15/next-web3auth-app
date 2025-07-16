@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Web3AuthMPCCoreKit, WEB3AUTH_NETWORK } from "@web3auth/mpc-core-kit";
-import { tssLib } from "@toruslabs/tss-dkls-lib";
+import { Web3Auth } from "@web3auth/single-factor-auth";
+// import { tssLib } from "@toruslabs/tss-dkls-lib";
 
 import * as bitcoin from "bitcoinjs-lib";
 import { ECPairFactory } from "ecpair";
@@ -56,29 +56,27 @@ export default function Web3AuthComponent() {
   const [jwtToken, setJwtToken] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-        const web3authInstance = new Web3AuthMPCCoreKit({
-          web3AuthClientId: CLIENT_ID,
-          web3AuthNetwork: WEB3AUTH_NETWORK.DEVNET, // or use "WEB3AUTH_NETWORK.TESTNET" if you import the enum
-          manualSync: true,
-          tssLib: tssLib,
-        storage: window.localStorage,
-        });
+useEffect(() => {
+  const init = async () => {
+    try {
+      const web3authInstance = new Web3Auth({
+        clientId: CLIENT_ID,
+        web3AuthNetwork: "devnet", // or "testnet", "mainnet"
+      });
 
-        await web3authInstance.init();
+      await web3authInstance.init();
+      
+      setWeb3auth(web3authInstance);
+      setProvider(web3authInstance.provider);
+    } catch (err) {
+      console.error("Web3Auth init error:", err);
+      alert("Web3 Auth init error: " + err);
+    }
+  };
 
-        setWeb3auth(web3authInstance);
-        setProvider(web3authInstance.provider);
-      } catch (err) {
-        console.error("Web3Auth init error:", err);
-        alert("Web3 Auth init error: " + err);
-      }
-    };
+  init();
+}, []);
 
-    init();
-  }, []);
 
   useEffect(() => {
     const script = document.createElement("script");
