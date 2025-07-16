@@ -16,7 +16,7 @@ export async function POST(req) {
       .setProtectedHeader({ alg: "RS256", kid: "telegram-key-1" })
       .setIssuedAt()
       .setExpirationTime("30m")
-      .setSubject(body.sub || body.id) // ✅ ensure sub is set
+      .setSubject(String(body.sub || body.id)) // 🔧 Cast to string
       .sign(privateKey);
 
     return new Response(JSON.stringify({ token }), {
