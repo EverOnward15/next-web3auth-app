@@ -60,7 +60,7 @@ export default function Web3AuthComponent() {
             chainConfig: {
               chainNamespace: "other",
               chainId: "0x1", // Dummy, required
-              rpcTarget: "", // Not needed for BTC
+              rpcTarget: "https://dummy-rpc.com", // Dummy RPC to bypass validation
               displayName: "Bitcoin",
               blockExplorerUrl: "https://blockstream.info/testnet/",
               ticker: "BTC",
