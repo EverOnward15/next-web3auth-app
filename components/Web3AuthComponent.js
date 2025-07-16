@@ -73,14 +73,15 @@ export default function Web3AuthComponent() {
 
         const web3authInstance = new Web3Auth({
           clientId: CLIENT_ID,
-          web3AuthNetwork: "devnet",
+          web3AuthNetwork: WEB3AUTH_NETWORK.DEVNET,
           privateKeyProvider,
         });
 
         await web3authInstance.init();
-
+        
         setWeb3auth(web3authInstance);
         setProvider(web3authInstance.provider);
+        
       } catch (err) {
         console.error("Web3Auth init error:", err);
         alert("Web3 Auth init error: " + err.message);
