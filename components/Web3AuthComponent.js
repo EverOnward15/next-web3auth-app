@@ -140,6 +140,8 @@ export default function Web3AuthComponent() {
         idToken: jwtToken, // JWT issued by your backend
       });
 
+      alert("Provider returned from connect:", provider);
+
       // Save session to localStorage
       localStorage.setItem("web3auth_logged_in", "true");
       localStorage.setItem("telegram_id", telegramUser.id.toString());
