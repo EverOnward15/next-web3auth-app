@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Web3Auth } from "@web3auth/single-factor-auth";
+import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
 // import { tssLib } from "@toruslabs/tss-dkls-lib";
 import * as bitcoin from "bitcoinjs-lib";
 import { ECPairFactory } from "ecpair";
