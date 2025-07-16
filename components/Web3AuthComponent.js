@@ -200,15 +200,15 @@ export default function Web3AuthComponent() {
     // await web3auth.logout();
       // Optional force cleanup
         try {
-              await web3auth.logout();
 
-    await web3auth.init();   
     localStorage.clear(); // Clear session
     setSkipRestore(true);
     setUser(null);
     setProvider(null);
     setIsLoggingIn(null);
     setJwtToken(null);
+                 await web3auth.logout();
+    await web3auth.init();   
     window.location.reload(); // <-- optional fallback
         } catch(err) {
           alert("Logout error: "+ err);
