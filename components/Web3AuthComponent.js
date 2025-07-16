@@ -132,10 +132,10 @@ export default function Web3AuthComponent() {
     try {
       setIsLoggingIn(true);
 
-      const provider = await web3auth.loginWithJWT({
-        verifier: "telegram-jwt-verifier", // must match the verifier name from your Web3Auth dashboard
-        verifierId: telegramUser.id.toString(), // can also use telegramUser.username
-        idToken: jwtToken,
+      const provider = await web3auth.connect({
+        verifier: "telegram-jwt-verifier", // Name set in Web3Auth dashboard
+        verifierId: telegramUser.id.toString(), // telegramUser.username or telegram ID
+        idToken: jwtToken, // JWT issued by your backend
       });
 
       // Save session to localStorage
@@ -172,7 +172,7 @@ export default function Web3AuthComponent() {
 
       if (isLoggedIn && storedToken && storedVerifierId) {
         try {
-          const provider = await web3auth.loginWithJWT({
+          const provider = await web3auth.connect({
             verifier: "telegram-jwt-verifier",
             verifierId: storedVerifierId,
             idToken: storedToken,
