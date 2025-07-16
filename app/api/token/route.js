@@ -16,7 +16,7 @@ export async function POST(req) {
       .setProtectedHeader({ alg: "RS256", kid: "telegram-key-1" })
       .setIssuedAt()
       .setExpirationTime("30m")
-      .setAudience("telegram-jwt-verifier") // ✅ ADD THIS
+      .setAudience("web3auth") // ✅ ADD THIS
       .setSubject(String(body.sub || body.id)) // 🔧 Cast to string
       .sign(privateKey);
 
