@@ -196,10 +196,12 @@ export default function Web3AuthComponent() {
   }, [web3auth]);
 
   const handleLogout = async () => {
-    if (!web3auth) return;
-    await web3auth.logout();
+    // if (!web3auth) return;
+    // await web3auth.logout();
       // Optional force cleanup
         try {
+              await web3auth.logout();
+
     await web3auth.init();   
     localStorage.clear(); // Clear session
     setSkipRestore(true);
