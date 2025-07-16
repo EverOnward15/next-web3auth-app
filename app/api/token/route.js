@@ -1,3 +1,4 @@
+// app/api/token/route.js
 import { SignJWT, importPKCS8 } from "jose";
 
 export async function POST(req) {
@@ -15,6 +16,7 @@ export async function POST(req) {
       .setProtectedHeader({ alg: "RS256", kid: "telegram-key-1" })
       .setIssuedAt()
       .setExpirationTime("30m")
+      .setSubject(body.sub || body.id) // ✅ ensure sub is set
       .sign(privateKey);
 
     return new Response(JSON.stringify({ token }), {
