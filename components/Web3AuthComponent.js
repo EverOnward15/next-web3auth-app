@@ -61,7 +61,7 @@ export default function Web3AuthComponent() {
         const privateKeyProvider = new CommonPrivateKeyProvider({
           config: {
             chainConfig: {
-              chainNamespace: "other",
+              chainNamespace: CHAIN_NAMESPACES.OTHER,
               chainId: "0x1", // Dummy, required
               rpcTarget: "https://dummy-rpc.com", // Dummy RPC to bypass validation
               displayName: "Bitcoin",
