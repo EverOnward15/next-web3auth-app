@@ -10,9 +10,9 @@ if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
 import { ECPairFactory } from "ecpair";
+import tinysecpModule from "tiny-secp256k1";
 
-
-import tinysecp from "tiny-secp256k1";
+const tinysecp = tinysecpModule.default ?? tinysecpModule;
 const ECPair = ECPairFactory(tinysecp);
 
 const CLIENT_ID =
