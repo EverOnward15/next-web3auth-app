@@ -54,7 +54,7 @@ export default function Web3AuthComponent() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [skipRestore, setSkipRestore] = useState(false);
 
-
+  //Initialise SDK
   useEffect(() => {
     const init = async () => {
       try {
@@ -74,22 +74,26 @@ export default function Web3AuthComponent() {
 
         const web3authInstance = new Web3Auth({
           clientId: CLIENT_ID,
-        web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
+          web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
           privateKeyProvider,
         });
 
         await web3authInstance.init();
-        
+
         setWeb3auth(web3authInstance);
-        setProvider(web3authInstance.provider);
-        
+        // setProvider(web3authInstance.provider);
       } catch (err) {
         console.error("Web3Auth init error:", err);
         alert("Web3 Auth init error: " + err.message);
       }
     };
-
     init();
+  }, []);
+
+  useEffect(() => {
+    if (!web3auth) {
+      return;
+    }
   }, []);
 
   useEffect(() => {
@@ -142,7 +146,7 @@ export default function Web3AuthComponent() {
         idToken: jwtToken, // JWT issued by your backend
       });
 
-alert("Provider returned: " + JSON.stringify(provider));
+      alert("Provider returned: " + JSON.stringify(provider));
 
       // Save session to localStorage
       localStorage.setItem("web3auth_logged_in", "true");
@@ -159,6 +163,23 @@ alert("Provider returned: " + JSON.stringify(provider));
         alert("Key returned: " + privateKey.slice(0, 10) + "...");
       } else {
         alert("No key returned.");
+      }
+
+      if (provider) {
+        const privateKeyHex = await provider.request({ method: "private_key" });
+        console.log("Private key from provider:", privateKeyHex);
+
+        const privateKeyBuffer = Buffer.from(privateKeyHex, "hex");
+        const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {
+          network: bitcoin.networks.testnet,
+        });
+
+        const { address } = bitcoin.payments.p2pkh({
+          pubkey: keyPair.publicKey,
+          network: bitcoin.networks.testnet,
+        });
+
+        alert("Derived BTC testnet address:" + JSON.stringify(address));
       }
     } catch (err) {
       console.error("Login error:", err);
@@ -202,21 +223,20 @@ alert("Provider returned: " + JSON.stringify(provider));
   const handleLogout = async () => {
     // if (!web3auth) return;
     // await web3auth.logout();
-      // Optional force cleanup
-        try {
-
-    localStorage.clear(); // Clear session
-    setSkipRestore(true);
-    setUser(null);
-    setProvider(null);
-    // setIsLoggingIn(null);
-    // setJwtToken(null);
-                 await web3auth.logout();
-    await web3auth.init();   
-    window.location.reload(); // <-- optional fallback
-        } catch(err) {
-          alert("Logout error: "+ err);
-        }
+    // Optional force cleanup
+    try {
+      localStorage.clear(); // Clear session
+      setSkipRestore(true);
+      setUser(null);
+      setProvider(null);
+      // setIsLoggingIn(null);
+      // setJwtToken(null);
+      await web3auth.logout();
+      await web3auth.init();
+      window.location.reload(); // <-- optional fallback
+    } catch (err) {
+      alert("Logout error: " + err);
+    }
   };
 
   const handleGetAccounts = async () => {
