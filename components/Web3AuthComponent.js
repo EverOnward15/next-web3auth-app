@@ -9,25 +9,27 @@ import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
+// import * as tinysecp from "tiny-secp256k1";
+// import { ECPairFactory } from "ecpair";
+
+// const ecc = {
+//   isPrivate: tinysecp.isPrivate,
+//   isPoint: tinysecp.isPoint,
+//   pointFromScalar: tinysecp.pointFromScalar,
+//   pointCompress: tinysecp.pointCompress,
+//   pointMultiply: tinysecp.pointMultiply,
+//   privateAdd: tinysecp.privateAdd,
+//   privateSub: tinysecp.privateSub,
+//   privateNegate: tinysecp.privateNegate, // ✅ This line was missing
+//   sign: tinysecp.sign,
+//   verify: tinysecp.verify,
+//   xOnlyPointAddTweak: tinysecp.xOnlyPointAddTweak,
+//   xOnlyPointFromPoint: tinysecp.xOnlyPointFromPoint,
+// };
+
+// const ECPair = ECPairFactory(ecc);
 import * as tinysecp from "tiny-secp256k1";
-import { ECPairFactory } from "ecpair";
-
-const ecc = {
-  isPrivate: tinysecp.isPrivate,
-  isPoint: tinysecp.isPoint,
-  pointFromScalar: tinysecp.pointFromScalar,
-  pointCompress: tinysecp.pointCompress,
-  pointMultiply: tinysecp.pointMultiply,
-  privateAdd: tinysecp.privateAdd,
-  privateSub: tinysecp.privateSub,
-  privateNegate: tinysecp.privateNegate, // ✅ This line was missing
-  sign: tinysecp.sign,
-  verify: tinysecp.verify,
-  xOnlyPointAddTweak: tinysecp.xOnlyPointAddTweak,
-  xOnlyPointFromPoint: tinysecp.xOnlyPointFromPoint,
-};
-
-const ECPair = ECPairFactory(ecc);
+const ECPair = ECPairFactory(tinysecp);
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
