@@ -164,23 +164,6 @@ export default function Web3AuthComponent() {
       } else {
         alert("No key returned.");
       }
-
-      if (provider) {
-        const privateKeyHex = await provider.request({ method: "private_key" });
-        console.log("Private key from provider:", privateKeyHex);
-
-        const privateKeyBuffer = Buffer.from(privateKeyHex, "hex");
-        const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {
-          network: bitcoin.networks.testnet,
-        });
-
-        const { address } = bitcoin.payments.p2pkh({
-          pubkey: keyPair.publicKey,
-          network: bitcoin.networks.testnet,
-        });
-
-        alert("Derived BTC testnet address:" + JSON.stringify(address));
-      }
     } catch (err) {
       console.error("Login error:", err);
       alert("Login failed: " + err.message);
@@ -261,6 +244,47 @@ export default function Web3AuthComponent() {
     }
   };
 
+   const checkPrivateKeyAndAddress = async () => {
+    if (!provider) return alert("Provider not initialized");
+
+    try {
+      const privateKeyHex = await provider.request({ method: "private_key" });
+      console.log("Private key:", privateKeyHex);
+
+      const privateKeyBuffer = Buffer.from(privateKeyHex, "hex");
+      const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {
+        network: bitcoin.networks.testnet,
+      });
+
+      const { address } = bitcoin.payments.p2pkh({
+        pubkey: keyPair.publicKey,
+        network: bitcoin.networks.testnet,
+      });
+
+      alert("Derived BTC Testnet Address:\n" + address);
+    } catch (error) {
+      console.error("Private key error:", error);
+      alert("Error deriving address.");
+    }
+  };
+
+  const checkUserLogin = async () => {
+    if (!web3auth) return alert("Web3Auth not initialized");
+
+    try {
+      if (web3auth.connected) {
+        const userInfo = await web3auth.getUserInfo();
+        console.log("User Info:", userInfo);
+        alert("User is logged in:\n" + JSON.stringify(userInfo, null, 2));
+      } else {
+        alert("User is NOT logged in.");
+      }
+    } catch (error) {
+      console.error("User info error:", error);
+      alert("Error getting user info.");
+    }
+  };
+
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>MVP Wallet Login - JWT Kit</h1>
@@ -305,9 +329,17 @@ export default function Web3AuthComponent() {
         </>
       )}
 
-          <button className={styles.button} onClick={handleLogout}>
-            Logout
-          </button>
+        <button className={styles.button} onClick={checkPrivateKeyAndAddress}>
+          Check BTC Private Key
+        </button>
+        <br />
+        <br />
+        <button className={styles.button} onClick={checkUserLogin}>Check Web3Auth Login</button>
+ 
+
+      <button className={styles.button} onClick={handleLogout}>
+        Logout
+      </button>
 
       <button
         className={styles.button}
