@@ -225,56 +225,45 @@ export default function Web3AuthComponent() {
     }
   };
 
-const checkPrivateKeyAndAddress = async () => {
+  const checkPrivateKeyAndAddress = async () => {
   if (!provider?.request) {
-    return alert("Provider not initialized properly");
+    alert("❌ Provider not available.");
+    return;
   }
 
   try {
-    // 1) grab the raw hex and log its full value & length
-    const privateKeyHex = await provider.request({ method: "private_key" });
-    console.log("🔑 privateKeyHex:", privateKeyHex);
-    console.log("🔢 length:", privateKeyHex.length);
+    const privateKeyHex = await provider.request({ method: "private_key" );
+    alert("✅ Raw privateKeyHex:\n" + privateKeyHex);
 
-    // sanity check: must be 64 hex chars
-    if (privateKeyHex.length !== 64) {
-      return alert(
-        `Unexpected key length: ${privateKeyHex.length}. Expect 64 hex chars.`
-      );
+    if (!privateKeyHex || typeof privateKeyHex !== "string") {
+      throw new Error("Invalid private key returned.");
     }
 
-    // 2) derive the keypair
-    const pkBuffer = Buffer.from(privateKeyHex, "hex");
-    let keyPair;
-    try {
-      keyPair = ECPair.fromPrivateKey(pkBuffer, {
-        network: bitcoin.networks.testnet,
-      });
-    } catch (innerErr) {
-      console.error("Error constructing ECPair:", innerErr);
-      return alert("Error creating keyPair: " + innerErr.message);
+    // Remove "0x" prefix if present
+    const hex = privateKeyHex.startsWith("0x") ? privateKeyHex.slice(2) : privateKeyHex;
+    alert("🧪 Cleaned hex (after removing 0x if present):\n" + hex);
+
+    if (hex.length !== 64) {
+      alert("⚠️ Expected 64-character hex, got " + hex.length + " characters.");
     }
 
-    // 3) get the P2PKH address
-    let address;
-    try {
-      ({ address } = bitcoin.payments.p2pkh({
-        pubkey: keyPair.publicKey,
-        network: bitcoin.networks.testnet,
-      }));
-    } catch (innerErr) {
-      console.error("Error generating address:", innerErr);
-      return alert("Error generating address: " + innerErr.message);
-    }
+    const privateKeyBuffer = Buffer.from(hex, "hex");
+    alert("📦 Buffer created from hex:\n" + privateKeyBuffer.toString("hex"));
 
-    // 4) success!
-    alert("✅ Derived BTC Testnet Address:\n" + address);
+    const keyPair = bitcoin.ECPair.fromPrivateKey(privateKeyBuffer, {
+      network: bitcoin.networks.testnet,
+    });
+
+    const { address } = bitcoin.payments.p2pkh({
+      pubkey: keyPair.publicKey,
+      network: bitcoin.networks.testnet,
+    });
+
+    alert("✅ BTC Testnet Address:\n" + address);
   } catch (err) {
-    console.error("🚨 Private key / address error:", err);
-    alert("⛔️ Error deriving address:\n" + err.message);
+    alert("❌ Error generating address:\n" + (err.message || err.toString()));
   }
 };
-
 
   const checkUserLogin = async () => {
     if (!web3auth) return alert("Web3Auth not initialized");
