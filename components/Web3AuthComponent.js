@@ -12,8 +12,23 @@ if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
 
-const ECPair = ECPairFactory(ecc);
-// const ECPair = ECPairFactory(tinysecp);
+// Fix: Create minimal ECC methods object
+const eccFixed = {
+  isPrivate: ecc.isPrivate,
+  isPoint: ecc.isPoint,
+  pointFromScalar: ecc.pointFromScalar,
+  pointCompress: ecc.pointCompress,
+  pointMultiply: ecc.pointMultiply,
+  privateAdd: ecc.privateAdd,
+  privateSub: ecc.privateSub,
+  sign: ecc.sign,
+  verify: ecc.verify,
+  xOnlyPointAddTweak: ecc.xOnlyPointAddTweak,
+  xOnlyPointFromPoint: ecc.xOnlyPointFromPoint,
+};
+
+const ECPair = ECPairFactory(eccFixed);
+
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
 
@@ -33,7 +48,7 @@ function deriveBTCWallet(provider) {
       network: networks.testnet,
     });
 
-    const { address } = bitcoin.payments.p2pkh({
+    const { address } = payments.p2pkh({
       pubkey: keyPair.publicKey,
       network: networks.testnet,
     });
