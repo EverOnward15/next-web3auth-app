@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { Web3Auth } from "@web3auth/single-factor-auth";
 import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
 // import { tssLib } from "@toruslabs/tss-dkls-lib";
-import * as bitcoin from "bitcoinjs-lib";
-import { ECPairFactory } from "ecpair";
+// import * as bitcoin from "bitcoinjs-lib";
+import { ECPair, networks, payments } from "bitcoinjs-lib";
+// import { ECPairFactory } from "ecpair";
 import * as tinysecp from "tiny-secp256k1";
 import styles from "../components/Web3AuthComponent.module.css";
 import { CommonPrivateKeyProvider } from "@web3auth/base-provider";
@@ -12,7 +13,7 @@ import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
-const ECPair = ECPairFactory(tinysecp);
+// const ECPair = ECPairFactory(tinysecp);
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
 
@@ -29,12 +30,12 @@ function deriveBTCWallet(provider) {
 
     const privateKeyBuffer = Buffer.from(privateKeyHex, "hex");
     const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {
-      network: bitcoin.networks.testnet,
+      network: networks.testnet,
     });
 
     const { address } = bitcoin.payments.p2pkh({
       pubkey: keyPair.publicKey,
-      network: bitcoin.networks.testnet,
+      network: networks.testnet,
     });
 
     const wallet = { address, privateKey: privateKeyHex };
@@ -250,21 +251,15 @@ export default function Web3AuthComponent() {
     const privateKeyBuffer = Buffer.from(hex, "hex");
     alert("📦 Buffer created from hex:\n" + privateKeyBuffer.toString("hex"));
 
-    try {
-      const keyPair = bitcoin.ECPair.fromPrivateKey(privateKeyBuffer, {
-        network: bitcoin.networks.testnet,
-      });
 
-      const { address } = bitcoin.payments.p2pkh({
-        pubkey: keyPair.publicKey,
-        network: bitcoin.networks.testnet,
-      });
+    const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {
+      network: networks.testnet,
+    });
 
-      alert("✅ BTC Testnet Address:\n" + address);
-    } catch (err) {
-      alert("⚠️ Key/address gen failed:\n" + (err.message || JSON.stringify(err)));
-    }
-
+    const { address } = payments.p2pkh({
+      pubkey: keyPair.publicKey,
+      network: networks.testnet,
+    });
     alert("✅ BTC Testnet Address:\n" + address);
   } catch (err) {
     alert("❌ Error generating address:\n" + (err.message || err.toString()));
