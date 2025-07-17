@@ -225,29 +225,56 @@ export default function Web3AuthComponent() {
     }
   };
 
-  const checkPrivateKeyAndAddress = async () => {
-    if (!provider) return alert("Provider not initialized");
+const checkPrivateKeyAndAddress = async () => {
+  if (!provider?.request) {
+    return alert("Provider not initialized properly");
+  }
 
+  try {
+    // 1) grab the raw hex and log its full value & length
+    const privateKeyHex = await provider.request({ method: "private_key" });
+    console.log("🔑 privateKeyHex:", privateKeyHex);
+    console.log("🔢 length:", privateKeyHex.length);
+
+    // sanity check: must be 64 hex chars
+    if (privateKeyHex.length !== 64) {
+      return alert(
+        `Unexpected key length: ${privateKeyHex.length}. Expect 64 hex chars.`
+      );
+    }
+
+    // 2) derive the keypair
+    const pkBuffer = Buffer.from(privateKeyHex, "hex");
+    let keyPair;
     try {
-      const privateKeyHex = await provider.request({ method: "private_key" });
-      alert("Private key:" + privateKeyHex);
-
-      const privateKeyBuffer = Buffer.from(privateKeyHex, "hex");
-      const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {
+      keyPair = ECPair.fromPrivateKey(pkBuffer, {
         network: bitcoin.networks.testnet,
       });
+    } catch (innerErr) {
+      console.error("Error constructing ECPair:", innerErr);
+      return alert("Error creating keyPair: " + innerErr.message);
+    }
 
-      const { address } = bitcoin.payments.p2pkh({
+    // 3) get the P2PKH address
+    let address;
+    try {
+      ({ address } = bitcoin.payments.p2pkh({
         pubkey: keyPair.publicKey,
         network: bitcoin.networks.testnet,
-      });
-
-      alert("Derived BTC Testnet Address:\n" + address);
-    } catch (error) {
-      console.error("Private key error:", error);
-      alert("Error deriving address.");
+      }));
+    } catch (innerErr) {
+      console.error("Error generating address:", innerErr);
+      return alert("Error generating address: " + innerErr.message);
     }
-  };
+
+    // 4) success!
+    alert("✅ Derived BTC Testnet Address:\n" + address);
+  } catch (err) {
+    console.error("🚨 Private key / address error:", err);
+    alert("⛔️ Error deriving address:\n" + err.message);
+  }
+};
+
 
   const checkUserLogin = async () => {
     if (!web3auth) return alert("Web3Auth not initialized");
