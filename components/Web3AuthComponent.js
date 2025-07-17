@@ -128,42 +128,23 @@ export default function Web3AuthComponent() {
   }, []);
 
   const handleLogin = async () => {
-    if (!web3auth) {
-      alert("Web3Auth not ready");
-      return;
-    }
-    if (!jwtToken) {
-      alert("JWT token missing");
-      return;
-    }
+    if (!web3auth || !jwtToken) return;
 
+    setIsLoggingIn(true);
     try {
-      setIsLoggingIn(true);
-
-      const provider = await web3auth.connect({
-        verifier: "telegram-jwt-verifier", // Name set in Web3Auth dashboard
-        verifierId: telegramUser.id.toString(), // telegramUser.username or telegram ID
-        idToken: jwtToken, // JWT issued by your backend
+      // 1) connect() will prompt login and internally wire up the key provider
+      await web3auth.connect({
+        verifier: "telegram-jwt-verifier",
+        verifierId: telegramUser.id.toString(),
+        idToken: jwtToken,
       });
+      // 2) the real provider lives on web3auth.provider
+      const pkProvider = web3auth.provider;
+      setProvider(pkProvider);
 
-      alert("Provider returned: " + JSON.stringify(provider));
-
-      // Save session to localStorage
-      localStorage.setItem("web3auth_logged_in", "true");
-      localStorage.setItem("telegram_id", telegramUser.id.toString());
-      localStorage.setItem("jwt_token", jwtToken);
-
-      setProvider(provider);
-
+      // (optional) show user info
       const userInfo = await web3auth.getUserInfo();
       setUser(userInfo);
-
-      const privateKey = await provider.request({ method: "private_key" });
-      if (privateKey) {
-        alert("Key returned: " + privateKey.slice(0, 10) + "...");
-      } else {
-        alert("No key returned.");
-      }
     } catch (err) {
       console.error("Login error:", err);
       alert("Login failed: " + err.message);
@@ -244,12 +225,12 @@ export default function Web3AuthComponent() {
     }
   };
 
-   const checkPrivateKeyAndAddress = async () => {
+  const checkPrivateKeyAndAddress = async () => {
     if (!provider) return alert("Provider not initialized");
 
     try {
       const privateKeyHex = await provider.request({ method: "private_key" });
-      console.log("Private key:", privateKeyHex);
+      alert("Private key:" + privateKeyHex);
 
       const privateKeyBuffer = Buffer.from(privateKeyHex, "hex");
       const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {
@@ -329,23 +310,23 @@ export default function Web3AuthComponent() {
         </>
       )}
 
-        <button className={styles.button} onClick={checkPrivateKeyAndAddress}>
-          Check BTC Private Key
-        </button>
-        <br />
-        <br />
-        <button className={styles.button} onClick={checkUserLogin}>Check Web3Auth Login</button>
- 
-
-      <button className={styles.button} onClick={handleLogout}>
-        Logout
+      <button className={styles.button} onClick={checkPrivateKeyAndAddress}>
+        Check BTC Private Key
+      </button>
+      <button className={styles.button} onClick={checkUserLogin}>
+        Check Web3Auth Login
       </button>
 
+      <button className={styles.button} onClick={handleLogout}>
+        Logout from Web3 Auth
+      </button>
+
+      <br></br>
       <button
         className={styles.button}
         onClick={() => deriveBTCWallet(provider)}
       >
-        Create BTC Wallet
+        Create BTC Wallet Test
       </button>
 
       {user && (
