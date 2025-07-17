@@ -8,7 +8,11 @@ import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
-import { networks, payments, ECPair } from "bitcoinjs-lib";
+import { networks, payments } from "bitcoinjs-lib";
+import * as wasmSecp from "tiny-secp256k1-wasm";
+import { ECPairFactory } from "ecpair";
+const ECPair = ECPairFactory(wasmSecp);
+
 
 
 const CLIENT_ID =
