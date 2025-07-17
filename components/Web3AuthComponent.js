@@ -20,6 +20,7 @@ const ecc = {
   pointMultiply: tinysecp.pointMultiply,
   privateAdd: tinysecp.privateAdd,
   privateSub: tinysecp.privateSub,
+    privateNegate: tinysecp.privateNegate, // ✅ This line was missing
   sign: tinysecp.sign,
   verify: tinysecp.verify,
   xOnlyPointAddTweak: tinysecp.xOnlyPointAddTweak,
