@@ -302,11 +302,12 @@ export default function Web3AuthComponent() {
           <button className={styles.button} onClick={handleGetAccounts}>
             Get Address
           </button>
+        </>
+      )}
+
           <button className={styles.button} onClick={handleLogout}>
             Logout
           </button>
-        </>
-      )}
 
       <button
         className={styles.button}
