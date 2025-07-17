@@ -3,29 +3,31 @@ import { useEffect, useState } from "react";
 import { Web3Auth } from "@web3auth/single-factor-auth";
 import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
 import { networks, payments } from "bitcoinjs-lib";
-import * as ecc from "tiny-secp256k1";
-import { ECPairFactory } from "ecpair";
 import styles from "../components/Web3AuthComponent.module.css";
 import { CommonPrivateKeyProvider } from "@web3auth/base-provider";
 import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
+import * as tinysecp from "tiny-secp256k1";
+import { ECPairFactory } from "ecpair";
 
-// Fix: Create minimal ECC methods object
-const eccFixed = {
-  isPrivate: ecc.isPrivate,
-  isPoint: ecc.isPoint,
-  pointFromScalar: ecc.pointFromScalar,
-  pointCompress: ecc.pointCompress,
-  pointMultiply: ecc.pointMultiply,
-  privateAdd: ecc.privateAdd,
-  privateSub: ecc.privateSub,
-  sign: ecc.sign,
-  verify: ecc.verify,
-  xOnlyPointAddTweak: ecc.xOnlyPointAddTweak,
-  xOnlyPointFromPoint: ecc.xOnlyPointFromPoint,
+const ecc = {
+  isPrivate: tinysecp.isPrivate,
+  isPoint: tinysecp.isPoint,
+  pointFromScalar: tinysecp.pointFromScalar,
+  pointCompress: tinysecp.pointCompress,
+  pointMultiply: tinysecp.pointMultiply,
+  privateAdd: tinysecp.privateAdd,
+  privateSub: tinysecp.privateSub,
+  sign: tinysecp.sign,
+  verify: tinysecp.verify,
+  xOnlyPointAddTweak: tinysecp.xOnlyPointAddTweak,
+  xOnlyPointFromPoint: tinysecp.xOnlyPointFromPoint,
 };
+
+const ECPair = ECPairFactory(ecc);
+
 
 const ECPair = ECPairFactory(eccFixed);
 
