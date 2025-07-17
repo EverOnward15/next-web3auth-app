@@ -9,26 +9,10 @@ import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
-// import * as tinysecp from "tiny-secp256k1";
 import { ECPairFactory } from "ecpair";
 
-// const ecc = {
-//   isPrivate: tinysecp.isPrivate,
-//   isPoint: tinysecp.isPoint,
-//   pointFromScalar: tinysecp.pointFromScalar,
-//   pointCompress: tinysecp.pointCompress,
-//   pointMultiply: tinysecp.pointMultiply,
-//   privateAdd: tinysecp.privateAdd,
-//   privateSub: tinysecp.privateSub,
-//   privateNegate: tinysecp.privateNegate, // ✅ This line was missing
-//   sign: tinysecp.sign,
-//   verify: tinysecp.verify,
-//   xOnlyPointAddTweak: tinysecp.xOnlyPointAddTweak,
-//   xOnlyPointFromPoint: tinysecp.xOnlyPointFromPoint,
-// };
 
-// const ECPair = ECPairFactory(ecc);
-import * as tinysecp from "tiny-secp256k1";
+import tinysecp from "tiny-secp256k1";
 const ECPair = ECPairFactory(tinysecp);
 
 const CLIENT_ID =
@@ -280,6 +264,14 @@ export default function Web3AuthComponent() {
       const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {
         network: networks.testnet,
       });
+
+
+      alert("🔑 keyPair:" + keyPair);
+alert("🔑 publicKey (hex):" + keyPair.publicKey?.toString("hex"));
+if (!keyPair.publicKey) {
+  throw new Error("keyPair.publicKey is falsy");
+}
+
 
       const { address } = payments.p2pkh({
         pubkey: keyPair.publicKey,
