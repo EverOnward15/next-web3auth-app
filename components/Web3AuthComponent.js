@@ -232,7 +232,7 @@ export default function Web3AuthComponent() {
   }
 
   try {
-    const privateKeyHex = await provider.request({ method: "private_key" );
+    const privateKeyHex = await provider.request({ method: "private_key" });
     alert("✅ Raw privateKeyHex:\n" + privateKeyHex);
 
     if (!privateKeyHex || typeof privateKeyHex !== "string") {
