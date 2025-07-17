@@ -2,18 +2,14 @@
 import { useEffect, useState } from "react";
 import { Web3Auth } from "@web3auth/single-factor-auth";
 import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
-import { networks, payments } from "bitcoinjs-lib";
 import styles from "../components/Web3AuthComponent.module.css";
 import { CommonPrivateKeyProvider } from "@web3auth/base-provider";
 import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
-import { ECPairFactory } from "ecpair";
-import tinysecpModule from "tiny-secp256k1";
+import { networks, payments, ECPair } from "bitcoinjs-lib";
 
-const tinysecp = tinysecpModule.default ?? tinysecpModule;
-const ECPair = ECPairFactory(tinysecp);
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
