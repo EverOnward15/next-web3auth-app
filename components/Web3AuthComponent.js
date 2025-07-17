@@ -250,14 +250,20 @@ export default function Web3AuthComponent() {
     const privateKeyBuffer = Buffer.from(hex, "hex");
     alert("📦 Buffer created from hex:\n" + privateKeyBuffer.toString("hex"));
 
-    const keyPair = bitcoin.ECPair.fromPrivateKey(privateKeyBuffer, {
-      network: bitcoin.networks.testnet,
-    });
+    try {
+      const keyPair = bitcoin.ECPair.fromPrivateKey(privateKeyBuffer, {
+        network: bitcoin.networks.testnet,
+      });
 
-    const { address } = bitcoin.payments.p2pkh({
-      pubkey: keyPair.publicKey,
-      network: bitcoin.networks.testnet,
-    });
+      const { address } = bitcoin.payments.p2pkh({
+        pubkey: keyPair.publicKey,
+        network: bitcoin.networks.testnet,
+      });
+
+      alert("✅ BTC Testnet Address:\n" + address);
+    } catch (err) {
+      alert("⚠️ Key/address gen failed:\n" + (err.message || JSON.stringify(err)));
+    }
 
     alert("✅ BTC Testnet Address:\n" + address);
   } catch (err) {
