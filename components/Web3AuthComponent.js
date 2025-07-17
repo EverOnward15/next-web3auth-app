@@ -28,9 +28,6 @@ const ecc = {
 
 const ECPair = ECPairFactory(ecc);
 
-
-const ECPair = ECPairFactory(eccFixed);
-
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
 
