@@ -20,7 +20,7 @@ const ecc = {
   pointMultiply: tinysecp.pointMultiply,
   privateAdd: tinysecp.privateAdd,
   privateSub: tinysecp.privateSub,
-    privateNegate: tinysecp.privateNegate, // ✅ This line was missing
+  privateNegate: tinysecp.privateNegate, // ✅ This line was missing
   sign: tinysecp.sign,
   verify: tinysecp.verify,
   xOnlyPointAddTweak: tinysecp.xOnlyPointAddTweak,
@@ -242,44 +242,56 @@ export default function Web3AuthComponent() {
   };
 
   const checkPrivateKeyAndAddress = async () => {
-  if (!provider?.request) {
-    alert("❌ Provider not available.");
-    return;
-  }
-
-  try {
-    const privateKeyHex = await provider.request({ method: "private_key" });
-    alert("✅ Raw privateKeyHex:\n" + privateKeyHex);
-
-    if (!privateKeyHex || typeof privateKeyHex !== "string") {
-      throw new Error("Invalid private key returned.");
+    if (!provider?.request) {
+      alert("❌ Provider not available.");
+      return;
     }
 
-    // Remove "0x" prefix if present
-    const hex = privateKeyHex.startsWith("0x") ? privateKeyHex.slice(2) : privateKeyHex;
-    alert("🧪 Cleaned hex (after removing 0x if present):\n" + hex);
+    try {
+      const privateKeyHex = await provider.request({ method: "private_key" });
+      alert("✅ Raw privateKeyHex:\n" + privateKeyHex);
 
-    if (hex.length !== 64) {
-      alert("⚠️ Expected 64-character hex, got " + hex.length + " characters.");
+      if (!privateKeyHex || typeof privateKeyHex !== "string") {
+        throw new Error("Invalid private key returned.");
+      }
+
+      // Remove "0x" prefix if present
+      const hex = privateKeyHex.startsWith("0x")
+        ? privateKeyHex.slice(2)
+        : privateKeyHex;
+      alert("🧪 Cleaned hex (after removing 0x if present):\n" + hex);
+
+      if (!/^[a-fA-F0-9]+$/.test(hex)) {
+        alert("❌ Invalid hex string received.");
+        return;
+      }
+
+      if (hex.length !== 64) {
+        alert(
+          "⚠️ Expected 64-character hex, got " + hex.length + " characters."
+        );
+      }
+
+      const privateKeyBuffer = Buffer.from(hex, "hex");
+      alert("📦 Buffer created from hex:\n" + privateKeyBuffer.toString("hex"));
+
+      const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {
+        network: networks.testnet,
+      });
+
+      const { address } = payments.p2pkh({
+        pubkey: keyPair.publicKey,
+        network: networks.testnet,
+      });
+      alert("✅ BTC Testnet Address:\n" + address);
+    } catch (err) {
+      const errorMessage =
+        err?.message ||
+        (typeof err === "string" ? err : JSON.stringify(err, null, 2));
+
+      alert("❌ Error generating address:\n" + errorMessage);
     }
-
-    const privateKeyBuffer = Buffer.from(hex, "hex");
-    alert("📦 Buffer created from hex:\n" + privateKeyBuffer.toString("hex"));
-
-
-    const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {
-      network: networks.testnet,
-    });
-
-    const { address } = payments.p2pkh({
-      pubkey: keyPair.publicKey,
-      network: networks.testnet,
-    });
-    alert("✅ BTC Testnet Address:\n" + address);
-  } catch (err) {
-    alert("❌ Error generating address:\n" + (err.message || err.toString()));
-  }
-};
+  };
 
   const checkUserLogin = async () => {
     if (!web3auth) return alert("Web3Auth not initialized");
