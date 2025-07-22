@@ -230,6 +230,7 @@ export default function Web3AuthComponent() {
           //   idToken: storedToken,
           // });
       const pkProvider = web3auth.provider;
+      alert(pkProvider);
       setProvider(pkProvider);
 
           const userInfo = await web3auth.getUserInfo();
