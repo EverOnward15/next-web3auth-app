@@ -1,6 +1,9 @@
 //Users/prathameshbhoite/Code/lotus-app/next-web3auth-app/app/api/derive/route.js
-import { ECPair } from "bitcoinjs-lib";
-import { networks, payments } from "bitcoinjs-lib";
+import * as bitcoin from "bitcoinjs-lib";
+import * as ecc from "tiny-secp256k1";
+import { ECPairFactory } from "ecpair";
+
+const ECPair = ECPairFactory(ecc);
 
 export async function POST(req) {
   try {
@@ -14,9 +17,8 @@ export async function POST(req) {
       });
     }
 
-    const cleanedHex = privateKeyHex.replace(/^0x/, "");
+    const cleanedHex = privateKeyHex.replace(/^0x/, "").trim();
 
-    // Validate format: exactly 64 hex characters
     if (!/^[a-fA-F0-9]{64}$/.test(cleanedHex)) {
       return new Response(
         JSON.stringify({ error: "privateKeyHex must be a 64-character hex string." }),
@@ -27,12 +29,12 @@ export async function POST(req) {
     const privateKeyBuffer = Buffer.from(cleanedHex, "hex");
 
     const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {
-      network: networks.testnet,
+      network: bitcoin.networks.testnet,
     });
 
-    const { address } = payments.p2pkh({
+    const { address } = bitcoin.payments.p2pkh({
       pubkey: keyPair.publicKey,
-      network: networks.testnet,
+      network: bitcoin.networks.testnet,
     });
 
     return new Response(JSON.stringify({ address }), {
