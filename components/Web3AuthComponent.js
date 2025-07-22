@@ -10,13 +10,8 @@ if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
 
-import { payments, networks } from 'bitcoinjs-lib';
-import * as secp from '@noble/secp256k1';
-
-// import { networks, payments } from "bitcoinjs-lib";
-// import * as wasmSecp from "tiny-secp256k1-wasm";
-// import { ECPairFactory } from "ecpair";
-// const ECPair = ECPairFactory(wasmSecp);
+import { payments, networks } from "bitcoinjs-lib";
+import * as secp from "@noble/secp256k1";
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
@@ -53,8 +48,8 @@ async function deriveBTCAddress(privateKeyHex) {
 async function deriveBTCWallet(provider) {
   const privateKeyHex = await provider.request({ method: "private_key" });
   const hex = privateKeyHex.startsWith("0x")
-  ? privateKeyHex.slice(2)
-  : privateKeyHex;
+    ? privateKeyHex.slice(2)
+    : privateKeyHex;
 
   if (!/^[a-fA-F0-9]{64}$/.test(hex)) {
     alert("❌ Invalid private key. Must be 64-character hex.");
@@ -69,35 +64,17 @@ async function deriveBTCWallet(provider) {
     return wallet;
   }
 
-  // Call API route to derive address
-  // const response = await fetch("/api/derive", {
-  //   method: "POST",
-  //   headers: { "Content-Type": "application/json" },
-  //   body: JSON.stringify({ privateKeyHex: hex }),
-  // });
-
-  // const { address, error } = await response.json();
-
-  // if (error) throw new Error(error);
-
-  // const wallet = { address, privateKey: privateKeyHex };
-  // localStorage.setItem("btc_wallet", JSON.stringify(wallet));
-
-  // alert("✅ BTC Testnet Wallet Created:\n" + address);
-  // return wallet;
-
   try {
-  const address = await deriveBTCAddress(hex);
-  const wallet = { address, privateKey: privateKeyHex };
-  localStorage.setItem("btc_wallet", JSON.stringify(wallet));
+    const address = await deriveBTCAddress(hex);
+    const wallet = { address, privateKey: privateKeyHex };
+    localStorage.setItem("btc_wallet", JSON.stringify(wallet));
 
-  alert("✅ BTC Testnet Wallet Created:\n" + address);
-  return wallet;
-} catch (err) {
-  alert("❌ Error deriving address: " + err.message);
-  return null;
-}
-
+    alert("✅ BTC Testnet Wallet Created:\n" + address);
+    return wallet;
+  } catch (err) {
+    alert("❌ Error deriving address: " + err.message);
+    return null;
+  }
 }
 
 export default function Web3AuthComponent() {
@@ -108,8 +85,42 @@ export default function Web3AuthComponent() {
   const [jwtToken, setJwtToken] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [skipRestore, setSkipRestore] = useState(false);
+  const [btcWallet, setBtcWallet] = useState(null); // { address, privateKey }
+  const [btcBalance, setBtcBalance] = useState(null); // number in tBTC (testnet BTC)
 
-  //Initialise SDK
+  //Initialise Telegram
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://telegram.org/js/telegram-web-app.js";
+    script.async = true;
+    script.onload = () => {
+      if (window.Telegram?.WebApp) {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        const userData = tg.initDataUnsafe?.user;
+        if (userData) {
+          setTelegramUser(userData);
+          fetch("/api/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(userData),
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              setJwtToken(data.token);
+              alert(data);
+              alert(data.token);
+              alert("JWT data received");
+              console.log("Received JWT Token:", data.token);
+            })
+            .catch((err) => console.error("JWT error:", err));
+        }
+      }
+    };
+    document.body.appendChild(script);
+  }, []);
+
+  //Initialise Web3Auth SDK
   useEffect(() => {
     const init = async () => {
       try {
@@ -149,37 +160,6 @@ export default function Web3AuthComponent() {
     if (!web3auth) {
       return;
     }
-  }, []);
-
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://telegram.org/js/telegram-web-app.js";
-    script.async = true;
-    script.onload = () => {
-      if (window.Telegram?.WebApp) {
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        const userData = tg.initDataUnsafe?.user;
-        if (userData) {
-          setTelegramUser(userData);
-          fetch("/api/token", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(userData),
-          })
-            .then((res) => res.json())
-            .then((data) => {
-              setJwtToken(data.token);
-              alert(data);
-              alert(data.token);
-              alert("JWT data received");
-              console.log("Received JWT Token:", data.token);
-            })
-            .catch((err) => console.error("JWT error:", err));
-        }
-      }
-    };
-    document.body.appendChild(script);
   }, []);
 
   const handleLogin = async () => {
@@ -262,63 +242,76 @@ export default function Web3AuthComponent() {
     if (!provider) return;
 
     try {
-      const btcWallet = await deriveBTCWallet(provider);
+      const wallet = await deriveBTCWallet(provider);
 
+      if (!wallet) {
+        alert("Failed to get BTC wallet.");
+        return;
+      }
+
+      // Fetch balance from blockstream API
       const res = await fetch(
-        `https://blockstream.info/testnet/api/address/${btcWallet.address}`
+        `https://blockstream.info/testnet/api/address/${wallet.address}`
       );
+      if (!res.ok) {
+        alert("Failed to fetch address info");
+        return;
+      }
       const data = await res.json();
 
-      const balance =
+      const balanceSatoshis =
         data.chain_stats.funded_txo_sum - data.chain_stats.spent_txo_sum;
 
-      alert(
-        `BTC Address: ${btcWallet.address}\nBalance: ${balance / 1e8} tBTC`
-      );
+      const balanceTbtc = balanceSatoshis / 1e8;
+
+      // Update UI state
+      setBtcWallet(wallet);
+      setBtcBalance(balanceTbtc);
     } catch (err) {
       alert("Error fetching BTC info: " + err.message);
     }
   };
 
-
-const checkPrivateKeyAndAddress = async () => {
-  if (!provider?.request) {
-    alert("❌ Provider not available.");
-    return;
-  }
-
-  try {
-    const privateKeyHex = await provider.request({ method: "private_key" });
-    alert("✅ Raw privateKeyHex:\n" + privateKeyHex);
-
-    if (!privateKeyHex || typeof privateKeyHex !== "string") {
-      throw new Error("Invalid private key returned.");
-    }
-
-    const hex = privateKeyHex.startsWith("0x")
-      ? privateKeyHex.slice(2)
-      : privateKeyHex;
-
-    alert("🧪 Cleaned hex (after removing 0x if present):\n" + hex);
-
-    if (!/^[a-fA-F0-9]+$/.test(hex)) {
-      alert("❌ Invalid hex string received.");
+  const checkPrivateKeyAndAddress = async () => {
+    if (!provider?.request) {
+      alert("❌ Provider not available.");
       return;
     }
 
-    if (hex.length !== 64) {
-      alert("⚠️ Expected 64-character hex, got " + hex.length + " characters.");
-    }
+    try {
+      const privateKeyHex = await provider.request({ method: "private_key" });
+      alert("✅ Raw privateKeyHex:\n" + privateKeyHex);
 
-    const address = await deriveBTCAddress(hex);
-    alert("✅ BTC Testnet Address:\n" + address);
-  } catch (err) {
-    const errorMessage =
-      err?.message ||
-      (typeof err === "string" ? err : JSON.stringify(err, null, 2));
-    alert("❌ Error generating address:\n" + errorMessage);
-  }
-};
+      if (!privateKeyHex || typeof privateKeyHex !== "string") {
+        throw new Error("Invalid private key returned.");
+      }
+
+      const hex = privateKeyHex.startsWith("0x")
+        ? privateKeyHex.slice(2)
+        : privateKeyHex;
+
+      alert("🧪 Cleaned hex (after removing 0x if present):\n" + hex);
+
+      if (!/^[a-fA-F0-9]+$/.test(hex)) {
+        alert("❌ Invalid hex string received.");
+        return;
+      }
+
+      if (hex.length !== 64) {
+        alert(
+          "⚠️ Expected 64-character hex, got " + hex.length + " characters."
+        );
+      }
+
+      const address = await deriveBTCAddress(hex);
+      alert("✅ BTC Testnet Address:\n" + address);
+    } catch (err) {
+      const errorMessage =
+        err?.message ||
+        (typeof err === "string" ? err : JSON.stringify(err, null, 2));
+      alert("❌ Error generating address:\n" + errorMessage);
+    }
+  };
 
   const checkUserLogin = async () => {
     if (!web3auth) return alert("Web3Auth not initialized");
@@ -362,7 +355,7 @@ const checkPrivateKeyAndAddress = async () => {
           )}
         </div>
       )}
-
+      
       {!provider ? (
         <button
           className={styles.button}
@@ -376,8 +369,21 @@ const checkPrivateKeyAndAddress = async () => {
       ) : (
         <>
           <button className={styles.button} onClick={handleGetAccounts}>
-            Get Address
+            Get Address & Balance
           </button>
+
+          {/* Display wallet info if available */}
+          {btcWallet && (
+            <div style={{ marginTop: "20px", textAlign: "center" }}>
+              <p>
+                <strong>BTC Address:</strong> {btcWallet.address}
+              </p>
+              <p>
+                <strong>Balance:</strong>{" "}
+                {btcBalance !== null ? `${btcBalance} tBTC` : "Loading..."}
+              </p>
+            </div>
+          )}
         </>
       )}
 
