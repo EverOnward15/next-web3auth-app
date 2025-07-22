@@ -17,29 +17,7 @@ const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
 
 /*------------------ Start of Code --------------------*/
-/*Wallet UI functions*/
- // Automatically get wallet + balance if provider is available
-  useEffect(() => {
-    const fetchWalletAndBalance = async () => {
-      if (!provider || btcWallet) return;
-      const wallet = await deriveBTCWallet(provider);
-      if (!wallet) return;
 
-      const res = await fetch(
-        `https://blockstream.info/testnet/api/address/${wallet.address}`
-      );
-      const data = await res.json();
-
-      const balanceSatoshis =
-        data.chain_stats.funded_txo_sum - data.chain_stats.spent_txo_sum;
-      const balanceTbtc = balanceSatoshis / 1e8;
-
-      setBtcWallet(wallet);
-      setBtcBalance(balanceTbtc);
-    };
-
-    fetchWalletAndBalance();
-  }, [provider, btcWallet]);
 
 
 //Function to derive BTC Address
@@ -111,6 +89,30 @@ export default function Web3AuthComponent() {
   const [skipRestore, setSkipRestore] = useState(false);
   const [btcWallet, setBtcWallet] = useState(null); // { address, privateKey }
   const [btcBalance, setBtcBalance] = useState(null); // number in tBTC (testnet BTC)
+
+  /*Wallet UI functions*/
+ // Automatically get wallet + balance if provider is availabl
+    useEffect(() => {
+    const fetchWalletAndBalance = async () => {
+      if (!provider || btcWallet) return;
+      const wallet = await deriveBTCWallet(provider);
+      if (!wallet) return;
+
+      const res = await fetch(
+        `https://blockstream.info/testnet/api/address/${wallet.address}`
+      );
+      const data = await res.json();
+
+      const balanceSatoshis =
+        data.chain_stats.funded_txo_sum - data.chain_stats.spent_txo_sum;
+      const balanceTbtc = balanceSatoshis / 1e8;
+
+      setBtcWallet(wallet);
+      setBtcBalance(balanceTbtc);
+    };
+
+    fetchWalletAndBalance();
+  }, [provider, btcWallet]);
 
   //Initialise Telegram
   useEffect(() => {
