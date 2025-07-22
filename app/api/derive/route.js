@@ -11,6 +11,12 @@ export default function handler(req, res) {
     }
 
     const cleanedHex = privateKeyHex.replace(/^0x/, "");
+
+    // Check length and hex format
+    if (!/^[a-fA-F0-9]{64}$/.test(cleanedHex)) {
+      return res.status(400).json({ error: "privateKeyHex must be a 64-character hex string." });
+    }
+
     const privateKeyBuffer = Buffer.from(cleanedHex, "hex");
 
     const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {

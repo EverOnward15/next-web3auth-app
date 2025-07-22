@@ -20,6 +20,15 @@ const CLIENT_ID =
 /*------------------ Start of Code --------------------*/
 async function deriveBTCWallet(provider) {
   const privateKeyHex = await provider.request({ method: "private_key" });
+  const hex = privateKeyHex.startsWith("0x")
+  ? privateKeyHex.slice(2)
+  : privateKeyHex;
+
+  if (!/^[a-fA-F0-9]{64}$/.test(hex)) {
+    alert("❌ Invalid private key. Must be 64-character hex.");
+    return;
+  }
+
   const existingWallet = localStorage.getItem("btc_wallet");
 
   if (existingWallet) {
@@ -32,7 +41,7 @@ async function deriveBTCWallet(provider) {
   const response = await fetch("/api/derive", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ privateKeyHex }),
+    body: JSON.stringify({ privateKeyHex: hex }),
   });
 
   const { address, error } = await response.json();
