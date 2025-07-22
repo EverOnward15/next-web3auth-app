@@ -14,7 +14,7 @@
 }
 
 .container * {
-    margin: 0 auto;
+  margin: 0 auto;
 }
 
 .title {
@@ -42,4 +42,29 @@
 
 .button:hover {
   background-color: #0a2f50;
+}
+
+.telegramContainer {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.welcomeText {
+  font-size: 18px;
+  color: white;
+}
+
+.telegramImage {
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  margin-top: 10px;
+}
+
+.walletInfo {
+  margin-top: 16px;
+  color: white;
+  font-size: 16px;
+  line-height: 1.4;
 }
