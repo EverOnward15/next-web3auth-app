@@ -23,9 +23,6 @@ const CLIENT_ID =
 
 /*------------------ Start of Code --------------------*/
 
-import { payments, networks } from "bitcoinjs-lib";
-import * as secp from "@noble/secp256k1";
-
 //Function to derive BTC Address
 async function deriveBTCAddress(privateKeyHex) {
   const hex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
