@@ -1,3 +1,4 @@
+///Users/prathameshbhoite/Code/lotus-app/next-web3auth-app/components/Web3AuthComponent.js
 "use client";
 import { useEffect, useState } from "react";
 import { Web3Auth } from "@web3auth/single-factor-auth";
@@ -8,12 +9,10 @@ import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
-import { networks, payments } from "bitcoinjs-lib";
-import * as wasmSecp from "tiny-secp256k1-wasm";
-import { ECPairFactory } from "ecpair";
-const ECPair = ECPairFactory(wasmSecp);
-
-
+// import { networks, payments } from "bitcoinjs-lib";
+// import * as wasmSecp from "tiny-secp256k1-wasm";
+// import { ECPairFactory } from "ecpair";
+// const ECPair = ECPairFactory(wasmSecp);
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
@@ -46,9 +45,6 @@ async function deriveBTCWallet(provider) {
   alert("✅ BTC Testnet Wallet Created:\n" + address);
   return wallet;
 }
-
-
-
 
 export default function Web3AuthComponent() {
   const [web3auth, setWeb3auth] = useState(null);
@@ -231,54 +227,56 @@ export default function Web3AuthComponent() {
   };
 
   const checkPrivateKeyAndAddress = async () => {
-  if (!provider?.request) {
-    alert("❌ Provider not available.");
-    return;
-  }
-
-  try {
-    const privateKeyHex = await provider.request({ method: "private_key" });
-    alert("✅ Raw privateKeyHex:\n" + privateKeyHex);
-
-    if (!privateKeyHex || typeof privateKeyHex !== "string") {
-      throw new Error("Invalid private key returned.");
-    }
-
-    // Remove "0x" prefix if present
-    const hex = privateKeyHex.startsWith("0x")
-      ? privateKeyHex.slice(2)
-      : privateKeyHex;
-
-    alert("🧪 Cleaned hex (after removing 0x if present):\n" + hex);
-
-    if (!/^[a-fA-F0-9]+$/.test(hex)) {
-      alert("❌ Invalid hex string received.");
+    if (!provider?.request) {
+      alert("❌ Provider not available.");
       return;
     }
 
-    if (hex.length !== 64) {
-      alert("⚠️ Expected 64-character hex, got " + hex.length + " characters.");
+    try {
+      const privateKeyHex = await provider.request({ method: "private_key" });
+      alert("✅ Raw privateKeyHex:\n" + privateKeyHex);
+
+      if (!privateKeyHex || typeof privateKeyHex !== "string") {
+        throw new Error("Invalid private key returned.");
+      }
+
+      // Remove "0x" prefix if present
+      const hex = privateKeyHex.startsWith("0x")
+        ? privateKeyHex.slice(2)
+        : privateKeyHex;
+
+      alert("🧪 Cleaned hex (after removing 0x if present):\n" + hex);
+
+      if (!/^[a-fA-F0-9]+$/.test(hex)) {
+        alert("❌ Invalid hex string received.");
+        return;
+      }
+
+      if (hex.length !== 64) {
+        alert(
+          "⚠️ Expected 64-character hex, got " + hex.length + " characters."
+        );
+      }
+
+      // Send hex to API to get address
+      const response = await fetch("/api/derive", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ privateKeyHex }),
+      });
+
+      const { address, error } = await response.json();
+
+      if (error) throw new Error(error);
+
+      alert("✅ BTC Testnet Address:\n" + address);
+    } catch (err) {
+      const errorMessage =
+        err?.message ||
+        (typeof err === "string" ? err : JSON.stringify(err, null, 2));
+      alert("❌ Error generating address:\n" + errorMessage);
     }
-
-    // Send hex to API to get address
-    const response = await fetch("/api/derive", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ privateKeyHex }),
-    });
-
-    const { address, error } = await response.json();
-
-    if (error) throw new Error(error);
-
-    alert("✅ BTC Testnet Address:\n" + address);
-  } catch (err) {
-    const errorMessage =
-      err?.message ||
-      (typeof err === "string" ? err : JSON.stringify(err, null, 2));
-    alert("❌ Error generating address:\n" + errorMessage);
-  }
-};
+  };
 
   const checkUserLogin = async () => {
     if (!web3auth) return alert("Web3Auth not initialized");
