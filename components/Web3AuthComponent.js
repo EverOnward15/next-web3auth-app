@@ -216,7 +216,6 @@ export default function Web3AuthComponent() {
 
   useEffect(() => {
     const tryRestoreSession = async () => {
-       if (!web3auth) return alert("Restore session alert: Web3Auth not initialized");
        if (web3auth.connected) {
         try {
       const pkProvider = web3auth.provider;
@@ -231,7 +230,6 @@ export default function Web3AuthComponent() {
         }
       }
     };
-
     tryRestoreSession();
   }, [web3auth]);
 
