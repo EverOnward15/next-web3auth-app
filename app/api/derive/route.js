@@ -7,6 +7,9 @@ const ECPair = ECPairFactory(ecc);
 
 export async function POST(req) {
   try {
+    console.log("API /derive called");
+    console.log("Request body:", await req.text());
+
     const body = await req.json();
     const { privateKeyHex } = body;
 
