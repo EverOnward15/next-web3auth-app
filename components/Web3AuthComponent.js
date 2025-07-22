@@ -19,33 +19,36 @@ const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
 
 /*------------------ Start of Code --------------------*/
-function deriveBTCWallet(provider) {
-  return provider.request({ method: "private_key" }).then((privateKeyHex) => {
-    const existingWallet = localStorage.getItem("btc_wallet");
+async function deriveBTCWallet(provider) {
+  const privateKeyHex = await provider.request({ method: "private_key" });
+  const existingWallet = localStorage.getItem("btc_wallet");
 
-    if (existingWallet) {
-      const wallet = JSON.parse(existingWallet);
-      alert("Wallet already exists:\n" + wallet.address);
-      return wallet;
-    }
-
-    const privateKeyBuffer = Buffer.from(privateKeyHex, "hex");
-    const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {
-      network: networks.testnet,
-    });
-
-    const { address } = payments.p2pkh({
-      pubkey: keyPair.publicKey,
-      network: networks.testnet,
-    });
-
-    const wallet = { address, privateKey: privateKeyHex };
-    localStorage.setItem("btc_wallet", JSON.stringify(wallet));
-
-    alert("Wallet created:\n" + address);
+  if (existingWallet) {
+    const wallet = JSON.parse(existingWallet);
+    alert("Wallet already exists:\n" + wallet.address);
     return wallet;
+  }
+
+  // Call API route to derive address
+  const response = await fetch("/api/derive", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ privateKeyHex }),
   });
+
+  const { address, error } = await response.json();
+
+  if (error) throw new Error(error);
+
+  const wallet = { address, privateKey: privateKeyHex };
+  localStorage.setItem("btc_wallet", JSON.stringify(wallet));
+
+  alert("✅ BTC Testnet Wallet Created:\n" + address);
+  return wallet;
 }
+
+
+
 
 export default function Web3AuthComponent() {
   const [web3auth, setWeb3auth] = useState(null);
@@ -228,64 +231,54 @@ export default function Web3AuthComponent() {
   };
 
   const checkPrivateKeyAndAddress = async () => {
-    if (!provider?.request) {
-      alert("❌ Provider not available.");
+  if (!provider?.request) {
+    alert("❌ Provider not available.");
+    return;
+  }
+
+  try {
+    const privateKeyHex = await provider.request({ method: "private_key" });
+    alert("✅ Raw privateKeyHex:\n" + privateKeyHex);
+
+    if (!privateKeyHex || typeof privateKeyHex !== "string") {
+      throw new Error("Invalid private key returned.");
+    }
+
+    // Remove "0x" prefix if present
+    const hex = privateKeyHex.startsWith("0x")
+      ? privateKeyHex.slice(2)
+      : privateKeyHex;
+
+    alert("🧪 Cleaned hex (after removing 0x if present):\n" + hex);
+
+    if (!/^[a-fA-F0-9]+$/.test(hex)) {
+      alert("❌ Invalid hex string received.");
       return;
     }
 
-    try {
-      const privateKeyHex = await provider.request({ method: "private_key" });
-      alert("✅ Raw privateKeyHex:\n" + privateKeyHex);
-
-      if (!privateKeyHex || typeof privateKeyHex !== "string") {
-        throw new Error("Invalid private key returned.");
-      }
-
-      // Remove "0x" prefix if present
-      const hex = privateKeyHex.startsWith("0x")
-        ? privateKeyHex.slice(2)
-        : privateKeyHex;
-      alert("🧪 Cleaned hex (after removing 0x if present):\n" + hex);
-
-      if (!/^[a-fA-F0-9]+$/.test(hex)) {
-        alert("❌ Invalid hex string received.");
-        return;
-      }
-
-      if (hex.length !== 64) {
-        alert(
-          "⚠️ Expected 64-character hex, got " + hex.length + " characters."
-        );
-      }
-
-      const privateKeyBuffer = Buffer.from(hex, "hex");
-      alert("📦 Buffer created from hex:\n" + privateKeyBuffer.toString("hex"));
-
-      const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {
-        network: networks.testnet,
-      });
-
-
-      alert("🔑 keyPair:" + keyPair);
-alert("🔑 publicKey (hex):" + keyPair.publicKey?.toString("hex"));
-if (!keyPair.publicKey) {
-  throw new Error("keyPair.publicKey is falsy");
-}
-
-
-      const { address } = payments.p2pkh({
-        pubkey: keyPair.publicKey,
-        network: networks.testnet,
-      });
-      alert("✅ BTC Testnet Address:\n" + address);
-    } catch (err) {
-      const errorMessage =
-        err?.message ||
-        (typeof err === "string" ? err : JSON.stringify(err, null, 2));
-
-      alert("❌ Error generating address:\n" + errorMessage);
+    if (hex.length !== 64) {
+      alert("⚠️ Expected 64-character hex, got " + hex.length + " characters.");
     }
-  };
+
+    // Send hex to API to get address
+    const response = await fetch("/api/derive", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ privateKeyHex }),
+    });
+
+    const { address, error } = await response.json();
+
+    if (error) throw new Error(error);
+
+    alert("✅ BTC Testnet Address:\n" + address);
+  } catch (err) {
+    const errorMessage =
+      err?.message ||
+      (typeof err === "string" ? err : JSON.stringify(err, null, 2));
+    alert("❌ Error generating address:\n" + errorMessage);
+  }
+};
 
   const checkUserLogin = async () => {
     if (!web3auth) return alert("Web3Auth not initialized");
