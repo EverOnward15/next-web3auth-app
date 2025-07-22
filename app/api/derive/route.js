@@ -2,19 +2,26 @@
 import { ECPair } from "bitcoinjs-lib";
 import { networks, payments } from "bitcoinjs-lib";
 
-export default function handler(req, res) {
+export async function POST(req) {
   try {
-    const { privateKeyHex } = req.body;
+    const body = await req.json();
+    const { privateKeyHex } = body;
 
     if (!privateKeyHex || typeof privateKeyHex !== "string") {
-      return res.status(400).json({ error: "Invalid privateKeyHex provided." });
+      return new Response(JSON.stringify({ error: "Invalid privateKeyHex provided." }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const cleanedHex = privateKeyHex.replace(/^0x/, "");
 
-    // Check length and hex format
+    // Validate format: exactly 64 hex characters
     if (!/^[a-fA-F0-9]{64}$/.test(cleanedHex)) {
-      return res.status(400).json({ error: "privateKeyHex must be a 64-character hex string." });
+      return new Response(
+        JSON.stringify({ error: "privateKeyHex must be a 64-character hex string." }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
     }
 
     const privateKeyBuffer = Buffer.from(cleanedHex, "hex");
@@ -28,8 +35,14 @@ export default function handler(req, res) {
       network: networks.testnet,
     });
 
-    return res.status(200).json({ address });
+    return new Response(JSON.stringify({ address }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (err) {
-    return res.status(400).json({ error: err.message });
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
