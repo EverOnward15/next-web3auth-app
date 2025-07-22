@@ -216,26 +216,15 @@ export default function Web3AuthComponent() {
 
   useEffect(() => {
     const tryRestoreSession = async () => {
-      if (!web3auth) return;
-
-      const isLoggedIn = localStorage.getItem("web3auth_logged_in");
-      const storedToken = localStorage.getItem("jwt_token");
-      const storedVerifierId = localStorage.getItem("telegram_id");
-
-      if (isLoggedIn && storedToken && storedVerifierId) {
+       if (!web3auth) return alert("Restore session alert: Web3Auth not initialized");
+       if (web3auth.connected) {
         try {
-          // const provider = await web3auth.connect({
-          //   verifier: "telegram-jwt-verifier",
-          //   verifierId: storedVerifierId,
-          //   idToken: storedToken,
-          // });
       const pkProvider = web3auth.provider;
       alert(pkProvider);
       setProvider(pkProvider);
 
           const userInfo = await web3auth.getUserInfo();
           setUser(userInfo);
-          setJwtToken(storedToken);
         } catch (err) {
           console.error("Session restore failed:", err);
           localStorage.clear(); // fallback
