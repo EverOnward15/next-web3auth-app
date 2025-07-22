@@ -17,9 +17,10 @@ export async function POST(req) {
       });
     }
 
-    const cleanedHex = privateKeyHex.replace(/^0x/, "").trim();
+    const cleanedHex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
 
-    if (!/^[a-fA-F0-9]{64}$/.test(cleanedHex)) {
+    // Ensure hex string is exactly 64 characters
+    if (!/^[a-f0-9]{64}$/.test(cleanedHex)) {
       return new Response(
         JSON.stringify({ error: "privateKeyHex must be a 64-character hex string." }),
         { status: 400, headers: { "Content-Type": "application/json" } }
@@ -27,6 +28,14 @@ export async function POST(req) {
     }
 
     const privateKeyBuffer = Buffer.from(cleanedHex, "hex");
+
+    // Validate that the buffer is exactly 32 bytes
+    if (privateKeyBuffer.length !== 32) {
+      return new Response(
+        JSON.stringify({ error: "Buffer must be 32 bytes. Check input." }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
     const keyPair = ECPair.fromPrivateKey(privateKeyBuffer, {
       network: bitcoin.networks.testnet,
