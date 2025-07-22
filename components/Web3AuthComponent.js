@@ -87,8 +87,8 @@ export default function Web3AuthComponent() {
   const [jwtToken, setJwtToken] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [skipRestore, setSkipRestore] = useState(false);
-  const [btcWallet, setBtcWallet] = useState(null); // { address, privateKey }
-  const [btcBalance, setBtcBalance] = useState(null); // number in tBTC (testnet BTC)
+  const [btcWallet, setBtcWallet] = useState(null); // 
+  const [btcBalance, setBtcBalance] = useState(null); // 
 
   /*Wallet UI functions*/
  // Automatically get wallet + balance if provider is availabl
@@ -216,7 +216,7 @@ export default function Web3AuthComponent() {
 
   useEffect(() => {
     const tryRestoreSession = async () => {
-      if (!web3auth || skipRestore) return;
+      if (!web3auth) return;
 
       const isLoggedIn = localStorage.getItem("web3auth_logged_in");
       const storedToken = localStorage.getItem("jwt_token");
@@ -224,13 +224,13 @@ export default function Web3AuthComponent() {
 
       if (isLoggedIn && storedToken && storedVerifierId) {
         try {
-          const provider = await web3auth.connect({
-            verifier: "telegram-jwt-verifier",
-            verifierId: storedVerifierId,
-            idToken: storedToken,
-          });
-
-          setProvider(provider);
+          // const provider = await web3auth.connect({
+          //   verifier: "telegram-jwt-verifier",
+          //   verifierId: storedVerifierId,
+          //   idToken: storedToken,
+          // });
+      const pkProvider = web3auth.provider;
+      setProvider(pkProvider);
 
           const userInfo = await web3auth.getUserInfo();
           setUser(userInfo);
