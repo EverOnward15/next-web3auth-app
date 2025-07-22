@@ -389,7 +389,7 @@ export default function Web3AuthComponent() {
       )}
 
 
-      {!provider ? (
+      {!provider?.request ? (
         <button
           className={styles.button}
           onClick={handleLogin}
@@ -404,19 +404,6 @@ export default function Web3AuthComponent() {
           <button className={styles.button} onClick={handleGetAccounts}>
             Get Address & Balance
           </button>
-
-          {/* Display wallet info if available */}
-          {btcWallet && (
-            <div style={{ marginTop: "20px", textAlign: "center" }}>
-              <p>
-                <strong>BTC Address:</strong> {btcWallet.address}
-              </p>
-              <p>
-                <strong>Balance:</strong>{" "}
-                {btcBalance !== null ? `${btcBalance} tBTC` : "Loading..."}
-              </p>
-            </div>
-          )}
         </>
       )}
 
