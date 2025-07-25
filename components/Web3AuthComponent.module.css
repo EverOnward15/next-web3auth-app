@@ -15,11 +15,13 @@
 
 .title {
   font-size: 28px;
-  color: #0f0;
+  /* color: #0f0; */
   margin-bottom: 8px;
   font-weight: 700;
   text-align: center;
-  text-shadow: 0 0 8px #0f0;
+  /* text-shadow: 0 0 8px #0f0; */
+    color: #0ff;
+  text-shadow: 0 0 4px #0ff;
 }
 
 .subtitle {
@@ -57,7 +59,7 @@
   line-height: 1.4;
   text-align: center;
   background-color: rgba(0, 255, 0, 0.05);
-  border: 1px solid #0f0;
+  /* border: 1px solid #0f0; */
   padding: 16px;
   border-radius: 12px;
   width: 100%;
@@ -176,11 +178,12 @@
 
 .sectionTitle {
   color: #0ff;
+  text-shadow: 0 0 4px #0ff;
   font-size: 16px;
   margin-top: 24px;
   margin-bottom: 8px;
   text-align: center;
-  text-shadow: 0 0 4px #0ff;
+  
 }
 
 .debugBox {
