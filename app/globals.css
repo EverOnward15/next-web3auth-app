@@ -2,18 +2,18 @@
   --background: #ffffff;
   --foreground: #171717;
 
-  --bg: #0a0a0a;
-  --card-bg: #111;
-  --highlight: #00d4ff;
-  --text-light: #ccc;
-  --text-muted: #888;
+  --bg: #0a0a0a;              /* Background */
+  --card-bg: #121212;         /* Panels/cards */
+  --highlight: #3d9df6;       /* Cool electric blue for accent glow */
+  --primary: #3d9df6;         /* Main accent */
+  --secondary: #1e88e5;       /* For hover & active */
+  --accent: #90caf9;          /* Subtle light accent (used sparingly) */
 
-  --primary: #00bfa6;
-  --secondary: #00695c;
-  --accent: #64ffda;
-  --text-main: #f0f0f0;
-  --text-muted: #a0a0a0;
-  --glass: rgba(255, 255, 255, 0.03);
+  --text-main: #e0e0e0;       /* Primary text */
+  --text-light: #bbb;         /* Slightly muted */
+  --text-muted: #777;         /* Subtext or less important content */
+
+  --glass: rgba(255, 255, 255, 0.05); /* Slight glass blur background */
 }
 
 @media (prefers-color-scheme: dark) {
