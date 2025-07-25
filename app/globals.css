@@ -1,6 +1,15 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  --primary: #00ffe7;
+  --secondary: #8a2be2;
+  --accent: #ff4ecd;
+  --bg: #0a0a0a;
+  --card-bg: #111;
+  --highlight: #00d4ff;
+  --text-light: #ccc;
+  --text-muted: #888;
 }
 
 @media (prefers-color-scheme: dark) {
