@@ -137,7 +137,7 @@
 }
 
 .actionButton {
-  background: linear-gradient(145deg, #0f0 0%, #0a0 100%);
+  background: linear-gradient(145deg, #0ff 0%, rgb(36, 172, 172) 100%);
   color: black;
   border: none;
   border-radius: 10px;
@@ -148,7 +148,7 @@
   text-align: center;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 0 10px #0f0;
+  box-shadow: 0 0 10px #0ff;
 }
 
 .actionButton:hover {
