@@ -15,12 +15,10 @@
 
 .title {
   font-size: 28px;
-  /* color: #0f0; */
   margin-bottom: 8px;
   font-weight: 700;
   text-align: center;
-  /* text-shadow: 0 0 8px #0f0; */
-    color: #0ff;
+  color: #0ff;
   text-shadow: 0 0 4px #0ff;
 }
 
@@ -58,13 +56,12 @@
   font-size: 14px;
   line-height: 1.4;
   text-align: center;
-  background-color: rgba(0, 255, 0, 0.05);
-  /* border: 1px solid #0f0; */
+  background-color: rgba(0, 255, 0, 0.025);
   padding: 16px;
   border-radius: 12px;
   width: 100%;
   max-width: 340px;
-  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+  box-shadow: 0 0 4px rgba(0, 255, 0, 0.2);
 }
 
 .walletLabel {
@@ -83,7 +80,7 @@
 
 .balanceLabel {
   font-size: 13px;
-  color: #0f0;
+  color: #888;
   text-transform: uppercase;
   margin-bottom: 4px;
   letter-spacing: 1px;
@@ -93,7 +90,7 @@
   font-size: 28px;
   font-weight: 700;
   color: #0f0;
-  text-shadow: 0 0 8px #0f0;
+  text-shadow: 0 0 6px #0f0;
 }
 
 .cryptoToggle {
@@ -137,9 +134,9 @@
 }
 
 .actionButton {
-  background: linear-gradient(145deg, #0ff 0%, rgb(36, 172, 172) 100%);
-  color: black;
-  border: none;
+  background: linear-gradient(145deg, #0a0a0a, #1c1c1c);
+  color: #0ff;
+  border: 1px solid #0ff;
   border-radius: 10px;
   padding: 10px 16px;
   font-size: 14px;
@@ -148,12 +145,12 @@
   text-align: center;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 0 10px #0ff;
+  box-shadow: 0 0 6px rgba(0, 255, 255, 0.3);
 }
 
 .actionButton:hover {
   transform: translateY(-1px);
-  box-shadow: 0 0 12px #0f0, 0 0 20px #0f0;
+  box-shadow: 0 0 8px #0ff, 0 0 14px #0ff;
 }
 
 .button {
@@ -183,7 +180,6 @@
   margin-top: 24px;
   margin-bottom: 8px;
   text-align: center;
-  
 }
 
 .debugBox {
