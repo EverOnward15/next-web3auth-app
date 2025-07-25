@@ -252,47 +252,46 @@ export default function Web3AuthComponent() {
         </div>
       )}
 
-  {/* Wallet Display Area */}
-  {btcWallet && (
-    <div className={styles.walletSection}>
-      <h3 className={styles.sectionTitle}>Your BTC Wallet</h3>
-      
-      <div className={styles.walletInfoBox}>
-        <p>
-          <strong>Address:</strong>
-          <code className={styles.walletAddress}>{btcWallet.address}</code>
-        </p>
-        <p>
-          <strong>Balance:</strong>{" "}
-          {loadingBalance
-            ? "Loading..."
-            : btcBalance !== null
-            ? `${btcBalance} tBTC`
-            : "N/A"}
-        </p>
-      </div>
-
-      <div className={styles.buttonGroup}>
-        <button
-          className={styles.walletButton}
-          onClick={handleRefreshBalance}
-          disabled={loadingBalance}
-        >
-          {loadingBalance ? "Refreshing..." : "Refresh Balance"}
-        </button>
-        <button className={styles.walletButton} onClick={handleBuyCrypto}>
-          Buy BTC
-        </button>
-        <button className={styles.walletButton} onClick={handleReceiveCrypto}>
-          Receive BTC
-        </button>
-        <button className={styles.walletButton} onClick={handleSendCrypto}>
-          Send BTC
-        </button>
-      </div>
+{/* Wallet Display Area */}
+{btcWallet && (
+  <div className={styles.walletSection}>
+    <h3 className={styles.sectionTitle}>Your BTC Wallet</h3>
+    
+    <div className={styles.walletInfoBox}>
+      <p>
+        <strong>Address:</strong>
+        <code className={styles.walletAddress}>{btcWallet.address}</code>
+      </p>
+      <p>
+        <strong>Balance:</strong>{" "}
+        {loadingBalance
+          ? "Loading..."
+          : btcBalance !== null
+          ? `${btcBalance} tBTC`
+          : "N/A"}
+      </p>
     </div>
-  )}
 
+    <div className={styles.buttonGroup}>
+      <button
+        className={styles.walletButton}
+        onClick={handleRefreshBalance}
+        disabled={loadingBalance}
+      >
+        {loadingBalance ? "Refreshing..." : "Refresh Balance"}
+      </button>
+      <button className={styles.walletButton} onClick={handleBuyCrypto}>
+        Buy BTC
+      </button>
+      <button className={styles.walletButton} onClick={handleReceiveCrypto}>
+        Receive BTC
+      </button>
+      <button className={styles.walletButton} onClick={handleSendCrypto}>
+        Send BTC
+      </button>
+    </div>
+  </div>
+)}
 
       {!user ? (
         <button onClick={handleLogin} disabled={isLoggingIn || !telegramUser || !jwtToken}>
