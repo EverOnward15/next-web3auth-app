@@ -13,6 +13,10 @@ if (typeof window !== "undefined") {
 import { payments, networks } from "bitcoinjs-lib";
 import * as secp from "@noble/secp256k1";
 
+import { ECPairFactory } from "ecpair";
+import * as ecc from "tiny-secp256k1";
+const ECPair = ECPairFactory(ecc); // One-time setup
+
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
 
@@ -93,8 +97,7 @@ export default function Web3AuthComponent() {
   const balances = {
     BTC: {
       address: btcWallet?.address || "Unavailable",
-      balance:
-        btcBalance !== null ? `${btcBalance} tBTC` : "Loading...",
+      balance: btcBalance !== null ? `${btcBalance} tBTC` : "Loading...",
     },
     USDT: {
       address: "0xUSDTExampleAddress",
@@ -302,6 +305,64 @@ export default function Web3AuthComponent() {
     }
   };
 
+  async function sendTestnetBTC({
+    fromAddress,
+    toAddress,
+    privateKeyHex,
+    amountInBTC,
+  }) {
+    const network = bitcoin.networks.testnet;
+    const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKeyHex, "hex"));
+
+    // 1. Fetch UTXOs
+    const utxosRes = await axios.get(
+      `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
+    );
+    const utxos = utxosRes.data;
+
+    if (!utxos.length) throw new Error("No UTXOs available to spend.");
+
+    const txb = new bitcoin.Psbt({ network });
+
+    let totalInput = 0;
+    for (const utxo of utxos) {
+      const rawTx = await axios.get(
+        `https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`
+      );
+      txb.addInput({
+        hash: utxo.txid,
+        index: utxo.vout,
+        nonWitnessUtxo: Buffer.from(rawTx.data, "hex"),
+      });
+      totalInput += utxo.value;
+      if (totalInput >= amountInBTC * 1e8) break;
+    }
+
+    const fee = 1000; // 1000 sats fee
+    const amountToSend = Math.floor(amountInBTC * 1e8);
+    const change = totalInput - amountToSend - fee;
+
+    if (change < 0) throw new Error("Insufficient funds");
+
+    txb.addOutput({ address: toAddress, value: amountToSend });
+
+    if (change > 0) {
+      txb.addOutput({ address: fromAddress, value: change });
+    }
+
+    txb.signAllInputs(keyPair);
+    txb.finalizeAllInputs();
+
+    const txHex = txb.extractTransaction().toHex();
+
+    // 3. Broadcast transaction
+    const broadcastRes = await axios.post(
+      "https://blockstream.info/testnet/api/tx",
+      txHex
+    );
+    return broadcastRes.data; // returns txid
+  }
+
   const checkPrivateKeyAndAddress = async () => {
     if (!provider?.request) {
       alert("❌ Provider not available.");
@@ -365,36 +426,34 @@ export default function Web3AuthComponent() {
       <h1 className={styles.title}>MVP Wallet</h1>
       <h2 className={styles.subtitle}>Tech: Web3Auth Core + Next.js</h2>
 
+      {telegramUser && (
+        <div className={styles.telegramContainer}>
+          <p className={styles.welcomeText}>
+            Welcome, <strong>{telegramUser.first_name}</strong>!
+          </p>
+          {telegramUser.photo_url && (
+            <img
+              src={telegramUser.photo_url}
+              alt={`${telegramUser.first_name}'s profile`}
+              className={styles.telegramImage}
+            />
+          )}
 
-          {telegramUser && (
-  <div className={styles.telegramContainer}>
-    <p className={styles.welcomeText}>
-      Welcome, <strong>{telegramUser.first_name}</strong>!
-    </p>
-    {telegramUser.photo_url && (
-      <img
-        src={telegramUser.photo_url}
-        alt={`${telegramUser.first_name}'s profile`}
-        className={styles.telegramImage}
-      />
-    )}
+          <div className={styles.walletInfo}>
+            <p className={styles.walletLabel}>
+              <strong>{selectedCrypto} Address:</strong>
+            </p>
+            <p className={styles.walletValue}>
+              {balances[selectedCrypto].address}
+            </p>
 
-    <div className={styles.walletInfo}>
-      <p className={styles.walletLabel}>
-        <strong>{selectedCrypto} Address:</strong>
-      </p>
-      <p className={styles.walletValue}>
-        {balances[selectedCrypto].address}
-      </p>
-
-      <p className={styles.balanceLabel}>Balance</p>
-      <p className={styles.balanceAmount}>
-        {balances[selectedCrypto].balance}
-      </p>
-    </div>
-  </div>
-)}
-
+            <p className={styles.balanceLabel}>Balance</p>
+            <p className={styles.balanceAmount}>
+              {balances[selectedCrypto].balance}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className={styles.cryptoToggle}>
         {["BTC", "USDT", "ETH"].map((crypto) => (
@@ -415,6 +474,37 @@ export default function Web3AuthComponent() {
         <button className={styles.actionButton}>Send</button>
         <button className={styles.actionButton}>Receive</button>
       </div>
+
+      <button
+        className={styles.button}
+        onClick={async () => {
+          const toAddress = prompt("Enter recipient Testnet BTC address:");
+          const amount = parseFloat(
+            prompt("Enter amount in BTC (e.g., 0.0001):")
+          );
+
+          if (!toAddress || isNaN(amount)) return alert("Invalid input");
+
+          const privateKeyHex = btcWallet?.privateKey?.replace(/^0x/, "");
+
+          try {
+            const txid = await sendTestnetBTC({
+              fromAddress: btcWallet.address,
+              toAddress,
+              privateKeyHex,
+              amountInBTC: amount,
+            });
+
+            alert("✅ Transaction sent!\nTxID: " + txid);
+            console.log("TXID:", txid);
+          } catch (err) {
+            console.error("Send error:", err);
+            alert("❌ Send failed: " + err.message);
+          }
+        }}
+      >
+        Send BTC (Testnet)
+      </button>
 
       {!provider?.request ? (
         <button

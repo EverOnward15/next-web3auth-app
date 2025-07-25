@@ -17,6 +17,7 @@
     "@web3auth/core": "^4.6.0",
     "@web3auth/openlogin-adapter": "^8.12.4",
     "@web3auth/single-factor-auth": "^9.5.0",
+    "axios": "^1.11.0",
     "bip32": "^5.0.0-rc.0",
     "bip39": "^3.1.0",
     "bitcoinjs-lib": "^6.1.7",
