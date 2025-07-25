@@ -365,34 +365,36 @@ export default function Web3AuthComponent() {
       <h1 className={styles.title}>MVP Wallet</h1>
       <h2 className={styles.subtitle}>Tech: Web3Auth Core + Next.js</h2>
 
-      {telegramUser && (
-        <div className={styles.walletInfo}>
-          <p className={styles.walletLabel}>
-            <strong>{selectedCrypto} Address:</strong>
-          </p>
-          <p className={styles.walletValue}>{balances[selectedCrypto].address}</p>
 
-          <p className={styles.balanceLabel}>Balance</p>
-          <p className={styles.balanceAmount}>
-            {balances[selectedCrypto].balance}
-          </p>
-        </div>
-      )}
+          {telegramUser && (
+  <div className={styles.telegramContainer}>
+    <p className={styles.welcomeText}>
+      Welcome, <strong>{telegramUser.first_name}</strong>!
+    </p>
+    {telegramUser.photo_url && (
+      <img
+        src={telegramUser.photo_url}
+        alt={`${telegramUser.first_name}'s profile`}
+        className={styles.telegramImage}
+      />
+    )}
 
+    <div className={styles.walletInfo}>
+      <p className={styles.walletLabel}>
+        <strong>{selectedCrypto} Address:</strong>
+      </p>
+      <p className={styles.walletValue}>
+        {balances[selectedCrypto].address}
+      </p>
 
-          {btcWallet && (
-            <div className={styles.walletInfo}>
-              <p>
-                <strong>BTC Address:</strong> {btcWallet.address}
-              </p>
-              <p>
-                <strong>Balance:</strong>{" "}
-                {btcBalance !== null ? `${btcBalance} tBTC` : "Loading..."}
-              </p>
-            </div>
-          )}
-        </div>
-      )}
+      <p className={styles.balanceLabel}>Balance</p>
+      <p className={styles.balanceAmount}>
+        {balances[selectedCrypto].balance}
+      </p>
+    </div>
+  </div>
+)}
+
 
       <div className={styles.cryptoToggle}>
         {["BTC", "USDT", "ETH"].map((crypto) => (
