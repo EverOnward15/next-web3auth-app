@@ -18,8 +18,6 @@ const CLIENT_ID =
 
 /*------------------ Start of Code --------------------*/
 
-
-
 //Function to derive BTC Address
 async function deriveBTCAddress(privateKeyHex) {
   const hex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
@@ -87,12 +85,12 @@ export default function Web3AuthComponent() {
   const [jwtToken, setJwtToken] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [skipRestore, setSkipRestore] = useState(false);
-  const [btcWallet, setBtcWallet] = useState(null); // 
-  const [btcBalance, setBtcBalance] = useState(null); // 
+  const [btcWallet, setBtcWallet] = useState(null); //
+  const [btcBalance, setBtcBalance] = useState(null); //
 
   /*Wallet UI functions*/
- // Automatically get wallet + balance if provider is availabl
-    useEffect(() => {
+  // Automatically get wallet + balance if provider is availabl
+  useEffect(() => {
     const fetchWalletAndBalance = async () => {
       if (!provider || btcWallet) return;
       const wallet = await deriveBTCWallet(provider);
@@ -216,11 +214,11 @@ export default function Web3AuthComponent() {
 
   useEffect(() => {
     const tryRestoreSession = async () => {
-       if (web3auth.connected) {
+      if (web3auth.connected) {
         try {
-      const pkProvider = web3auth.provider;
-      alert(pkProvider);
-      setProvider(pkProvider);
+          const pkProvider = web3auth.provider;
+          alert(pkProvider);
+          setProvider(pkProvider);
 
           const userInfo = await web3auth.getUserInfo();
           setUser(userInfo);
@@ -346,7 +344,7 @@ export default function Web3AuthComponent() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>MVP Wallet </h1>
+      <h1 className={styles.title}>MVP Wallet</h1>
       <h2 className={styles.subtitle}>Tech: Web3Auth Core + Next.js</h2>
 
       {telegramUser && (
@@ -376,6 +374,18 @@ export default function Web3AuthComponent() {
         </div>
       )}
 
+      <div className={styles.cryptoToggle}>
+        <button className={styles.cryptoButton}>BTC</button>
+        <button className={styles.cryptoButton}>USDT</button>
+        <button className={styles.cryptoButton}>ETH</button>
+      </div>
+
+      <div className={styles.actionButtons}>
+        <button className={styles.actionButton}>Buy</button>
+        <button className={styles.actionButton}>Send</button>
+        <button className={styles.actionButton}>Receive</button>
+      </div>
+
       {!provider?.request ? (
         <button
           className={styles.button}
@@ -387,11 +397,9 @@ export default function Web3AuthComponent() {
             : "Waiting for Telegram Login..."}
         </button>
       ) : (
-        <>
-          <button className={styles.button} onClick={handleGetAccounts}>
-            Get Address & Balance
-          </button>
-        </>
+        <button className={styles.button} onClick={handleGetAccounts}>
+          Get Address & Balance
+        </button>
       )}
 
       <button className={styles.button} onClick={checkPrivateKeyAndAddress}>
@@ -400,12 +408,9 @@ export default function Web3AuthComponent() {
       <button className={styles.button} onClick={checkUserLogin}>
         Check Web3Auth Login
       </button>
-
       <button className={styles.button} onClick={handleLogout}>
         Logout from Web3 Auth
       </button>
-
-      <br></br>
       <button
         className={styles.button}
         onClick={() => deriveBTCWallet(provider)}
@@ -415,22 +420,24 @@ export default function Web3AuthComponent() {
 
       {user && (
         <>
-          <h3>Web3Auth User Info:</h3>
-          <pre>{JSON.stringify(user, null, 2)}</pre>
+          <h3 className={styles.sectionTitle}>Web3Auth User Info:</h3>
+          <pre className={styles.debugBox}>{JSON.stringify(user, null, 2)}</pre>
         </>
       )}
 
       {telegramUser && (
         <>
-          <h3>Telegram User Info:</h3>
-          <pre>{JSON.stringify(telegramUser, null, 2)}</pre>
+          <h3 className={styles.sectionTitle}>Telegram User Info:</h3>
+          <pre className={styles.debugBox}>
+            {JSON.stringify(telegramUser, null, 2)}
+          </pre>
         </>
       )}
 
       {jwtToken && (
         <>
-          <h3>JWT Token:</h3>
-          <pre>{jwtToken}</pre>
+          <h3 className={styles.sectionTitle}>JWT Token:</h3>
+          <pre className={styles.debugBox}>{jwtToken}</pre>
         </>
       )}
     </div>

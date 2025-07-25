@@ -1,47 +1,31 @@
 /* components/Web3AuthComponent.module.css */
-
 .container {
   display: flex;
   flex-direction: column;
   margin: 0 auto;
-  padding: 24px;
-  background-color: black;
-  border-radius: 8px;
-  font-family: sans-serif;
-  height: 600px;
-  justify-content: center;
+  padding: 24px 16px;
+  background-color: #000;
+  border-radius: 12px;
+  font-family: 'Helvetica Neue', sans-serif;
+  min-height: 100vh;
+  justify-content: flex-start;
   align-items: center;
-}
-
-.container * {
-  margin: 0 auto;
+  max-width: 400px;
 }
 
 .title {
-  font-size: 24px;
-  color: #103565;
-  margin-bottom: 40px;
+  font-size: 26px;
+  color: #ffffff;
+  margin-bottom: 8px;
+  font-weight: bold;
+  text-align: center;
 }
 
 .subtitle {
-  font-size: 18px;
-  color: white;
-  margin-bottom: 40px;
-}
-
-.button {
-  margin: 0 auto;
-  padding: 8px 16px;
-  background-color: #103565;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-bottom: 20px !important;
-}
-
-.button:hover {
-  background-color: #0a2f50;
+  font-size: 14px;
+  color: #aaa;
+  margin-bottom: 24px;
+  text-align: center;
 }
 
 .telegramContainer {
@@ -50,80 +34,107 @@
 }
 
 .welcomeText {
-  font-size: 18px;
+  font-size: 16px;
   color: white;
 }
 
 .telegramImage {
   border-radius: 50%;
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   object-fit: cover;
   margin-top: 10px;
 }
 
 .walletInfo {
   margin-top: 16px;
-  color: white;
-  font-size: 16px;
+  color: #ddd;
+  font-size: 14px;
   line-height: 1.4;
+  text-align: center;
+}
+
+.cryptoToggle {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 24px 0 16px;
+}
+
+.cryptoButton {
+  background: #1e1e1e;
+  color: white;
+  border: 1px solid #444;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.cryptoButton:hover {
+  background-color: #103565;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.actionButton {
+  background: #103565;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 90px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.actionButton:hover {
+  background-color: #0a2f50;
+}
+
+.button {
+  width: 100%;
+  padding: 12px;
+  background-color: #222;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.button:hover {
+  background-color: #103565;
 }
 
 .sectionTitle {
   color: #fff;
-  font-size: 20px;
-  margin-bottom: 16px;
+  font-size: 16px;
+  margin-top: 24px;
+  margin-bottom: 8px;
   text-align: center;
 }
 
-.walletSection {
-  background-color: #1a1a1a;
-  padding: 24px;
-  border-radius: 10px;
+.debugBox {
   width: 100%;
-  max-width: 500px;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
-  margin-bottom: 32px;
-}
-
-.walletInfoBox {
-  margin-bottom: 20px;
-  color: white;
-  font-size: 16px;
-  line-height: 1.5;
-  background-color: #2c2c2c;
-  padding: 16px;
+  background-color: #1a1a1a;
+  color: #0f0;
+  padding: 12px;
   border-radius: 6px;
-}
-
-.walletAddress {
-  display: block;
+  overflow-x: auto;
+  font-size: 12px;
+  white-space: pre-wrap;
   word-break: break-word;
-  color: #9ed8ff;
-  margin-top: 6px;
-  font-family: monospace;
-}
-
-.buttonGroup {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.walletButton {
-  flex: 1 1 45%;
-  padding: 10px 16px;
-  background-color: #103565;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
-}
-
-.walletButton:hover {
-  background-color: #0a2f50;
 }
