@@ -103,31 +103,31 @@
   gap: 10px;
   margin: 28px 0 16px;
 }
-
 .cryptoButton {
-  background: #111;
-  color: var(--text-main);
-  border: 1px solid #222;
-  padding: 8px 18px;
+  background: #1e1e1e;
+  color: white;
+  border: 1px solid #333;
+  padding: 8px 16px;
   border-radius: 20px;
-  font-size: 13.5px;
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.25s ease;
   box-shadow: 0 0 6px transparent;
+  font-weight: 500;
 }
 
 .cryptoButton:hover {
-  background-color: var(--secondary);
-  color: white;
-  box-shadow: 0 0 10px var(--secondary);
+  background-color: #103565;
+  box-shadow: 0 0 10px #3d9df6;
+  color: #fff;
 }
 
 .selectedCrypto {
-  background-color: var(--secondary);
-  border-color: var(--accent);
-  color: #fff;
-  font-weight: 600;
-  box-shadow: 0 0 12px var(--secondary);
+  background-color: #103565;
+  border-color: #3d9df6;
+  color: #3d9df6;
+  font-weight: bold;
+  box-shadow: 0 0 10px #3d9df6;
 }
 
 .actionButtons {
