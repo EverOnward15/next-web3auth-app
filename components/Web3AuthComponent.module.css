@@ -138,3 +138,39 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+
+.selectedCrypto {
+  background-color: #103565;
+  border-color: #0ff;
+  color: #0ff;
+  font-weight: bold;
+}
+
+.walletLabel {
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 4px;
+}
+
+.walletValue {
+  font-size: 13px;
+  color: #fff;
+  word-break: break-all;
+  margin-bottom: 16px;
+}
+
+.balanceLabel {
+  font-size: 14px;
+  color: #0f0;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  letter-spacing: 1px;
+}
+
+.balanceAmount {
+  font-size: 26px;
+  font-weight: 600;
+  color: #0f0;
+  text-shadow: 0 0 6px #0f0;
+}

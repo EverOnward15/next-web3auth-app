@@ -87,6 +87,24 @@ export default function Web3AuthComponent() {
   const [skipRestore, setSkipRestore] = useState(false);
   const [btcWallet, setBtcWallet] = useState(null); //
   const [btcBalance, setBtcBalance] = useState(null); //
+  const [selectedCrypto, setSelectedCrypto] = useState("BTC");
+
+  // You can later plug in USDT or ETH balances like this:
+  const balances = {
+    BTC: {
+      address: btcWallet?.address || "Unavailable",
+      balance:
+        btcBalance !== null ? `${btcBalance} tBTC` : "Loading...",
+    },
+    USDT: {
+      address: "0xUSDTExampleAddress",
+      balance: "12.50 USDT",
+    },
+    ETH: {
+      address: "0xETHExampleAddress",
+      balance: "0.034 ETH",
+    },
+  };
 
   /*Wallet UI functions*/
   // Automatically get wallet + balance if provider is availabl
@@ -348,17 +366,19 @@ export default function Web3AuthComponent() {
       <h2 className={styles.subtitle}>Tech: Web3Auth Core + Next.js</h2>
 
       {telegramUser && (
-        <div className={styles.telegramContainer}>
-          <p className={styles.welcomeText}>
-            Welcome, <strong>{telegramUser.first_name}</strong>!
+        <div className={styles.walletInfo}>
+          <p className={styles.walletLabel}>
+            <strong>{selectedCrypto} Address:</strong>
           </p>
-          {telegramUser.photo_url && (
-            <img
-              src={telegramUser.photo_url}
-              alt={`${telegramUser.first_name}'s profile`}
-              className={styles.telegramImage}
-            />
-          )}
+          <p className={styles.walletValue}>{balances[selectedCrypto].address}</p>
+
+          <p className={styles.balanceLabel}>Balance</p>
+          <p className={styles.balanceAmount}>
+            {balances[selectedCrypto].balance}
+          </p>
+        </div>
+      )}
+
 
           {btcWallet && (
             <div className={styles.walletInfo}>
@@ -375,9 +395,17 @@ export default function Web3AuthComponent() {
       )}
 
       <div className={styles.cryptoToggle}>
-        <button className={styles.cryptoButton}>BTC</button>
-        <button className={styles.cryptoButton}>USDT</button>
-        <button className={styles.cryptoButton}>ETH</button>
+        {["BTC", "USDT", "ETH"].map((crypto) => (
+          <button
+            key={crypto}
+            className={`${styles.cryptoButton} ${
+              selectedCrypto === crypto ? styles.selectedCrypto : ""
+            }`}
+            onClick={() => setSelectedCrypto(crypto)}
+          >
+            {crypto}
+          </button>
+        ))}
       </div>
 
       <div className={styles.actionButtons}>
