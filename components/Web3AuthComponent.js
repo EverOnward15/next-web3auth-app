@@ -1,4 +1,3 @@
-///Users/prathameshbhoite/Code/lotus-app/next-web3auth-app/components/Web3AuthComponent.js
 "use client";
 import { useEffect, useState } from "react";
 import { Web3Auth } from "@web3auth/single-factor-auth";
@@ -16,68 +15,30 @@ import * as secp from "@noble/secp256k1";
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
 
-/*------------------ Start of Code --------------------*/
-
-
-
-//Function to derive BTC Address
-async function deriveBTCAddress(privateKeyHex) {
-  const hex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
-
-  if (!/^[a-f0-9]{64}$/.test(hex)) {
-    throw new Error("privateKeyHex must be a 64-character hex string.");
-  }
-
-  const privateKeyBytes = Uint8Array.from(Buffer.from(hex, "hex"));
-
-  if (privateKeyBytes.length !== 32) {
-    throw new Error("Private key must be 32 bytes.");
-  }
-
-  // Get compressed public key (33 bytes)
-  const publicKey = await secp.getPublicKey(privateKeyBytes, true);
-
-  // Generate p2pkh Bitcoin testnet address
-  const { address } = payments.p2pkh({
-    pubkey: Buffer.from(publicKey),
-    network: networks.testnet, // Change to networks.bitcoin for mainnet
+// Derive BTC address from private key
+const deriveBTCAddress = async (privKey) => {
+  const privKeyBuffer = Buffer.from(privKey, "hex");
+  const pubkey = secp.getPublicKey(privKeyBuffer, true); // compressed
+  const { address } = payments.p2wpkh({
+    pubkey: Buffer.from(pubkey),
+    network: networks.testnet,
   });
-
   return address;
-}
+};
 
-//Function to call deriveBTCWallet
-async function deriveBTCWallet(provider) {
-  const privateKeyHex = await provider.request({ method: "private_key" });
-  const hex = privateKeyHex.startsWith("0x")
-    ? privateKeyHex.slice(2)
-    : privateKeyHex;
-
-  if (!/^[a-fA-F0-9]{64}$/.test(hex)) {
-    alert("❌ Invalid private key. Must be 64-character hex.");
-    return;
-  }
-
-  const existingWallet = localStorage.getItem("btc_wallet");
-
-  if (existingWallet) {
-    const wallet = JSON.parse(existingWallet);
-    alert("Wallet already exists:\n" + wallet.address);
-    return wallet;
-  }
-
+const deriveBTCWallet = async (provider) => {
   try {
-    const address = await deriveBTCAddress(hex);
-    const wallet = { address, privateKey: privateKeyHex };
-    localStorage.setItem("btc_wallet", JSON.stringify(wallet));
+    const privateKey = await provider.request({
+      method: "private_key",
+    });
 
-    alert("✅ BTC Testnet Wallet Created:\n" + address);
-    return wallet;
+    const address = await deriveBTCAddress(privateKey);
+    return { privateKey, address };
   } catch (err) {
-    alert("❌ Error deriving address: " + err.message);
+    console.error("Error deriving BTC wallet:", err);
     return null;
   }
-}
+};
 
 export default function Web3AuthComponent() {
   const [web3auth, setWeb3auth] = useState(null);
@@ -87,266 +48,193 @@ export default function Web3AuthComponent() {
   const [jwtToken, setJwtToken] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [skipRestore, setSkipRestore] = useState(false);
-  const [btcWallet, setBtcWallet] = useState(null); // 
-  const [btcBalance, setBtcBalance] = useState(null); // 
+  const [btcWallet, setBtcWallet] = useState(null);
+  const [btcBalance, setBtcBalance] = useState(null);
+  const [loadingBalance, setLoadingBalance] = useState(false);
 
-  /*Wallet UI functions*/
- // Automatically get wallet + balance if provider is availabl
-    useEffect(() => {
-    const fetchWalletAndBalance = async () => {
-      if (!provider || btcWallet) return;
-      const wallet = await deriveBTCWallet(provider);
-      if (!wallet) return;
-
-      const res = await fetch(
-        `https://blockstream.info/testnet/api/address/${wallet.address}`
-      );
-      const data = await res.json();
-
-      const balanceSatoshis =
-        data.chain_stats.funded_txo_sum - data.chain_stats.spent_txo_sum;
-      const balanceTbtc = balanceSatoshis / 1e8;
-
-      setBtcWallet(wallet);
-      setBtcBalance(balanceTbtc);
-    };
-
-    fetchWalletAndBalance();
-  }, [provider, btcWallet]);
-
-  //Initialise Telegram
+  // Get Telegram user info
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://telegram.org/js/telegram-web-app.js";
-    script.async = true;
-    script.onload = () => {
-      if (window.Telegram?.WebApp) {
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        const userData = tg.initDataUnsafe?.user;
-        if (userData) {
-          setTelegramUser(userData);
-          fetch("/api/token", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(userData),
-          })
-            .then((res) => res.json())
-            .then((data) => {
-              setJwtToken(data.token);
-              alert(data);
-              alert(data.token);
-              alert("JWT data received");
-              console.log("Received JWT Token:", data.token);
-            })
-            .catch((err) => console.error("JWT error:", err));
-        }
-      }
-    };
-    document.body.appendChild(script);
+    const tgUser = window?.Telegram?.WebApp?.initDataUnsafe?.user;
+    setTelegramUser(tgUser);
+
+    const initData = window?.Telegram?.WebApp?.initData || "";
+    const encoded = encodeURIComponent(initData);
+
+    if (encoded) {
+      fetch(`/api/auth?initData=${encoded}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.token) {
+            setJwtToken(data.token);
+          }
+        })
+        .catch((err) => console.error("JWT fetch error:", err));
+    }
   }, []);
 
-  //Initialise Web3Auth SDK
+  // Initialize Web3Auth instance
   useEffect(() => {
     const init = async () => {
-      try {
-        const privateKeyProvider = new CommonPrivateKeyProvider({
-          config: {
-            chainConfig: {
-              chainNamespace: CHAIN_NAMESPACES.OTHER,
-              chainId: "0x1", // Dummy, required
-              rpcTarget: "https://dummy-rpc.com", // Dummy RPC to bypass validation
-              displayName: "Bitcoin",
-              blockExplorerUrl: "https://blockstream.info/testnet/",
-              ticker: "BTC",
-              tickerName: "Bitcoin",
-            },
-          },
-        });
-
-        const web3authInstance = new Web3Auth({
-          clientId: CLIENT_ID,
-          web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
-          privateKeyProvider,
-        });
-
-        await web3authInstance.init();
-
-        setWeb3auth(web3authInstance);
-        // setProvider(web3authInstance.provider);
-      } catch (err) {
-        console.error("Web3Auth init error:", err);
-        alert("Web3 Auth init error: " + err.message);
-      }
+      const web3authInstance = new Web3Auth({
+        clientId: CLIENT_ID,
+        web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
+        chainConfig: {
+          chainNamespace: CHAIN_NAMESPACES.OTHER,
+        },
+      });
+      setWeb3auth(web3authInstance);
     };
     init();
   }, []);
 
+  // Restore session on load
   useEffect(() => {
-    if (!web3auth) {
-      return;
-    }
-  }, []);
+    const restoreSession = async () => {
+      if (!web3auth || skipRestore || !telegramUser || !jwtToken) return;
+
+      try {
+        const privKeyProvider = new CommonPrivateKeyProvider({
+          config: { chainConfig: { chainNamespace: CHAIN_NAMESPACES.OTHER } },
+        });
+
+        const sub = telegramUser?.id?.toString();
+        const idToken = jwtToken;
+
+        const provider = await web3auth.connect({
+          verifier: "telegram-x-login",
+          verifierId: sub,
+          idToken,
+          privateKeyProvider: privKeyProvider,
+        });
+
+        setProvider(provider);
+        const userInfo = await web3auth.getUserInfo();
+        setUser(userInfo);
+      } catch (error) {
+        console.log("Restore session failed:", error);
+      }
+    };
+
+    restoreSession();
+  }, [web3auth, telegramUser, jwtToken, skipRestore]);
+
+  // Create wallet and fetch balance
+  useEffect(() => {
+    const fetchWalletAndBalance = async () => {
+      if (!provider) return;
+      setLoadingBalance(true);
+      try {
+        const wallet = await deriveBTCWallet(provider);
+        if (!wallet) {
+          setLoadingBalance(false);
+          return;
+        }
+
+        const res = await fetch(
+          `https://blockstream.info/testnet/api/address/${wallet.address}`
+        );
+        const data = await res.json();
+
+        const balanceSatoshis =
+          data.chain_stats.funded_txo_sum - data.chain_stats.spent_txo_sum;
+        const balanceTbtc = balanceSatoshis / 1e8;
+
+        setBtcWallet(wallet);
+        setBtcBalance(balanceTbtc);
+      } catch (err) {
+        alert("Error fetching BTC balance: " + err.message);
+      } finally {
+        setLoadingBalance(false);
+      }
+    };
+
+    fetchWalletAndBalance();
+  }, [provider]);
 
   const handleLogin = async () => {
-    if (!web3auth || !jwtToken) return;
+    if (!web3auth || !telegramUser || !jwtToken) return;
 
     setIsLoggingIn(true);
     try {
-      // 1) connect() will prompt login and internally wire up the key provider
-      await web3auth.connect({
-        verifier: "telegram-jwt-verifier",
-        verifierId: telegramUser.id.toString(),
-        idToken: jwtToken,
+      const privKeyProvider = new CommonPrivateKeyProvider({
+        config: { chainConfig: { chainNamespace: CHAIN_NAMESPACES.OTHER } },
       });
-      // 2) the real provider lives on web3auth.provider
-      const pkProvider = web3auth.provider;
-      setProvider(pkProvider);
 
-      // (optional) show user info
+      const sub = telegramUser?.id?.toString();
+      const idToken = jwtToken;
+
+      const provider = await web3auth.connect({
+        verifier: "telegram-x-login",
+        verifierId: sub,
+        idToken,
+        privateKeyProvider: privKeyProvider,
+      });
+
+      setProvider(provider);
       const userInfo = await web3auth.getUserInfo();
       setUser(userInfo);
-    } catch (err) {
-      console.error("Login error:", err);
-      alert("Login failed: " + err.message);
+    } catch (error) {
+      alert("Login failed: " + error.message);
     } finally {
       setIsLoggingIn(false);
     }
   };
 
-  useEffect(() => {
-    const tryRestoreSession = async () => {
-       if (web3auth.connected) {
-        try {
-      const pkProvider = web3auth.provider;
-      alert(pkProvider);
-      setProvider(pkProvider);
-
-          const userInfo = await web3auth.getUserInfo();
-          setUser(userInfo);
-        } catch (err) {
-          console.error("Session restore failed:", err);
-          localStorage.clear(); // fallback
-        }
-      }
-    };
-    tryRestoreSession();
-  }, [web3auth]);
-
   const handleLogout = async () => {
-    // if (!web3auth) return;
-    // await web3auth.logout();
-    // Optional force cleanup
-    try {
-      localStorage.clear(); // Clear session
-      setSkipRestore(true);
-      setUser(null);
-      setProvider(null);
-      // setIsLoggingIn(null);
-      // setJwtToken(null);
-      await web3auth.logout();
-      await web3auth.init();
-      window.location.reload(); // <-- optional fallback
-    } catch (err) {
-      alert("Logout error: " + err);
-    }
+    setUser(null);
+    setProvider(null);
+    setSkipRestore(true);
+    setBtcWallet(null);
+    setBtcBalance(null);
   };
 
-  const handleGetAccounts = async () => {
-    if (!provider) return;
-
+  const handleRefreshBalance = async () => {
+    if (!btcWallet) {
+      alert("No BTC wallet found.");
+      return;
+    }
+    setLoadingBalance(true);
     try {
-      const wallet = await deriveBTCWallet(provider);
-
-      if (!wallet) {
-        alert("Failed to get BTC wallet.");
-        return;
-      }
-
-      // Fetch balance from blockstream API
       const res = await fetch(
-        `https://blockstream.info/testnet/api/address/${wallet.address}`
+        `https://blockstream.info/testnet/api/address/${btcWallet.address}`
       );
       if (!res.ok) {
-        alert("Failed to fetch address info");
+        alert("Failed to fetch balance info.");
+        setLoadingBalance(false);
         return;
       }
       const data = await res.json();
 
       const balanceSatoshis =
         data.chain_stats.funded_txo_sum - data.chain_stats.spent_txo_sum;
-
       const balanceTbtc = balanceSatoshis / 1e8;
-
-      // Update UI state
-      setBtcWallet(wallet);
       setBtcBalance(balanceTbtc);
     } catch (err) {
-      alert("Error fetching BTC info: " + err.message);
+      alert("Error refreshing balance: " + err.message);
+    } finally {
+      setLoadingBalance(false);
     }
   };
 
-  const checkPrivateKeyAndAddress = async () => {
-    if (!provider?.request) {
-      alert("❌ Provider not available.");
+  const handleBuyCrypto = () => {
+    alert("Buy BTC functionality coming soon.");
+  };
+
+  const handleReceiveCrypto = () => {
+    if (!btcWallet) {
+      alert("No wallet available to receive crypto.");
       return;
     }
-
-    try {
-      const privateKeyHex = await provider.request({ method: "private_key" });
-      alert("✅ Raw privateKeyHex:\n" + privateKeyHex);
-
-      if (!privateKeyHex || typeof privateKeyHex !== "string") {
-        throw new Error("Invalid private key returned.");
-      }
-
-      const hex = privateKeyHex.startsWith("0x")
-        ? privateKeyHex.slice(2)
-        : privateKeyHex;
-
-      alert("🧪 Cleaned hex (after removing 0x if present):\n" + hex);
-
-      if (!/^[a-fA-F0-9]+$/.test(hex)) {
-        alert("❌ Invalid hex string received.");
-        return;
-      }
-
-      if (hex.length !== 64) {
-        alert(
-          "⚠️ Expected 64-character hex, got " + hex.length + " characters."
-        );
-      }
-
-      const address = await deriveBTCAddress(hex);
-      alert("✅ BTC Testnet Address:\n" + address);
-    } catch (err) {
-      const errorMessage =
-        err?.message ||
-        (typeof err === "string" ? err : JSON.stringify(err, null, 2));
-      alert("❌ Error generating address:\n" + errorMessage);
-    }
+    alert(`Your BTC receiving address:\n${btcWallet.address}`);
   };
 
-  const checkUserLogin = async () => {
-    if (!web3auth) return alert("Web3Auth not initialized");
-
-    try {
-      if (web3auth.connected) {
-        const userInfo = await web3auth.getUserInfo();
-        console.log("User Info:", userInfo);
-        alert("User is logged in:\n" + JSON.stringify(userInfo, null, 2));
-      } else {
-        alert("User is NOT logged in.");
-      }
-    } catch (error) {
-      console.error("User info error:", error);
-      alert("Error getting user info.");
-    }
+  const handleSendCrypto = () => {
+    alert("Send BTC functionality coming soon.");
   };
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>MVP Wallet </h1>
+      <h1 className={styles.title}>MVP Wallet</h1>
       <h2 className={styles.subtitle}>Tech: Web3Auth Core + Next.js</h2>
 
       {telegramUser && (
@@ -361,78 +249,57 @@ export default function Web3AuthComponent() {
               className={styles.telegramImage}
             />
           )}
-
-          {btcWallet && (
-            <div className={styles.walletInfo}>
-              <p>
-                <strong>BTC Address:</strong> {btcWallet.address}
-              </p>
-              <p>
-                <strong>Balance:</strong>{" "}
-                {btcBalance !== null ? `${btcBalance} tBTC` : "Loading..."}
-              </p>
-            </div>
-          )}
         </div>
       )}
 
+  {/* Wallet Display Area */}
+  {btcWallet && (
+    <div className={styles.walletSection}>
+      <h3 className={styles.sectionTitle}>Your BTC Wallet</h3>
+      
+      <div className={styles.walletInfoBox}>
+        <p>
+          <strong>Address:</strong>
+          <code className={styles.walletAddress}>{btcWallet.address}</code>
+        </p>
+        <p>
+          <strong>Balance:</strong>{" "}
+          {loadingBalance
+            ? "Loading..."
+            : btcBalance !== null
+            ? `${btcBalance} tBTC`
+            : "N/A"}
+        </p>
+      </div>
 
-      {!provider?.request ? (
+      <div className={styles.buttonGroup}>
         <button
-          className={styles.button}
-          onClick={handleLogin}
-          disabled={isLoggingIn}
+          className={styles.walletButton}
+          onClick={handleRefreshBalance}
+          disabled={loadingBalance}
         >
-          {jwtToken
-            ? "Login via Telegram (JWT)"
-            : "Waiting for Telegram Login..."}
+          {loadingBalance ? "Refreshing..." : "Refresh Balance"}
+        </button>
+        <button className={styles.walletButton} onClick={handleBuyCrypto}>
+          Buy BTC
+        </button>
+        <button className={styles.walletButton} onClick={handleReceiveCrypto}>
+          Receive BTC
+        </button>
+        <button className={styles.walletButton} onClick={handleSendCrypto}>
+          Send BTC
+        </button>
+      </div>
+    </div>
+  )}
+
+
+      {!user ? (
+        <button onClick={handleLogin} disabled={isLoggingIn || !telegramUser || !jwtToken}>
+          {isLoggingIn ? "Logging in..." : "Login with Telegram"}
         </button>
       ) : (
-        <>
-          <button className={styles.button} onClick={handleGetAccounts}>
-            Get Address & Balance
-          </button>
-        </>
-      )}
-
-      <button className={styles.button} onClick={checkPrivateKeyAndAddress}>
-        Check BTC Private Key
-      </button>
-      <button className={styles.button} onClick={checkUserLogin}>
-        Check Web3Auth Login
-      </button>
-
-      <button className={styles.button} onClick={handleLogout}>
-        Logout from Web3 Auth
-      </button>
-
-      <br></br>
-      <button
-        className={styles.button}
-        onClick={() => deriveBTCWallet(provider)}
-      >
-        Create BTC Wallet Test
-      </button>
-
-      {user && (
-        <>
-          <h3>Web3Auth User Info:</h3>
-          <pre>{JSON.stringify(user, null, 2)}</pre>
-        </>
-      )}
-
-      {telegramUser && (
-        <>
-          <h3>Telegram User Info:</h3>
-          <pre>{JSON.stringify(telegramUser, null, 2)}</pre>
-        </>
-      )}
-
-      {jwtToken && (
-        <>
-          <h3>JWT Token:</h3>
-          <pre>{jwtToken}</pre>
-        </>
+        <button onClick={handleLogout}>Logout</button>
       )}
     </div>
   );
