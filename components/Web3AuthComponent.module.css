@@ -1,31 +1,33 @@
-/* components/Web3AuthComponent.module.css */
 .container {
   display: flex;
   flex-direction: column;
   margin: 0 auto;
   padding: 24px 16px;
-  background-color: #000;
+  background: radial-gradient(ellipse at center, #0b0b0b 0%, #000000 100%);
   border-radius: 12px;
   font-family: 'Helvetica Neue', sans-serif;
   min-height: 100vh;
   justify-content: flex-start;
   align-items: center;
   max-width: 400px;
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.1);
 }
 
 .title {
-  font-size: 26px;
-  color: #ffffff;
+  font-size: 28px;
+  color: #0f0;
   margin-bottom: 8px;
-  font-weight: bold;
+  font-weight: 700;
   text-align: center;
+  text-shadow: 0 0 8px #0f0;
 }
 
 .subtitle {
-  font-size: 14px;
-  color: #aaa;
+  font-size: 13px;
+  color: #00ffee;
   margin-bottom: 24px;
   text-align: center;
+  letter-spacing: 0.5px;
 }
 
 .telegramContainer {
@@ -34,8 +36,9 @@
 }
 
 .welcomeText {
-  font-size: 16px;
-  color: white;
+  font-size: 15px;
+  color: #aaa;
+  margin-bottom: 6px;
 }
 
 .telegramImage {
@@ -44,14 +47,51 @@
   height: 80px;
   object-fit: cover;
   margin-top: 10px;
+  box-shadow: 0 0 6px #0ff;
 }
 
 .walletInfo {
-  margin-top: 16px;
+  margin-top: 20px;
   color: #ddd;
   font-size: 14px;
   line-height: 1.4;
   text-align: center;
+  background-color: rgba(0, 255, 0, 0.05);
+  border: 1px solid #0f0;
+  padding: 16px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 340px;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.walletLabel {
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 4px;
+}
+
+.walletValue {
+  font-size: 13px;
+  color: #0ff;
+  word-break: break-all;
+  margin-bottom: 16px;
+  text-shadow: 0 0 4px #0ff;
+}
+
+.balanceLabel {
+  font-size: 13px;
+  color: #0f0;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  letter-spacing: 1px;
+}
+
+.balanceAmount {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0f0;
+  text-shadow: 0 0 8px #0f0;
 }
 
 .cryptoToggle {
@@ -64,16 +104,26 @@
 .cryptoButton {
   background: #1e1e1e;
   color: white;
-  border: 1px solid #444;
+  border: 1px solid #333;
   padding: 8px 16px;
   border-radius: 20px;
   font-size: 14px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 6px transparent;
 }
 
 .cryptoButton:hover {
   background-color: #103565;
+  box-shadow: 0 0 10px #0ff;
+}
+
+.selectedCrypto {
+  background-color: #103565;
+  border-color: #0ff;
+  color: #0ff;
+  font-weight: bold;
+  box-shadow: 0 0 10px #0ff;
 }
 
 .actionButtons {
@@ -85,51 +135,57 @@
 }
 
 .actionButton {
-  background: #103565;
-  color: white;
+  background: linear-gradient(145deg, #0f0 0%, #0a0 100%);
+  color: black;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 10px 16px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   min-width: 90px;
   text-align: center;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0 10px #0f0;
 }
 
 .actionButton:hover {
-  background-color: #0a2f50;
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px #0f0, 0 0 20px #0f0;
 }
 
 .button {
   width: 100%;
   padding: 12px;
-  background-color: #222;
-  color: white;
-  border: 1px solid #444;
+  background-color: #111;
+  color: #0ff;
+  border: 1px solid #0ff;
   border-radius: 8px;
   font-size: 14px;
   margin-bottom: 12px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 6px #0ff;
 }
 
 .button:hover {
   background-color: #103565;
+  color: #0ff;
+  box-shadow: 0 0 12px #0ff;
 }
 
 .sectionTitle {
-  color: #fff;
+  color: #0ff;
   font-size: 16px;
   margin-top: 24px;
   margin-bottom: 8px;
   text-align: center;
+  text-shadow: 0 0 4px #0ff;
 }
 
 .debugBox {
   width: 100%;
-  background-color: #1a1a1a;
+  background-color: #111;
   color: #0f0;
   padding: 12px;
   border-radius: 6px;
@@ -137,40 +193,5 @@
   font-size: 12px;
   white-space: pre-wrap;
   word-break: break-word;
-}
-
-
-.selectedCrypto {
-  background-color: #103565;
-  border-color: #0ff;
-  color: #0ff;
-  font-weight: bold;
-}
-
-.walletLabel {
-  font-size: 12px;
-  color: #aaa;
-  margin-bottom: 4px;
-}
-
-.walletValue {
-  font-size: 13px;
-  color: #fff;
-  word-break: break-all;
-  margin-bottom: 16px;
-}
-
-.balanceLabel {
-  font-size: 14px;
-  color: #0f0;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-  letter-spacing: 1px;
-}
-
-.balanceAmount {
-  font-size: 26px;
-  font-weight: 600;
-  color: #0f0;
-  text-shadow: 0 0 6px #0f0;
+  box-shadow: 0 0 6px #0f0;
 }
