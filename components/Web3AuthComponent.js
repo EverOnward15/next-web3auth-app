@@ -23,23 +23,37 @@ const CLIENT_ID =
 
 //Function to derive BTC Address
 async function deriveBTCAddress(privateKeyHex) {
-  const { bitcoin } = await initializeCrypto();
-  const hex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
+  try {
+    const { bitcoin } = await initializeCrypto();
+    const hex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
 
-  if (!/^[a-f0-9]{64}$/.test(hex)) {
-    throw new Error("privateKeyHex must be a 64-character hex string.");
+    if (!/^[a-f0-9]{64}$/.test(hex)) {
+      throw new Error("privateKeyHex must be a 64-character hex string.");
+    }
+
+    // Add this check in deriveBTCAddress
+if (!bitcoin.networks.testnet) {
+  throw new Error("Bitcoin testnet network not properly configured");
+}
+    const privateKeyBytes = Uint8Array.from(Buffer.from(hex, "hex"));
+    const secp = await import("@noble/secp256k1");
+    const publicKey = await secp.getPublicKey(privateKeyBytes, true);
+
+    // Create payment object directly without destructuring
+    const payment = bitcoin.payments.p2pkh({
+      pubkey: Buffer.from(publicKey),
+      network: bitcoin.networks.testnet,
+    });
+
+    if (!payment.address) {
+      throw new Error("Failed to generate address from public key");
+    }
+
+    return payment.address;
+  } catch (err) {
+    console.error("Address derivation error:", err);
+    throw new Error(`Failed to derive address: ${err.message}`);
   }
-
-  const privateKeyBytes = Uint8Array.from(Buffer.from(hex, "hex"));
-  const secp = await import("@noble/secp256k1");
-  const publicKey = await secp.getPublicKey(privateKeyBytes, true);
-
-  const { address } = bitcoin.payments.p2pkh({
-    pubkey: Buffer.from(publicKey),
-    network: bitcoin.networks.testnet,
-  });
-
-  return address;
 }
 //Function to call deriveBTCWallet
 async function deriveBTCWallet(provider) {
@@ -398,17 +412,21 @@ export default function Web3AuthComponent() {
     tryRestoreSession();
   }, [web3auth]);
 
-  useEffect(() => {
-    const verifySetup = async () => {
-      await initializeCrypto();
-      const { bitcoin } = await initializeCrypto();
+useEffect(() => {
+  const verifySetup = async () => {
+    try {
+      const { bitcoin, secp } = await initializeCrypto();
       console.log("Crypto Verification:", {
-        hmacReady: typeof bitcoin.crypto.hmacSha256Sync === "function",
-        bitcoinReady: !!bitcoin,
+        paymentsReady: typeof bitcoin.payments.p2pkh === 'function',
+        networksReady: !!bitcoin.networks.testnet,
+        secpReady: typeof secp.getPublicKey === 'function'
       });
-    };
-    verifySetup();
-  }, []);
+    } catch (err) {
+      console.error("Crypto verification failed:", err);
+    }
+  };
+  verifySetup();
+}, []);
 
   const handleLogout = async () => {
     // if (!web3auth) return;
@@ -419,6 +437,8 @@ export default function Web3AuthComponent() {
       setSkipRestore(true);
       setUser(null);
       setProvider(null);
+      // Add this at the start of deriveBTCWallet
+      localStorage.removeItem("btc_wallet"); // Temporary - remove after testin
       // setIsLoggingIn(null);
       // setJwtToken(null);
       await web3auth.logout();
