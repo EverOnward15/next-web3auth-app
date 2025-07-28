@@ -13,7 +13,6 @@ import axios from "axios";
 import * as secp from "@noble/secp256k1";
 import { hmac } from "@noble/hashes/hmac";
 import { sha256 } from "@noble/hashes/sha256";
-import { Buffer } from "buffer";
 import bitcoin from "bitcoinjs-lib";
 
 // Patch bitcoinjs-lib's hmacSha256Sync before using it
