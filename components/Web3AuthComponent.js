@@ -170,9 +170,8 @@ async function sendTestnetBTC({
           publicKey,
           network,
           sign: async (hash) => {
-            const sig = await secp.sign(hash, privateKey);
-            const derSig = secp.exportSignature(sig);
-            return Buffer.from(derSig);
+            const sig = await secp.sign(hash, privateKey, { der: true });
+            return Buffer.from(sig);
           },
         });
       }
