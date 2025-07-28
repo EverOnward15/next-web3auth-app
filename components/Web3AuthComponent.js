@@ -9,9 +9,10 @@ import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
-
+import axios from "axios";
 import { payments, networks } from "bitcoinjs-lib";
 import * as secp from "@noble/secp256k1";
+import { ECPair, networks, payments, Psbt } from "bitcoinjs-lib";
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
@@ -92,8 +93,6 @@ export default function Web3AuthComponent() {
   const [sendAmount, setSendAmount] = useState("");
   const [sendStatus, setSendStatus] = useState(null);
   const [showSendModal, setShowSendModal] = useState(false);
-
-
 
   // You can later plug in USDT or ETH balances like this:
   const balances = {
@@ -313,7 +312,7 @@ export default function Web3AuthComponent() {
     privateKeyHex,
     amountInBTC,
   }) {
-    const network = bitcoin.networks.testnet;
+    const network = networks.testnet;
     const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKeyHex, "hex"));
 
     // 1. Fetch UTXOs
@@ -321,10 +320,13 @@ export default function Web3AuthComponent() {
       `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
     );
     const utxos = utxosRes.data;
+    if (!utxosRes.data || utxosRes.data.length === 0) {
+      throw new Error("No UTXOs returned from API.");
+    }
 
     if (!utxos.length) throw new Error("No UTXOs available to spend.");
 
-    const txb = new bitcoin.Psbt({ network });
+    const txb = new Psbt({ network });
 
     let totalInput = 0;
     for (const utxo of utxos) {
@@ -423,41 +425,39 @@ export default function Web3AuthComponent() {
     }
   };
 
-const openSendModal = () => setShowSendModal(true);
-const closeSendModal = () => {
-  setShowSendModal(false);
-  setSendToAddress("");
-  setSendAmount("");
-  setSendStatus(null);
-};
+  const openSendModal = () => setShowSendModal(true);
+  const closeSendModal = () => {
+    setShowSendModal(false);
+    setSendToAddress("");
+    setSendAmount("");
+    setSendStatus(null);
+  };
 
-
-const handleSendCrypto = async () => {
-  setSendStatus("Sending...");
-  try {
-    if (selectedCrypto === "BTC") {
-      if (!btcWallet) {
-        alert("No BTC wallet available");
-        setSendStatus(null);
-        return;
+  const handleSendCrypto = async () => {
+    setSendStatus("Sending...");
+    try {
+      if (selectedCrypto === "BTC") {
+        if (!btcWallet) {
+          alert("No BTC wallet available");
+          setSendStatus(null);
+          return;
+        }
+        // Call your send BTC function here
+        // You'll need to implement or call your sendTestnetBTC function
+        await sendTestnetBTC({
+          fromAddress: btcWallet.address,
+          toAddress: sendToAddress.trim(),
+          privateKeyHex: btcWallet.privateKey,
+          amountInBTC: parseFloat(sendAmount),
+        });
+        setSendStatus("BTC sent successfully!");
+      } else {
+        setSendStatus(`Sending ${selectedCrypto} is not implemented yet.`);
       }
-      // Call your send BTC function here
-      // You'll need to implement or call your sendTestnetBTC function
-      await sendTestnetBTC({
-        fromAddress: btcWallet.address,
-        toAddress: sendToAddress.trim(),
-        privateKeyHex: btcWallet.privateKey,
-        amountInBTC: parseFloat(sendAmount),
-      });
-      setSendStatus("BTC sent successfully!");
-    } else {
-      setSendStatus(`Sending ${selectedCrypto} is not implemented yet.`);
+    } catch (err) {
+      setSendStatus(`Error sending ${selectedCrypto}: ${err.message}`);
     }
-  } catch (err) {
-    setSendStatus(`Error sending ${selectedCrypto}: ${err.message}`);
-  }
-};
-
+  };
 
   return (
     <div className={styles.container}>
@@ -601,8 +601,8 @@ const handleSendCrypto = async () => {
         </>
       )}
 
-       {/* Send button opens the modal */}
-        {showSendModal && (
+      {/* Send button opens the modal */}
+      {showSendModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
             <h2>Send {selectedCrypto}</h2>
