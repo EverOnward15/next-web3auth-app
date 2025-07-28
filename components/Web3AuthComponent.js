@@ -246,6 +246,17 @@ export default function Web3AuthComponent() {
     },
   };
 
+  useEffect(() => {
+  const verifyCrypto = async () => {
+    const bitcoin = await import('bitcoinjs-lib');
+    console.log('BitcoinJS crypto available:', {
+      sha256: typeof bitcoin.crypto.sha256,
+      hmac: typeof bitcoin.crypto.hmacSha256Sync
+    });
+  };
+  verifyCrypto();
+}, []);
+
   /*Wallet UI functions*/
   // Automatically get wallet + balance if provider is availabl
   useEffect(() => {
