@@ -389,6 +389,8 @@ export default function Web3AuthComponent() {
     return broadcastRes.data; // returns txid
   }
 
+
+
   const checkPrivateKeyAndAddress = async () => {
     if (!provider?.request) {
       alert("❌ Provider not available.");
@@ -477,14 +479,15 @@ export default function Web3AuthComponent() {
         setSendStatus(`Sending ${selectedCrypto} is not implemented yet.`);
       }
     } catch (err) {
-      alert("BTC send error:" + (err?.message || err?.toString() || "Unknown error"));
-      const errorMessage = err?.message || err?.toString?.() || "Unknown error";
-      setSendStatus(`Error sending ${selectedCrypto}: ${errorMessage}`);
-    }
+    let errorMessage;
+    try {
+      errorMessage = err?.message || (typeof err?.toString === "function" ? err.toString() : null) || "Unknown error";
+    } catch (e) {
+  errorMessage = "Unknown error";
+  }
+  alert("BTC send error: " + errorMessage);
+  setSendStatus(`Error sending ${selectedCrypto}: ${errorMessage}`);
   };
-
-
-
 
 
   return (
