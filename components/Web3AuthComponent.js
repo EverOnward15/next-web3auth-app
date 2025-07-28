@@ -157,6 +157,7 @@ async function sendTestnetBTC({
     const signer = {
       publicKey,
       sign: async (hash) => {
+          alert("signing with hmacSha256Sync:" + typeof secp.utils.hmacSha256Sync);
         const sig = await secp.sign(hash, privateKey); // remove { der: true }
         const derSig = secp.Signature.fromCompact(sig).toDERHex();
         return Buffer.from(derSig, "hex");
@@ -507,6 +508,10 @@ export default function Web3AuthComponent() {
   };
 
   const handleSendCrypto = async () => {
+    if (!cryptoReady) {
+  alert("Crypto modules not initialized yet. Please wait a few seconds.");
+  return;
+}
     setSendStatus("Sending...");
     try {
       if (selectedCrypto === "BTC") {
