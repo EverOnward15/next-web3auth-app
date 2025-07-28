@@ -467,11 +467,17 @@ export default function Web3AuthComponent() {
         setSendStatus(`Sending ${selectedCrypto} is not implemented yet.`);
       }
     } catch (err) {
-      alert("BTC send error:" + err);
+      alert("BTC send error:" + (err?.message || err?.toString() || "Unknown error"));
       const errorMessage = err?.message || err?.toString?.() || "Unknown error";
       setSendStatus(`Error sending ${selectedCrypto}: ${errorMessage}`);
     }
   };
+
+
+  window.onerror = function(message, source, lineno, colno, error) {
+  console.error("Global error caught:", { message, source, lineno, colno, error });
+};
+
 
   return (
     <div className={styles.container}>
