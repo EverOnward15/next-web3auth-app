@@ -9,7 +9,7 @@ import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
-import { secp } from '../components/patchSecp256k1.js';
+import { secp } from './patchSecp256k1';
 import axios from "axios";
 import * as bitcoin from "bitcoinjs-lib";
 const { payments, networks } = bitcoin;
