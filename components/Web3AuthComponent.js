@@ -10,14 +10,10 @@ if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
 import axios from "axios";
+import * as bitcoin from "bitcoinjs-lib";
+const { payments, networks } = bitcoin;
+
 import * as secp from "@noble/secp256k1";
-import { hmac } from "@noble/hashes/hmac";
-import { sha256 } from "@noble/hashes/sha256";
-import bitcoin from "bitcoinjs-lib";
-
-// Now you can safely use bitcoinjs-lib's payments, networks, Psbt, etc.
-const { payments, networks, Psbt, Transaction } = bitcoin;
-
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
