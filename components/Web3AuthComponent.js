@@ -38,8 +38,7 @@ async function deriveBTCAddress(privateKeyHex) {
   if (privateKeyBytes.length !== 32) {
     throw new Error("Private key must be 32 bytes.");
   }
-  
-  const secp = await import("@noble/secp256k1");
+
   // Get compressed public key (33 bytes)
   const publicKey = await secp.getPublicKey(privateKeyBytes, true);
 
@@ -96,8 +95,7 @@ async function sendTestnetBTC({
   amountInBTC,
 }) {
   try {
-    const { bitcoin } = await initializeCrypto();
-    const secp = await import("@noble/secp256k1");
+    const { bitcoin, secp } = await initializeCrypto();
     const { Psbt, networks, payments } = bitcoin;
     const network = networks.testnet;
 
@@ -171,7 +169,8 @@ const signer = {
 
     try {
       for (let i = 0; i < psbt.inputCount; i++) {
-        await psbt.signInputAsync(i, signer);;
+        await psbt.signInputAsync(i, signer);
+;
       }
       psbt.validateSignaturesOfAllInputs();
       psbt.finalizeAllInputs();
