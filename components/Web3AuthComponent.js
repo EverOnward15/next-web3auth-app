@@ -24,7 +24,7 @@ const CLIENT_ID =
 
 //Function to derive BTC Address
 async function deriveBTCAddress(privateKeyHex) {
- const { bitcoin, secp } = await initializeCrypto();
+  const { bitcoin, secp } = await initializeCrypto();
   const { payments, networks } = bitcoin;
   const hex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
 
@@ -90,7 +90,7 @@ async function sendTestnetBTC({
   amountInBTC,
 }) {
   try {
-const { bitcoin, secp } = await initializeCrypto();
+    const { bitcoin, secp } = await initializeCrypto();
     const { Psbt, networks, payments } = bitcoin;
     const network = networks.testnet;
 
@@ -154,14 +154,14 @@ const { bitcoin, secp } = await initializeCrypto();
     }
 
     // 4. Sign all inputs using noble-secp256k1
-const signer = {
-  publicKey,
-  sign: async (hash) => {
-    const sig = await secp.sign(hash, privateKey); // remove { der: true }
-    const derSig = secp.Signature.fromCompact(sig).toDERHex();
-    return Buffer.from(derSig, "hex");
-  },
-};
+    const signer = {
+      publicKey,
+      sign: async (hash) => {
+        const sig = await secp.sign(hash, privateKey); // remove { der: true }
+        const derSig = secp.Signature.fromCompact(sig).toDERHex();
+        return Buffer.from(derSig, "hex");
+      },
+    };
 
     try {
       for (let i = 0; i < psbt.inputCount; i++) {
@@ -229,16 +229,6 @@ export default function Web3AuthComponent() {
     },
   };
 
-  useEffect(() => {
-    const verifyCrypto = async () => {
-      const bitcoin = await import("bitcoinjs-lib");
-      console.log("BitcoinJS crypto available:", {
-        sha256: typeof bitcoin.crypto.sha256,
-        hmac: typeof bitcoin.crypto.hmacSha256Sync,
-      });
-    };
-    verifyCrypto();
-  }, []);
 
   /*Wallet UI functions*/
   // Automatically get wallet + balance if provider is availabl
