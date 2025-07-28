@@ -29,12 +29,14 @@ import * as bitcoin from "bitcoinjs-lib";
 // Patch bitcoinjs-lib crypto functions ONLY on the client
 if (typeof window !== "undefined") {
   bitcoin.crypto.sha256 = (buffer) => Buffer.from(sha256(buffer));
-  bitcoin.crypto.hash256 = (buffer) =>
-    Buffer.from(sha256(sha256(buffer)));
+  bitcoin.crypto.hash256 = (buffer) => Buffer.from(sha256(sha256(buffer)));
   bitcoin.crypto.ripemd160 = (buffer) => Buffer.from(ripemd160(buffer));
-  bitcoin.crypto.hmacSha256 = (key, buffer) =>
-    Buffer.from(hmac(sha256, key, buffer));
+  bitcoin.crypto.hmacSha256 = (key, buffer) => Buffer.from(hmac(sha256, key, buffer));
+  
+  // Add this line to patch the sync function
+  bitcoin.crypto.hmacSha256Sync = (key, buffer) => Buffer.from(hmac(sha256, key, buffer));
 }
+
 
 // Optional: destructure if you're using payments/networks
 const { payments, networks } = bitcoin;
