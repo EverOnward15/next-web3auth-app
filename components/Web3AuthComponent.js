@@ -17,9 +17,8 @@ if (typeof window !== "undefined") {
 }
 import * as secp from "@noble/secp256k1";
 
-import * as bitcoin from "bitcoinjs-lib";
-// Destructure if you need them
-const { payments, networks } = bitcoin;
+// import * as bitcoin from "bitcoinjs-lib";
+// const { payments, networks } = bitcoin;
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
@@ -42,6 +41,10 @@ async function deriveBTCAddress(privateKeyHex) {
 
   // Get compressed public key (33 bytes)
   const publicKey = await secp.getPublicKey(privateKeyBytes, true);
+
+  const { bitcoin } = await initializeCrypto();
+  const { payments, networks } = bitcoin;
+
 
   // Generate p2pkh Bitcoin testnet address
   const { address } = payments.p2pkh({
