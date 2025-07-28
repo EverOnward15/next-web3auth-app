@@ -315,21 +315,24 @@ export default function Web3AuthComponent() {
   async function sendTestnetBTC({
     fromAddress,
     toAddress,
-    privateKeyHex,
+    privateKeyHex, // WIF??
     amountInBTC,
   }) {
     const network = bitcoin.networks.testnet;
-    const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKeyHex, "hex"));
+    
+    // const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKeyHex, "hex"));
+    // Use fromWIF if your private key is in WIF format
+    const keyPair = ECPair.fromWIF(privateKeyHex, network);
 
-    // Ensure the key matches the address
-    const { address } = bitcoin.payments.p2pkh({
+    // Optional safety check
+    const { address: derivedAddress } = payments.p2pkh({
       pubkey: keyPair.publicKey,
       network,
     });
-
-    if (address !== fromAddress) {
+    if (derivedAddress !== fromAddress) {
       throw new Error("Private key does not match fromAddress");
     }
+    
     // 1. Fetch UTXOs
     const utxosRes = await axios.get(
       `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
