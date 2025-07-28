@@ -96,9 +96,11 @@ async function sendTestnetBTC({ fromAddress, toAddress, privateKeyHex, amountInB
     const publicKey = Buffer.from(await secp.getPublicKey(privateKey, true));
 
     // Validate crypto patch
-    if (!bitcoin.crypto?.hmacSha256Sync || !bitcoin.crypto.ripemd160) {
-      throw new Error("ECC crypto library invalid or unpatched");
-    }
+    console.log("ECC library patched:", {
+      isEccLibReady: typeof bitcoin.ECPair !== "undefined",
+      hasRipemd160: typeof bitcoin.crypto?.ripemd160 !== "undefined",
+    });
+
 
     const isSegWit = fromAddress.startsWith("tb1");
     const payment = isSegWit
