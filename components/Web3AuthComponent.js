@@ -318,11 +318,18 @@ export default function Web3AuthComponent() {
     privateKeyHex, // WIF??
     amountInBTC,
   }) {
-    const network = bitcoin.networks.testnet;
+
+    alert(fromAddress);
+    alert(toAddress);
+    alert(privateKeyHex);
+    alert(amountInBTC);
+
+
+    const network = networks.testnet;
     
-    // const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKeyHex, "hex"));
+    const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKeyHex, "hex"));
     // Use fromWIF if your private key is in WIF format
-    const keyPair = ECPair.fromWIF(privateKeyHex, network);
+    // const keyPair = ECPair.fromWIF(privateKeyHex, network);
 
     // Optional safety check
     const { address: derivedAddress } = payments.p2pkh({
@@ -332,7 +339,7 @@ export default function Web3AuthComponent() {
     if (derivedAddress !== fromAddress) {
       throw new Error("Private key does not match fromAddress");
     }
-    
+
     // 1. Fetch UTXOs
     const utxosRes = await axios.get(
       `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
@@ -477,9 +484,7 @@ export default function Web3AuthComponent() {
   };
 
 
-  window.onerror = function(message, source, lineno, colno, error) {
-  console.error("Global error caught:", { message, source, lineno, colno, error });
-};
+
 
 
   return (
