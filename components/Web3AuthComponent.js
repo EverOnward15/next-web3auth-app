@@ -1,8 +1,10 @@
 ///Users/prathameshbhoite/Code/lotus-app/next-web3auth-app/components/Web3AuthComponent.js
 "use client";
-import crypto from "crypto";
-window.crypto = crypto;           // makes crypto.getRandomValues, etc. available
-window.crypto.subtle = crypto.webcrypto.subtle;
+// 2) noble-secp256k1 + HMAC patch
+import * as secp from "@noble/secp256k1";
+import { sha256 } from "@noble/hashes/sha256";
+import { hmac } from "@noble/hashes/hmac";
+secp.utils.hmacSha256Sync = (key, ...msgs) => hmac(sha256, key, ...msgs);
 
 import { useEffect, useState } from "react";
 import styles from "../components/Web3AuthComponent.module.css";
@@ -27,16 +29,11 @@ if (typeof window !== "undefined") {
 // Patch noble HMAC for signing
 // secp.utils.hmacSha256Sync = (key, ...msgs) => hmac(sha256, key, ...msgs);
 
-// 2) noble-secp256k1 + HMAC patch
-import * as secp from "@noble/secp256k1";
-import { sha256 } from "@noble/hashes/sha256";
-import { hmac } from "@noble/hashes/hmac";
-secp.utils.hmacSha256Sync = (key, ...msgs) => hmac(sha256, key, ...msgs);
 
 
 
 
-
+import crypto from "crypto";            // polyfilled by your webpack fallback
 // bitcoinjs-lib
 import * as bitcoin from "bitcoinjs-lib";
 bitcoin.crypto.hmacSha256Sync = (key, message) =>
