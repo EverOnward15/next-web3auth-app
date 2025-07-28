@@ -103,7 +103,7 @@ export default function Web3AuthComponent() {
   const balances = {
     BTC: {
       address: btcWallet?.address || "Unavailable",
-      balance: btcBalance !== null ? `${btcBalance} tBTC` : "Loading...",
+      balance: btcBalance !== null ? `${btcBalance} BTC` : "Loading...",
     },
     USDT: {
       address: "0xUSDTExampleAddress",
@@ -612,6 +612,7 @@ const handleSendCrypto = async () => {
             <h2>Send {selectedCrypto}</h2>
             <label>
               Recipient Address:
+              <br></br>
               <input
                 type="text"
                 value={sendToAddress}
@@ -622,6 +623,7 @@ const handleSendCrypto = async () => {
             </label>
             <label>
               Amount:
+              <br></br>
               <input
                 type="number"
                 value={sendAmount}
