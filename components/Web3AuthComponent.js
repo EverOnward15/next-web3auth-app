@@ -38,19 +38,18 @@ async function deriveBTCAddress(privateKeyHex, bitcoin, secp) {
   }
 
   // Get compressed public key (33 bytes)
-  const publicKey = await secp.getPublicKey(privateKeyBytes, true);
-
-  // Generate p2pkh Bitcoin testnet address
-  const { address } = payments.p2pkh({
+  const privateKey = secp.utils.hexToBytes(privateKeyHex);
+  const publicKey = secp.getPublicKey(privateKey, true); // compressed = true
+  const { address } = payments.p2wpkh({
     pubkey: Buffer.from(publicKey),
-    network: networks.testnet, // Change to networks.bitcoin for mainnet
+    network: networks.testnet,
   });
 
   return address;
 }
 
 //Function to call deriveBTCWallet
-async function deriveBTCWallet(provider) {
+async function deriveBTCWallet(provider, bitcoin, secp) {
   const privateKeyHex = await provider.request({ method: "private_key" });
   const hex = privateKeyHex.startsWith("0x")
     ? privateKeyHex.slice(2)
@@ -72,8 +71,8 @@ async function deriveBTCWallet(provider) {
   try {
     const address = await deriveBTCAddress(
       hex,
-      cryptoInstance.bitcoin,
-      cryptoInstance.secp
+      bitcoin,
+      secp
     );
     const wallet = { address, privateKey: privateKeyHex };
     localStorage.setItem("btc_wallet", JSON.stringify(wallet));
@@ -87,9 +86,7 @@ async function deriveBTCWallet(provider) {
 }
 
 async function sendTestnetBTC(
-  { fromAddress, toAddress, privateKeyHex, amountInBTC },
-  bitcoin,
-  secp
+  { fromAddress, toAddress, privateKeyHex, amountInBTC, bitcoin, secp }
 ) {
   try {
     const { Psbt, networks, payments } = bitcoin;
@@ -488,7 +485,7 @@ export default function Web3AuthComponent() {
         );
       }
 
-      const address = await deriveBTCAddress(hex);
+      const address = await deriveBTCAddress(hex, cryptoInstance.bitcoin, cryptoInstance.secp);
       alert("✅ BTC Testnet Address:\n" + address);
     } catch (err) {
       const errorMessage =
@@ -538,16 +535,15 @@ export default function Web3AuthComponent() {
         }
         // Call your send BTC function here
         // You'll need to implement or call your sendTestnetBTC function
-        await sendTestnetBTC(
-          {
-            fromAddress: btcWallet.address,
-            toAddress: sendToAddress.trim(),
-            privateKeyHex: btcWallet.privateKey,
-            amountInBTC: parseFloat(sendAmount),
-          },
-          bitcoin,
-          secp
-        );
+      await sendTestnetBTC({
+        fromAddress: btcWallet.address,
+        toAddress: sendToAddress.trim(),
+        privateKeyHex: btcWallet.privateKey,
+        amountInBTC: parseFloat(sendAmount),
+        bitcoin: cryptoInstance.bitcoin,
+        secp: cryptoInstance.secp,
+      });
+
         setSendStatus("BTC sent successfully!");
       } else {
         setSendStatus(`Sending ${selectedCrypto} is not implemented yet.`);
@@ -567,8 +563,10 @@ export default function Web3AuthComponent() {
     }
   };
 
+  if (!cryptoReady) return <div>Loading wallet engine…</div>;
+
   return (
-   
+  
     <div className={styles.container}>
       <h1 className={styles.title}>MVP Wallet</h1>
       <h2 className={styles.subtitle}>Tech: Web3Auth Core + Next.js</h2>
