@@ -157,9 +157,23 @@ async function sendTestnetBTC({ fromAddress, toAddress, privateKeyHex, amountInB
       },
     };
 
-    await psbt.signAllInputs(signer);
-    psbt.validateSignaturesOfAllInputs(signer);
-    psbt.finalizeAllInputs();
+try {
+  for (let i = 0; i < psbt.inputCount; i++) {
+    await psbt.signInputAsync(i, {
+      publicKey,
+      sign: async (hash) => {
+        const sig = await secp.sign(hash, privateKey);
+        return Buffer.from(sig);
+      },
+    });
+  }
+  psbt.validateSignaturesOfAllInputs();
+  psbt.finalizeAllInputs();
+} catch (signErr) {
+  console.error("Signing error:", signErr);
+  throw new Error("Signing failed: " + signErr.message);
+}
+
 
     const rawTx = psbt.extractTransaction().toHex();
 
