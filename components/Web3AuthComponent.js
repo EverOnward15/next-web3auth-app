@@ -92,6 +92,12 @@ export default function Web3AuthComponent() {
   const [btcWallet, setBtcWallet] = useState(null); //
   const [btcBalance, setBtcBalance] = useState(null); //
   const [selectedCrypto, setSelectedCrypto] = useState("BTC");
+  const [sendToAddress, setSendToAddress] = useState("");
+  const [sendAmount, setSendAmount] = useState("");
+  const [sendStatus, setSendStatus] = useState(null);
+  const [showSendModal, setShowSendModal] = useState(false);
+
+
 
   // You can later plug in USDT or ETH balances like this:
   const balances = {
@@ -421,6 +427,42 @@ export default function Web3AuthComponent() {
     }
   };
 
+const openSendModal = () => setShowSendModal(true);
+const closeSendModal = () => {
+  setShowSendModal(false);
+  setSendToAddress("");
+  setSendAmount("");
+  setSendStatus(null);
+};
+
+
+const handleSendCrypto = async () => {
+  setSendStatus("Sending...");
+  try {
+    if (selectedCrypto === "BTC") {
+      if (!btcWallet) {
+        alert("No BTC wallet available");
+        setSendStatus(null);
+        return;
+      }
+      // Call your send BTC function here
+      // You'll need to implement or call your sendTestnetBTC function
+      await sendTestnetBTC({
+        fromAddress: btcWallet.address,
+        toAddress: sendToAddress.trim(),
+        privateKeyHex: btcWallet.privateKey,
+        amountInBTC: parseFloat(sendAmount),
+      });
+      setSendStatus("BTC sent successfully!");
+    } else {
+      setSendStatus(`Sending ${selectedCrypto} is not implemented yet.`);
+    }
+  } catch (err) {
+    setSendStatus(`Error sending ${selectedCrypto}: ${err.message}`);
+  }
+};
+
+
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>MVP Wallet</h1>
@@ -471,7 +513,9 @@ export default function Web3AuthComponent() {
 
       <div className={styles.actionButtons}>
         <button className={styles.actionButton}>Buy</button>
-        <button className={styles.actionButton}>Send</button>
+        <button onClick={openSendModal} className={styles.sendButton}>
+          Send
+        </button>
         <button className={styles.actionButton}>Receive</button>
       </div>
 
@@ -562,4 +606,46 @@ export default function Web3AuthComponent() {
       )}
     </div>
   );
+
+
+
+  //Modal that opens with Send button
+  {showSendModal && (
+  <div className={styles.modalOverlay}>
+    <div className={styles.modal}>
+      <h2>Send {selectedCrypto}</h2>
+      <label>
+        Recipient Address:
+        <input
+          type="text"
+          value={sendToAddress}
+          onChange={(e) => setSendToAddress(e.target.value)}
+          placeholder="Enter address"
+          className={styles.input}
+        />
+      </label>
+      <label>
+        Amount:
+        <input
+          type="number"
+          value={sendAmount}
+          onChange={(e) => setSendAmount(e.target.value)}
+          placeholder="Enter amount"
+          min="0"
+          step="any"
+          className={styles.input}
+        />
+      </label>
+      <div className={styles.buttonRow}>
+        <button onClick={handleSendCrypto} className={styles.sendButton}>
+          Send
+        </button>
+        <button onClick={closeSendModal} className={styles.cancelButton}>
+          Cancel
+        </button>
+      </div>
+      {sendStatus && <p className={styles.sendStatus}>{sendStatus}</p>}
+    </div>
+  </div>
+)}
 }
