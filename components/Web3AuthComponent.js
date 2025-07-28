@@ -1,5 +1,6 @@
 ///Users/prathameshbhoite/Code/lotus-app/next-web3auth-app/components/Web3AuthComponent.js
 "use client";
+import { initializeCrypto } from "../lib/cryptoInit";
 
 import { useEffect, useState } from "react";
 import styles from "../components/Web3AuthComponent.module.css";
@@ -14,11 +15,6 @@ import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
-import * as secp from "@noble/secp256k1";
-
-import * as bitcoin from "bitcoinjs-lib";
-// Destructure if you need them
-const { payments, networks } = bitcoin;
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
@@ -27,6 +23,7 @@ const CLIENT_ID =
 
 //Function to derive BTC Address
 async function deriveBTCAddress(privateKeyHex) {
+  const { bitcoin } = await initializeCrypto();
   const hex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
 
   if (!/^[a-f0-9]{64}$/.test(hex)) {
@@ -34,23 +31,16 @@ async function deriveBTCAddress(privateKeyHex) {
   }
 
   const privateKeyBytes = Uint8Array.from(Buffer.from(hex, "hex"));
-
-  if (privateKeyBytes.length !== 32) {
-    throw new Error("Private key must be 32 bytes.");
-  }
-
-  // Get compressed public key (33 bytes)
+  const secp = await import("@noble/secp256k1");
   const publicKey = await secp.getPublicKey(privateKeyBytes, true);
 
-  // Generate p2pkh Bitcoin testnet address
-  const { address } = payments.p2pkh({
+  const { address } = bitcoin.payments.p2pkh({
     pubkey: Buffer.from(publicKey),
-    network: networks.testnet, // Change to networks.bitcoin for mainnet
+    network: bitcoin.networks.testnet,
   });
 
   return address;
 }
-
 //Function to call deriveBTCWallet
 async function deriveBTCWallet(provider) {
   const privateKeyHex = await provider.request({ method: "private_key" });
@@ -92,23 +82,20 @@ async function sendTestnetBTC({
 }) {
   try {
     // Dynamically import modules
-    const secp = await import("@noble/secp256k1");
-    const bitcoin = await import("bitcoinjs-lib");
-    
     // Access components safely
-    const networks = bitcoin.networks;
-    const payments = bitcoin.payments;
-    const Psbt = bitcoin.Psbt;
-    const Transaction = bitcoin.Transaction;
-
-    // Verify crypto functions are available
-    if (!bitcoin.crypto?.hmacSha256Sync) {
-      throw new Error("bitcoinjs-lib crypto functions not properly initialized");
-    }
-
+    // Initialize crypto first
+    const { bitcoin, secp } = await initializeCrypto();
+    const { networks, payments, Psbt, Transaction } = bitcoin;
     const network = networks.testnet;
     const privateKey = Buffer.from(privateKeyHex.replace(/^0x/, ""), "hex");
     const publicKey = Buffer.from(await secp.getPublicKey(privateKey, true));
+
+    // Verify crypto functions are available
+    if (!bitcoin.crypto?.hmacSha256Sync) {
+      throw new Error(
+        "bitcoinjs-lib crypto functions not properly initialized"
+      );
+    }
 
     const isSegWit = fromAddress.startsWith("tb1");
     const payment = isSegWit
@@ -175,7 +162,7 @@ async function sendTestnetBTC({
     // Sign all inputs
     for (let i = 0; i < psbt.inputCount; i++) {
       const sighashType = Transaction.SIGHASH_ALL;
-      
+
       // Get the sighash
       const sighash = psbt.__CACHE.__TX.hashForSignature(
         i,
@@ -208,11 +195,14 @@ async function sendTestnetBTC({
 
     return broadcast.data;
   } catch (err) {
-    console.error("Detailed send error:", err);
+        console.error("Full error details:", {
+      message: err.message,
+      stack: err.stack,
+      cause: err.cause
+    });
     throw new Error(`Failed to send BTC: ${err.message}`);
   }
 }
-
 
 export default function Web3AuthComponent() {
   const [web3auth, setWeb3auth] = useState(null);
@@ -229,6 +219,14 @@ export default function Web3AuthComponent() {
   const [sendAmount, setSendAmount] = useState("");
   const [sendStatus, setSendStatus] = useState(null);
   const [showSendModal, setShowSendModal] = useState(false);
+  const [cryptoReady, setCryptoReady] = useState(false);
+
+  useEffect(() => {
+    initializeCrypto().then(() => {
+      console.log("Crypto fully initialized");
+      setCryptoReady(true);
+    });
+  }, []);
 
   // You can later plug in USDT or ETH balances like this:
   const balances = {
@@ -247,15 +245,15 @@ export default function Web3AuthComponent() {
   };
 
   useEffect(() => {
-  const verifyCrypto = async () => {
-    const bitcoin = await import('bitcoinjs-lib');
-    console.log('BitcoinJS crypto available:', {
-      sha256: typeof bitcoin.crypto.sha256,
-      hmac: typeof bitcoin.crypto.hmacSha256Sync
-    });
-  };
-  verifyCrypto();
-}, []);
+    const verifyCrypto = async () => {
+      const bitcoin = await import("bitcoinjs-lib");
+      console.log("BitcoinJS crypto available:", {
+        sha256: typeof bitcoin.crypto.sha256,
+        hmac: typeof bitcoin.crypto.hmacSha256Sync,
+      });
+    };
+    verifyCrypto();
+  }, []);
 
   /*Wallet UI functions*/
   // Automatically get wallet + balance if provider is availabl
@@ -399,6 +397,18 @@ export default function Web3AuthComponent() {
     };
     tryRestoreSession();
   }, [web3auth]);
+
+  useEffect(() => {
+    const verifySetup = async () => {
+      await initializeCrypto();
+      const { bitcoin } = await initializeCrypto();
+      console.log("Crypto Verification:", {
+        hmacReady: typeof bitcoin.crypto.hmacSha256Sync === "function",
+        bitcoinReady: !!bitcoin,
+      });
+    };
+    verifySetup();
+  }, []);
 
   const handleLogout = async () => {
     // if (!web3auth) return;
