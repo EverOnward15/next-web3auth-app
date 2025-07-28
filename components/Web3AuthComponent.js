@@ -38,7 +38,8 @@ async function deriveBTCAddress(privateKeyHex) {
   if (privateKeyBytes.length !== 32) {
     throw new Error("Private key must be 32 bytes.");
   }
-
+  
+  const secp = await import("@noble/secp256k1");
   // Get compressed public key (33 bytes)
   const publicKey = await secp.getPublicKey(privateKeyBytes, true);
 
