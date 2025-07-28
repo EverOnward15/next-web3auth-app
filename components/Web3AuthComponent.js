@@ -168,7 +168,6 @@ async function sendTestnetBTC({
       for (let i = 0; i < psbt.inputCount; i++) {
         await psbt.signInputAsync(i, {
           publicKey,
-          network,
           sign: async (hash) => {
             const sig = await secp.sign(hash, privateKey, { der: true });
             return Buffer.from(sig);
