@@ -23,8 +23,7 @@ const CLIENT_ID =
 
 //Function to derive BTC Address
 async function deriveBTCAddress(privateKeyHex) {
-  const { bitcoin } = await initializeCrypto();
-  const secp = await import("@noble/secp256k1");
+ const { bitcoin, secp } = await initializeCrypto();
   const { payments, networks } = bitcoin;
   const hex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
 
@@ -90,8 +89,7 @@ async function sendTestnetBTC({
   amountInBTC,
 }) {
   try {
-    const { bitcoin } = await initializeCrypto();
-    const secp = await import("@noble/secp256k1");
+const { bitcoin, secp } = await initializeCrypto();
     const { Psbt, networks, payments } = bitcoin;
     const network = networks.testnet;
 
