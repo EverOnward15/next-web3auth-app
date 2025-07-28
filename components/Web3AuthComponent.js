@@ -85,130 +85,120 @@ async function deriveBTCWallet(provider) {
   }
 }
 
-async function sendTestnetBTC({
-  fromAddress,
-  toAddress,
-  privateKeyHex,
-  amountInBTC,
-}) {
+
+async function sendTestnetBTC({ fromAddress, toAddress, privateKeyHex, amountInBTC }) {
   try {
-    // Dynamically import modules
-    // Access components safely
-    // Initialize crypto first
     const { bitcoin, secp } = await initializeCrypto();
-    const { networks, payments, Psbt, Transaction } = bitcoin;
+    const { Psbt, networks, payments } = bitcoin;
     const network = networks.testnet;
+
     const privateKey = Buffer.from(privateKeyHex.replace(/^0x/, ""), "hex");
     const publicKey = Buffer.from(await secp.getPublicKey(privateKey, true));
 
-    // Verify crypto functions are available
-    if (!bitcoin.crypto?.hmacSha256Sync) {
-      throw new Error("bitcoinjs-lib crypto functions not properly initialized");
+    // Validate crypto patch
+    if (!bitcoin.crypto?.hmacSha256Sync || !bitcoin.crypto.ripemd160) {
+      throw new Error("ECC crypto library invalid or unpatched");
     }
-
 
     const isSegWit = fromAddress.startsWith("tb1");
     const payment = isSegWit
       ? payments.p2wpkh({ pubkey: publicKey, network })
       : payments.p2pkh({ pubkey: publicKey, network });
 
-    // Fetch UTXOs
+    // Step 1: Fetch UTXOs
     const utxosRes = await axios.get(
       `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
     );
     const utxos = utxosRes.data;
-    if (!utxos.length) throw new Error("No UTXOs available");
+    if (!utxos || utxos.length === 0) throw new Error("No UTXOs available");
 
     const psbt = new Psbt({ network });
-
+    const sendAmount = Math.floor(amountInBTC * 1e8); // BTC to sats
+    const fee = 1000; // Flat fee
     let total = 0;
-    const sendAmount = Math.floor(amountInBTC * 1e8);
-    const fee = 1000;
 
-    // Add inputs
+    // Step 2: Add inputs
     for (const utxo of utxos) {
       if (total >= sendAmount + fee) break;
 
-      const rawTx = await axios.get(
-        `https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`
-      );
-      const txHex = rawTx.data;
+      const txHex = (
+        await axios.get(
+          `https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`
+        )
+      ).data;
 
-      const input = {
-        hash: utxo.txid,
-        index: utxo.vout,
-        ...(isSegWit
-          ? {
-              witnessUtxo: {
-                script: payment.output,
-                value: utxo.value,
-              },
-            }
-          : {
-              nonWitnessUtxo: Buffer.from(txHex, "hex"),
-            }),
-      };
+      const inputData = isSegWit
+        ? {
+            hash: utxo.txid,
+            index: utxo.vout,
+            witnessUtxo: {
+              script: payment.output,
+              value: utxo.value,
+            },
+          }
+        : {
+            hash: utxo.txid,
+            index: utxo.vout,
+            nonWitnessUtxo: Buffer.from(txHex, "hex"),
+          };
 
-      psbt.addInput(input);
+      psbt.addInput(inputData);
       total += utxo.value;
     }
 
     if (total < sendAmount + fee) throw new Error("Insufficient balance");
 
-    // Add outputs
-    psbt.addOutput({
-      address: toAddress,
-      value: sendAmount,
-    });
+    // Step 3: Add outputs
+    psbt.addOutput({ address: toAddress, value: sendAmount });
 
     const change = total - sendAmount - fee;
     if (change > 0) {
-      psbt.addOutput({
-        address: fromAddress,
-        value: change,
-      });
+      psbt.addOutput({ address: fromAddress, value: change });
     }
 
-    // Sign all inputs
+    // Step 4: Sign inputs manually using noble-secp256k1
     for (let i = 0; i < psbt.inputCount; i++) {
-      const sighashType = Transaction.SIGHASH_ALL;
-      
-      // Get the sighash
+      const sighashType = bitcoin.Transaction.SIGHASH_ALL;
+
+      // Use psbt.getInputPreimage to compute sighash
       const sighash = psbt.__CACHE.__TX.hashForSignature(
         i,
         payment.output,
         sighashType
       );
 
-      // Sign using noble-secp256k1
-      const sig = await secp.sign(sighash, privateKey);
-      const sigWithHashType = Buffer.concat([
-        Buffer.from(sig),
-        Buffer.from([sighashType]),
-      ]);
+      const sig = await secp.sign(sighash, privateKey, { der: true });
 
-      // Add signature to PSBT
-      psbt.signInput(i, {
-        publicKey,
-        sign: async () => sigWithHashType,
+      psbt.updateInput(i, {
+        partialSig: [
+          {
+            pubkey: publicKey,
+            signature: Buffer.concat([
+              Buffer.from(sig),
+              Buffer.from([sighashType]),
+            ]),
+          },
+        ],
       });
     }
 
-    // Finalize and broadcast
     psbt.finalizeAllInputs();
-    const txHex = psbt.extractTransaction().toHex();
 
-    const broadcast = await axios.post(
-      `https://blockstream.info/testnet/api/tx`,
-      txHex
+    const rawTx = psbt.extractTransaction().toHex();
+
+    // Step 5: Broadcast to testnet
+    const broadcastRes = await axios.post(
+      "https://blockstream.info/testnet/api/tx",
+      rawTx
     );
 
-    return broadcast.data;
+    return broadcastRes.data; // txid
   } catch (err) {
     console.error("Detailed send error:", err);
     throw new Error(`Failed to send BTC: ${err.message}`);
   }
 }
+
 
 
 export default function Web3AuthComponent() {
