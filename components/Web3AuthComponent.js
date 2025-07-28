@@ -1,18 +1,45 @@
 ///Users/prathameshbhoite/Code/lotus-app/next-web3auth-app/components/Web3AuthComponent.js
 "use client";
+
 import { useEffect, useState } from "react";
+import styles from "../components/Web3AuthComponent.module.css";
+import axios from "axios";
+
 import { Web3Auth } from "@web3auth/single-factor-auth";
 import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
-import styles from "../components/Web3AuthComponent.module.css";
 import { CommonPrivateKeyProvider } from "@web3auth/base-provider";
+
+// Ensure Buffer is available in browser
 import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
-import { secp } from './patchSecp256k1';
-import axios from "axios";
+
+// noble + patch for secp256k1
+import * as secp from "@noble/secp256k1";
+import { sha256, hmac } from "@noble/hashes/sha256";
+import { ripemd160 } from "@noble/hashes/ripemd160";
+
+// Patch noble HMAC for signing
+secp.utils.hmacSha256Sync = (key, ...msgs) => hmac(sha256, key, ...msgs);
+
+// bitcoinjs-lib
 import * as bitcoin from "bitcoinjs-lib";
+
+// Patch bitcoinjs-lib crypto functions ONLY on the client
+if (typeof window !== "undefined") {
+  bitcoin.crypto.sha256 = (buffer) => Buffer.from(sha256(buffer));
+  bitcoin.crypto.hash256 = (buffer) =>
+    Buffer.from(sha256(sha256(buffer)));
+  bitcoin.crypto.ripemd160 = (buffer) => Buffer.from(ripemd160(buffer));
+  bitcoin.crypto.hmacSha256 = (key, buffer) =>
+    Buffer.from(hmac(sha256, key, buffer));
+}
+
+// Optional: destructure if you're using payments/networks
 const { payments, networks } = bitcoin;
+
+
 
 
 
