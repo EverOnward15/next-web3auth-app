@@ -163,8 +163,11 @@ async function sendTestnetBTC({
 } else {
   alert("✅ hmacSha256Sync is set and is a " + typeof secp.utils.hmacSha256Sync);
 }
-  alert("❗Before signing, typeof hashes.hmacSha256Sync =" + typeof hashes?.hmacSha256Sync);
-    const sig = await secp.sign(hash, privateKey); // remove { der: true }
+alert("🚨 Before signing:");
+alert("typeof hashes.hmacSha256Sync:" + typeof hashes?.hmacSha256Sync);
+alert("typeof window.hashes.hmacSha256Sync:"+ typeof window?.hashes?.hmacSha256Sync);
+alert("typeof secp.utils.hmacSha256Sync:"+ typeof secp?.utils?.hmacSha256Sync);    
+const sig = await secp.sign(hash, privateKey); // remove { der: true }
         const derSig = secp.Signature.fromCompact(sig).toDERHex();
         return Buffer.from(derSig, "hex");
       },
