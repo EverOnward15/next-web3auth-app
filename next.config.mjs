@@ -1,46 +1,90 @@
 // next.config.mjs
-import { createRequire } from 'module';
+import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack: (config, { isServer }) => {
-    // Enable async WebAssembly for better performance with certain libraries
+  // Enable React strict mode
+  reactStrictMode: true,
+  
+  // Configure Webpack
+  webpack: (config, { isServer, webpack }) => {
+    // Enable async WebAssembly
     config.experiments = {
       ...config.experiments,
       asyncWebAssembly: true,
+      topLevelAwait: true,
     };
 
-    // Only apply polyfills for the client-side bundle
-    // Server-side Node.js environment already has these modules
+    // Client-side specific configurations
     if (!isServer) {
+      // Essential polyfills for Bitcoin operations
       config.resolve.fallback = {
         ...config.resolve.fallback,
-        // Node.js core modules to polyfill for the browser environment
         "buffer": require.resolve("buffer/"),
-        "stream": require.resolve("stream-browserify"),
         "crypto": require.resolve("crypto-browserify"),
+        "stream": require.resolve("stream-browserify"),
         "assert": require.resolve("assert/"),
         "http": require.resolve("stream-http"),
         "https": require.resolve("https-browserify"),
-        "os": require.resolve("os-browserify"),
+        "os": require.resolve("os-browserify/browser"),
         "url": require.resolve("url/"),
-        "util": require.resolve("util/"), // Often needed for other polyfills
-        // Add other fallbacks if you encounter more "Module not found" errors
+        "util": require.resolve("util/"),
+        "zlib": require.resolve("browserify-zlib"),
+        "net": false, // Not available in browser
+        "tls": false, // Not available in browser
+        "fs": false, // Not available in browser
+        "path": require.resolve("path-browserify"),
       };
 
-      // ProvidePlugin makes Buffer and process globally available
-      // This is often required by libraries that expect these globals
+      // Add global polyfills
       config.plugins = (config.plugins || []).concat([
-        new (require("webpack").ProvidePlugin)({
-          process: "process/browser", // Polyfill for Node.js 'process' global
-          Buffer: ["buffer", "Buffer"], // Polyfill for Node.js 'Buffer' global
+        new webpack.ProvidePlugin({
+          process: "process/browser",
+          Buffer: ["buffer", "Buffer"],
         }),
+        new webpack.NormalModuleReplacementPlugin(
+          /node:crypto/,
+          require.resolve("crypto-browserify")
+        ),
       ]);
     }
 
+    // Add BitcoinJS specific optimizations
+    config.module = {
+      ...config.module,
+      rules: [
+        ...config.module.rules,
+        {
+          test: /\.m?js$/,
+          resolve: {
+            fullySpecified: false, // Disable fully specified imports
+          },
+        },
+      ],
+    };
+
     return config;
   },
+
+  // Enable ESM externals for better compatibility
+  experimental: {
+    esmExternals: 'loose',
+    serverComponentsExternalPackages: [
+      'bitcoinjs-lib',
+      '@noble/secp256k1',
+      '@noble/hashes',
+      'buffer',
+      'crypto-browserify'
+    ],
+  },
+
+  // Optional: Configure transpilePackages if needed
+  transpilePackages: [
+    '@web3auth',
+    '@web3auth/base',
+    '@web3auth/single-factor-auth'
+  ],
 };
 
 export default nextConfig;

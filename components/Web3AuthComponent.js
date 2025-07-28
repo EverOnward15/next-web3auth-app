@@ -83,6 +83,7 @@ async function deriveBTCWallet(provider) {
     return null;
   }
 }
+
 async function sendTestnetBTC({
   fromAddress,
   toAddress,
@@ -90,11 +91,11 @@ async function sendTestnetBTC({
   amountInBTC,
 }) {
   try {
-    // Import the modules properly without destructuring initially
+    // Dynamically import modules
     const secp = await import("@noble/secp256k1");
     const bitcoin = await import("bitcoinjs-lib");
     
-    // Now safely access the needed components
+    // Access components safely
     const networks = bitcoin.networks;
     const payments = bitcoin.payments;
     const Psbt = bitcoin.Psbt;
@@ -211,6 +212,7 @@ async function sendTestnetBTC({
     throw new Error(`Failed to send BTC: ${err.message}`);
   }
 }
+
 
 export default function Web3AuthComponent() {
   const [web3auth, setWeb3auth] = useState(null);

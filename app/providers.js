@@ -7,7 +7,6 @@ import { sha256 } from "@noble/hashes/sha256";
 import { hmac } from "@noble/hashes/hmac";
 import { ripemd160 } from "@noble/hashes/ripemd160";
 
-// Ensure Buffer is available globally
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
@@ -18,12 +17,12 @@ export default function CryptoPatchProvider({ children }) {
   useEffect(() => {
     async function applyCryptoPatches() {
       try {
-        // 1. Patch noble-secp256k1 first
+        // Patch noble-secp256k1 first
         const secp = await import("@noble/secp256k1");
         secp.utils.hmacSha256Sync = (key, ...msgs) => hmac(sha256, key, ...msgs);
         secp.utils.sha256Sync = (b) => sha256(b);
         
-        // 2. Then patch bitcoinjs-lib
+        // Then patch bitcoinjs-lib
         const bitcoin = await import("bitcoinjs-lib");
         
         // Create a complete crypto implementation
@@ -38,18 +37,11 @@ export default function CryptoPatchProvider({ children }) {
         // Replace the entire crypto module
         bitcoin.crypto = cryptoImpl;
         
-        // Also patch the TransactionBuilder if needed
-        if (bitcoin.TransactionBuilder) {
-          bitcoin.TransactionBuilder.prototype.__makeScript = function() {
-            // Custom implementation if needed
-          };
-        }
-
-        console.log("All crypto patches applied successfully");
+        console.log("Crypto patches applied successfully");
         setIsPatched(true);
       } catch (err) {
         console.error("Failed to apply crypto patches:", err);
-        throw err; // Re-throw to prevent silent failures
+        throw err;
       }
     }
 
