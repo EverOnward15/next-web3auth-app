@@ -9,6 +9,7 @@ import axios from "axios";
 import { Web3Auth } from "@web3auth/single-factor-auth";
 import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
 import { CommonPrivateKeyProvider } from "@web3auth/base-provider";
+import { Signature } from "@noble/secp256k1";
 
 // Ensure Buffer is available in browser
 import { Buffer } from "buffer";
@@ -153,13 +154,15 @@ const { bitcoin, secp } = await initializeCrypto();
     }
 
     // 4. Sign all inputs using noble-secp256k1
-    const signer = {
-      publicKey,
-      sign: async (hash) => {
-        const sig = await secp.sign(hash, privateKey, { der: true });
-        return Buffer.from(sig);
-      },
-    };
+const signer = {
+  publicKey,
+  sign: async (hash) => {
+    const sig = await secp.sign(hash, privateKey); // remove { der: true }
+    const derSig = secp.Signature.fromCompact(sig).toDERHex();
+    return Buffer.from(derSig, "hex");
+  },
+};
+
     try {
       for (let i = 0; i < psbt.inputCount; i++) {
         await psbt.signInputAsync(i, signer);
