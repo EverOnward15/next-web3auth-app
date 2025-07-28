@@ -513,7 +513,7 @@ const handleSendCrypto = async () => {
 
       <div className={styles.actionButtons}>
         <button className={styles.actionButton}>Buy</button>
-        <button onClick={openSendModal} className={styles.sendButton}>
+        <button onClick={openSendModal} className={styles.actionButton}>
           Send
         </button>
         <button className={styles.actionButton}>Receive</button>
@@ -604,48 +604,46 @@ const handleSendCrypto = async () => {
           <pre className={styles.debugBox}>{jwtToken}</pre>
         </>
       )}
+
+       {/* Send button opens the modal */}
+        {showSendModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <h2>Send {selectedCrypto}</h2>
+            <label>
+              Recipient Address:
+              <input
+                type="text"
+                value={sendToAddress}
+                onChange={(e) => setSendToAddress(e.target.value)}
+                placeholder="Enter address"
+                className={styles.input}
+              />
+            </label>
+            <label>
+              Amount:
+              <input
+                type="number"
+                value={sendAmount}
+                onChange={(e) => setSendAmount(e.target.value)}
+                placeholder="Enter amount"
+                min="0"
+                step="any"
+                className={styles.input}
+              />
+            </label>
+            <div className={styles.buttonRow}>
+              <button onClick={handleSendCrypto} className={styles.sendButton}>
+                Send
+              </button>
+              <button onClick={closeSendModal} className={styles.cancelButton}>
+                Cancel
+              </button>
+            </div>
+            {sendStatus && <p className={styles.sendStatus}>{sendStatus}</p>}
+          </div>
+        </div>
+      )}
     </div>
   );
-
-
-
-  //Modal that opens with Send button
-  {showSendModal && (
-  <div className={styles.modalOverlay}>
-    <div className={styles.modal}>
-      <h2>Send {selectedCrypto}</h2>
-      <label>
-        Recipient Address:
-        <input
-          type="text"
-          value={sendToAddress}
-          onChange={(e) => setSendToAddress(e.target.value)}
-          placeholder="Enter address"
-          className={styles.input}
-        />
-      </label>
-      <label>
-        Amount:
-        <input
-          type="number"
-          value={sendAmount}
-          onChange={(e) => setSendAmount(e.target.value)}
-          placeholder="Enter amount"
-          min="0"
-          step="any"
-          className={styles.input}
-        />
-      </label>
-      <div className={styles.buttonRow}>
-        <button onClick={handleSendCrypto} className={styles.sendButton}>
-          Send
-        </button>
-        <button onClick={closeSendModal} className={styles.cancelButton}>
-          Cancel
-        </button>
-      </div>
-      {sendStatus && <p className={styles.sendStatus}>{sendStatus}</p>}
-    </div>
-  </div>
-)}
 }
