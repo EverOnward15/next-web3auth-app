@@ -206,75 +206,104 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
+  backdrop-filter: blur(6px);
 }
 
-/* Modal box */
 .modal {
-  background: #fff;
-  padding: 24px;
-  border-radius: 8px;
-  width: 320px;
+  background: linear-gradient(160deg, #0a0a0a 0%, #000000 100%);
+  border-radius: 16px;
+  padding: 24px 20px;
   max-width: 90%;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  width: 360px;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  font-family: 'Inter', 'Helvetica Neue', sans-serif;
+  color: var(--text-main);
+  border: 1px solid var(--primary);
 }
 
-/* Input styling */
+.modal h2 {
+  color: var(--primary);
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-align: center;
+  text-shadow: 0 0 8px var(--primary);
+}
+
 .input {
   width: 100%;
-  padding: 8px 12px;
-  margin: 8px 0 16px 0;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 1rem;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  background: #111;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  font-size: 14px;
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.1);
+  outline: none;
+  transition: all 0.25s ease;
 }
 
-/* Button row to space buttons */
+.input:focus {
+  border-color: #3d9df6;
+  box-shadow: 0 0 10px #3d9df6;
+}
+
 .buttonRow {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+  flex-wrap: wrap;
   margin-top: 12px;
 }
 
-/* Send button */
-.sendButton {
-  background-color: #103565;
-  color: white;
+.sendButton, .cancelButton {
   padding: 10px 18px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+  border-radius: 10px;
+  font-size: 14px;
   font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  min-width: 100px;
+}
+
+.sendButton {
+  background: linear-gradient(145deg, #0b0b0b, #1a1a1a);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.25);
 }
 
 .sendButton:hover {
-  background-color: #0b2447;
+  transform: translateY(-2px);
+  box-shadow: 0 0 12px var(--primary), 0 0 16px var(--primary);
+  background-color: var(--secondary);
+  color: white;
 }
 
-/* Cancel button */
 .cancelButton {
-  background-color: #ddd;
-  color: #333;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+  background-color: #222;
+  color: var(--text-muted);
+  border: 1px solid #333;
 }
 
 .cancelButton:hover {
-  background-color: #bbb;
+  background-color: #444;
+  color: white;
+  border-color: #555;
 }
 
-/* Status message */
 .sendStatus {
   margin-top: 12px;
   font-weight: 600;
-  color: #103565;
+  color: var(--primary);
+  text-align: center;
 }
