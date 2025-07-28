@@ -93,7 +93,7 @@ async function deriveBTCWallet(provider) {
   }) {
     const network = bitcoin.networks.testnet;
     const privateKey = Buffer.from(privateKeyHex, "hex");
-    const publicKey = Buffer.from(secp256k1.getPublicKey(privateKey, true));
+    const publicKey = Buffer.from(secp.getPublicKey(privateKey, true));
 
     const isSegWit = fromAddress.startsWith("tb1");
     const payment = isSegWit
@@ -167,7 +167,7 @@ async function deriveBTCWallet(provider) {
           )
         : psbt.__CACHE; // Should never hit this
 
-      const sig = await secp256k1.sign(sighash, privateKey);
+      const sig = await secp.sign(sighash, privateKey);
       const sigWithHashType = Buffer.concat([
         Buffer.from(sig),
         Buffer.from([sighashType]),
