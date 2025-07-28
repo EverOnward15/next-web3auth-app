@@ -424,8 +424,11 @@ export default function Web3AuthComponent() {
     if (!provider) return;
 
     try {
-      const wallet = await deriveBTCWallet(provider);
-
+const wallet = await deriveBTCWallet(
+  provider,
+  cryptoInstance.bitcoin,
+  cryptoInstance.secp
+);
       if (!wallet) {
         alert("Failed to get BTC wallet.");
         return;
@@ -635,12 +638,13 @@ export default function Web3AuthComponent() {
           const privateKeyHex = btcWallet?.privateKey?.replace(/^0x/, "");
 
           try {
-            const txid = await sendTestnetBTC({
-              fromAddress: btcWallet.address,
-              toAddress,
-              privateKeyHex,
-              amountInBTC: amount,
-            });
+const txid = await sendTestnetBTC({
+  fromAddress: btcWallet.address,
+  toAddress,
+  privateKeyHex,
+  amountInBTC: amount,
+});
+
 
             alert("✅ Transaction sent!\nTxID: " + txid);
             console.log("TXID:", txid);
