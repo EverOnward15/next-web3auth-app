@@ -37,9 +37,8 @@ async function deriveBTCAddress(privateKeyHex, bitcoin, secp) {
     throw new Error("Private key must be 32 bytes.");
   }
 
-  // Get compressed public key (33 bytes)
-  const privateKey = secp.utils.hexToBytes(privateKeyHex);
-  const publicKey = secp.getPublicKey(privateKey, true); // compressed = true
+  const publicKey = await secp.getPublicKey(privateKeyBytes, true);
+ 
   const { address } = payments.p2wpkh({
     pubkey: Buffer.from(publicKey),
     network: networks.testnet,
@@ -164,7 +163,7 @@ async function sendTestnetBTC(
           );
         }
         alert("🚨 Before signing:");
-        alert("typeof hashes.hmacSha256Sync:" + typeof hashes?.hmacSha256Sync);
+        alert("typeof globalThis.hashes.hmacSha256Sync:" + typeof globalThis.hmacSha256Sync);
         alert(
           "typeof window.hashes.hmacSha256Sync:" +
             typeof window?.hashes?.hmacSha256Sync
@@ -668,7 +667,9 @@ const txid = await sendTestnetBTC({
             : "Waiting for Telegram Login..."}
         </button>
       ) : (
-        <button className={styles.button} onClick={handleGetAccounts}>
+        <button className={styles.button} 
+        // onClick={handleGetAccounts}
+        >
           Get Address & Balance
         </button>
       )}
@@ -684,7 +685,7 @@ const txid = await sendTestnetBTC({
       </button>
       <button
         className={styles.button}
-        onClick={() => deriveBTCWallet(provider)}
+        // onClick={() => deriveBTCWallet(provider)}
       >
         Create BTC Wallet Test
       </button>
