@@ -95,7 +95,8 @@ async function sendTestnetBTC({
   amountInBTC,
 }) {
   try {
-    const { bitcoin, secp } = await initializeCrypto();
+    const { bitcoin } = await initializeCrypto();
+    const secp = await import("@noble/secp256k1");
     const { Psbt, networks, payments } = bitcoin;
     const network = networks.testnet;
 
@@ -159,23 +160,17 @@ async function sendTestnetBTC({
     }
 
     // 4. Sign all inputs using noble-secp256k1
-    const signer = {
-      publicKey,
-      sign: async (hash) => {
-        const sig = await secp.sign(hash, privateKey);
-        return Buffer.from(sig);
-      },
-    };
+const signer = {
+  publicKey,
+  sign: async (hash) => {
+    const sig = await secp.sign(hash, privateKey, { der: true });
+    return Buffer.from(sig);
+  },
+};
 
     try {
       for (let i = 0; i < psbt.inputCount; i++) {
-        await psbt.signInputAsync(i, {
-          publicKey,
-          sign: async (hash) => {
-            const sig = await secp.sign(hash, privateKey, { der: true });
-            return Buffer.from(sig);
-          },
-        });
+        await psbt.signInputAsync(i, signer);;
       }
       psbt.validateSignaturesOfAllInputs();
       psbt.finalizeAllInputs();
