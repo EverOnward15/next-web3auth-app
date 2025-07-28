@@ -1,11 +1,5 @@
 ///Users/prathameshbhoite/Code/lotus-app/next-web3auth-app/components/Web3AuthComponent.js
 "use client";
-import { hmac } from "@noble/hashes/hmac";
-import { sha256 } from "@noble/hashes/sha256";
-import * as secp from "@noble/secp256k1";
-secp.utils.hmacSha256Sync = (key, ...msgs) => hmac(sha256, key, ...msgs);
-
-
 import { useEffect, useState } from "react";
 import { Web3Auth } from "@web3auth/single-factor-auth";
 import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
@@ -15,6 +9,7 @@ import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
+import { secp } from './patchSecp256k1.js';
 import axios from "axios";
 import * as bitcoin from "bitcoinjs-lib";
 const { payments, networks } = bitcoin;
