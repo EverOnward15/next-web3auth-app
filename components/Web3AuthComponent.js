@@ -1,5 +1,8 @@
 ///Users/prathameshbhoite/Code/lotus-app/next-web3auth-app/components/Web3AuthComponent.js
 "use client";
+import crypto from "crypto";
+window.crypto = crypto;           // makes crypto.getRandomValues, etc. available
+window.crypto.subtle = crypto.webcrypto.subtle;
 
 import { useEffect, useState } from "react";
 import styles from "../components/Web3AuthComponent.module.css";
@@ -16,34 +19,41 @@ if (typeof window !== "undefined") {
 }
 
 // noble + patch for secp256k1
-import * as secp from "@noble/secp256k1";
-import { sha256 } from "@noble/hashes/sha256";
-import { hmac } from "@noble/hashes/hmac";       // ← correct module!
-import { ripemd160 } from "@noble/hashes/ripemd160";
+// import * as secp from "@noble/secp256k1";
+// import { sha256 } from "@noble/hashes/sha256";
+// import { hmac } from "@noble/hashes/hmac";       // ← correct module!
+// import { ripemd160 } from "@noble/hashes/ripemd160";
 
 // Patch noble HMAC for signing
+// secp.utils.hmacSha256Sync = (key, ...msgs) => hmac(sha256, key, ...msgs);
+
+// 2) noble-secp256k1 + HMAC patch
+import * as secp from "@noble/secp256k1";
+import { sha256 } from "@noble/hashes/sha256";
+import { hmac } from "@noble/hashes/hmac";
 secp.utils.hmacSha256Sync = (key, ...msgs) => hmac(sha256, key, ...msgs);
+
+
+
+
 
 // bitcoinjs-lib
 import * as bitcoin from "bitcoinjs-lib";
-
+bitcoin.crypto.hmacSha256Sync = (key, message) =>
+  crypto.createHmac("sha256", key).update(message).digest();
 // Patch bitcoinjs-lib crypto functions ONLY on the client
-if (typeof window !== "undefined") {
-  bitcoin.crypto.sha256 = (buffer) => Buffer.from(sha256(buffer));
-  bitcoin.crypto.hash256 = (buffer) => Buffer.from(sha256(sha256(buffer)));
-  bitcoin.crypto.ripemd160 = (buffer) => Buffer.from(ripemd160(buffer));
-  bitcoin.crypto.hmacSha256 = (key, buffer) =>
-    Buffer.from(hmac(sha256, key, buffer));
-  bitcoin.crypto.hmacSha256Sync = (key, buffer) =>
-    Buffer.from(hmac(sha256, key, buffer));
-}
+// if (typeof window !== "undefined") {
+//   bitcoin.crypto.sha256 = (buffer) => Buffer.from(sha256(buffer));
+//   bitcoin.crypto.hash256 = (buffer) => Buffer.from(sha256(sha256(buffer)));
+//   bitcoin.crypto.ripemd160 = (buffer) => Buffer.from(ripemd160(buffer));
+//   bitcoin.crypto.hmacSha256 = (key, buffer) =>
+//     Buffer.from(hmac(sha256, key, buffer));
+//   bitcoin.crypto.hmacSha256Sync = (key, buffer) =>
+//     Buffer.from(hmac(sha256, key, buffer));
+// }
 
 // Destructure if you need them
 const { payments, networks } = bitcoin;
-
-
-
-
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
