@@ -14,7 +14,10 @@ import * as secp from "@noble/secp256k1";
 import axios from "axios";
 import { payments, networks, Psbt } from "bitcoinjs-lib";
 import ECPairFactory from "ecpair";
-import tinysecp from "tiny-secp256k1";
+import ECPairFactory from "ecpair";
+import * as tinysecp from "tiny-secp256k1";
+
+
 
 // Create an ECPair that bitcoinjs-lib’s Psbt can use:
 const ECPair = ECPairFactory(tinysecp);
@@ -319,6 +322,11 @@ export default function Web3AuthComponent() {
   }) {
     const network = networks.testnet;
     const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKeyHex, "hex"));
+
+    if (!ECPair?.fromPrivateKey) {
+  alert("ECPair is not correctly initialized");
+}
+
 
     // 1. Fetch UTXOs
     const utxosRes = await axios.get(
