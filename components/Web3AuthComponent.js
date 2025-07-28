@@ -84,6 +84,113 @@ async function deriveBTCWallet(provider) {
   }
 }
 
+//Send Crypto 
+  async function sendTestnetBTC({
+    fromAddress,
+    toAddress,
+    privateKeyHex,
+    amountInBTC,
+  }) {
+    const network = bitcoin.networks.testnet;
+    const privateKey = Buffer.from(privateKeyHex, "hex");
+    const publicKey = Buffer.from(secp256k1.getPublicKey(privateKey, true));
+
+    const isSegWit = fromAddress.startsWith("tb1");
+    const payment = isSegWit
+      ? bitcoin.payments.p2wpkh({ pubkey: publicKey, network })
+      : bitcoin.payments.p2pkh({ pubkey: publicKey, network });
+
+    const utxosRes = await axios.get(
+      `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
+    );
+    const utxos = utxosRes.data;
+    if (!utxos.length) throw new Error("No UTXOs available");
+
+    const psbt = new bitcoin.Psbt({ network });
+
+    let total = 0;
+    const sendAmount = Math.floor(amountInBTC * 1e8);
+    const fee = 1000;
+
+    for (const utxo of utxos) {
+      if (total >= sendAmount + fee) break;
+
+      const rawTx = await axios.get(
+        `https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`
+      );
+      const txHex = rawTx.data;
+      const tx = bitcoin.Transaction.fromHex(txHex);
+
+      const input = {
+        hash: utxo.txid,
+        index: utxo.vout,
+        ...(isSegWit
+          ? {
+              witnessUtxo: {
+                script: payment.output,
+                value: utxo.value,
+              },
+            }
+          : {
+              nonWitnessUtxo: Buffer.from(txHex, "hex"),
+            }),
+      };
+
+      psbt.addInput(input);
+      total += utxo.value;
+    }
+
+    if (total < sendAmount + fee) throw new Error("Insufficient balance");
+
+    psbt.addOutput({
+      address: toAddress,
+      value: sendAmount,
+    });
+
+    const change = total - sendAmount - fee;
+    if (change > 0) {
+      psbt.addOutput({
+        address: fromAddress,
+        value: change,
+      });
+    }
+
+    // Sign all inputs using noble-secp256k1
+    for (let i = 0; i < psbt.inputCount; i++) {
+      const sighashType = bitcoin.Transaction.SIGHASH_ALL;
+
+      const sighash = psbt.__CACHE
+        ? psbt.__CACHE.__TX.hashForSignature(
+            i,
+            bitcoin.payments.p2pkh({ pubkey: publicKey, network }).output,
+            sighashType
+          )
+        : psbt.__CACHE; // Should never hit this
+
+      const sig = await secp256k1.sign(sighash, privateKey);
+      const sigWithHashType = Buffer.concat([
+        Buffer.from(sig),
+        Buffer.from([sighashType]),
+      ]);
+
+      psbt.signInput(i, {
+        publicKey,
+        sign: async () => sigWithHashType,
+      });
+    }
+
+    psbt.finalizeAllInputs();
+
+    const txHex = psbt.extractTransaction().toHex();
+
+    const broadcast = await axios.post(
+      `https://blockstream.info/testnet/api/tx`,
+      txHex
+    );
+
+    return broadcast.data; // returns txid
+  }
+
 export default function Web3AuthComponent() {
   const [web3auth, setWeb3auth] = useState(null);
   const [provider, setProvider] = useState(null);
@@ -311,83 +418,6 @@ export default function Web3AuthComponent() {
       alert("Error fetching BTC info: " + err.message);
     }
   };
-
-  async function sendTestnetBTC({
-    fromAddress,
-    toAddress,
-    privateKeyHex, // WIF??
-    amountInBTC,
-  }) {
-    alert ("I'm working?");
-
-    const network = networks.testnet;
-
-    const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKeyHex, "hex"), {
-      network: networks.testnet,
-      compressed: true, // Must match your publicKey format
-    });
-    // Use fromWIF if your private key is in WIF format
-    // const keyPair = ECPair.fromWIF(privateKeyHex, network);
-
-    // Optional safety check
-    const { address: derivedAddress } = payments.p2pkh({
-      pubkey: keyPair.publicKey,
-      network,
-    });
-    alert("Derived from private key:"+ derivedAddress);
-    alert("From wallet object:"+ fromAddress);
-
-    if (derivedAddress !== fromAddress) {
-      throw new Error("Private key does not match fromAddress");
-    }
-    // 1. Fetch UTXOs
-    const utxosRes = await axios.get(
-      `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
-    );
-    const utxos = utxosRes.data;
-
-    if (!utxos.length) throw new Error("No UTXOs available to spend.");
-
-    const txb = new bitcoin.Psbt({ network });
-
-    let totalInput = 0;
-    for (const utxo of utxos) {
-      const rawTx = await axios.get(
-        `https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`
-      );
-      txb.addInput({
-        hash: utxo.txid,
-        index: utxo.vout,
-        nonWitnessUtxo: Buffer.from(rawTx.data, "hex"),
-      });
-      totalInput += utxo.value;
-      if (totalInput >= amountInBTC * 1e8) break;
-    }
-
-    const fee = 1000; // 1000 sats fee
-    const amountToSend = Math.floor(amountInBTC * 1e8);
-    const change = totalInput - amountToSend - fee;
-
-    if (change < 0) throw new Error("Insufficient funds");
-
-    txb.addOutput({ address: toAddress, value: amountToSend });
-
-    if (change > 0) {
-      txb.addOutput({ address: fromAddress, value: change });
-    }
-
-    txb.signAllInputs(keyPair);
-    txb.finalizeAllInputs();
-
-    const txHex = txb.extractTransaction().toHex();
-
-    // 3. Broadcast transaction
-    const broadcastRes = await axios.post(
-      "https://blockstream.info/testnet/api/tx",
-      txHex
-    );
-    return broadcastRes.data; // returns txid
-  }
 
   const checkPrivateKeyAndAddress = async () => {
     if (!provider?.request) {
