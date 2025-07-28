@@ -318,15 +318,13 @@ export default function Web3AuthComponent() {
     privateKeyHex, // WIF??
     amountInBTC,
   }) {
-
     alert(fromAddress);
     alert(toAddress);
     alert(privateKeyHex);
     alert(amountInBTC);
 
-
     const network = networks.testnet;
-    
+
     const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKeyHex, "hex"));
     // Use fromWIF if your private key is in WIF format
     // const keyPair = ECPair.fromWIF(privateKeyHex, network);
@@ -388,8 +386,6 @@ export default function Web3AuthComponent() {
     );
     return broadcastRes.data; // returns txid
   }
-
-
 
   const checkPrivateKeyAndAddress = async () => {
     if (!provider?.request) {
@@ -479,16 +475,19 @@ export default function Web3AuthComponent() {
         setSendStatus(`Sending ${selectedCrypto} is not implemented yet.`);
       }
     } catch (err) {
-    let errorMessage;
-    try {
-      errorMessage = err?.message || (typeof err?.toString === "function" ? err.toString() : null) || "Unknown error";
-    } catch (e) {
-  errorMessage = "Unknown error";
-  }
-  alert("BTC send error: " + errorMessage);
-  setSendStatus(`Error sending ${selectedCrypto}: ${errorMessage}`);
+      let errorMessage;
+      try {
+        errorMessage =
+          err?.message ||
+          (typeof err?.toString === "function" ? err.toString() : null) ||
+          "Unknown error";
+      } catch (e) {
+        errorMessage = "Unknown error";
+      }
+      alert("BTC send error: " + errorMessage);
+      setSendStatus(`Error sending ${selectedCrypto}: ${errorMessage}`);
+    }
   };
-
 
   return (
     <div className={styles.container}>
