@@ -318,68 +318,66 @@ export default function Web3AuthComponent() {
     amountInBTC,
   }) {
     const network = networks.testnet;
-
-    const hex = privateKeyHex.startsWith("0x")
-      ? privateKeyHex.slice(2)
-      : privateKeyHex;
-    if (hex.length !== 64) {
-      throw new Error(`Invalid private key length ${hex.length}.`);
-    }
+    const hex = privateKeyHex.replace(/^0x/, "");
+    if (hex.length !== 64) throw new Error("Invalid private key length");
     const keyPair = ECPair.fromPrivateKey(Buffer.from(hex, "hex"));
 
-    if (!ECPair?.fromPrivateKey) {
-      alert("ECPair is not correctly initialized");
-    }
-    // 1. Fetch UTXOs
-    const utxosRes = await axios.get(
+    // 1) fetch UTXOs
+    const { data: utxos } = await axios.get(
       `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
     );
-    const utxos = utxosRes.data;
-    if (!utxosRes.data || utxosRes.data.length === 0) {
-      throw new Error("No UTXOs returned from API.");
-    }
+    if (utxos.length === 0) throw new Error("No UTXOs");
 
-    if (!utxos.length) throw new Error("No UTXOs available to spend.");
-
-    const txb = new Psbt({ network });
-
-    let totalInput = 0;
+    // 2) build PSBT
+    const psbt = new Psbt({ network });
+    let total = 0;
     for (const utxo of utxos) {
-      const rawTx = await axios.get(
-        `https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`
-      );
-      txb.addInput({
-        hash: utxo.txid,
-        index: utxo.vout,
-        nonWitnessUtxo: Buffer.from(rawTx.data, "hex"),
-      });
-      totalInput += utxo.value;
-      if (totalInput >= amountInBTC * 1e8) break;
+      const rawHex = await axios
+        .get(`https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`)
+        .then((r) => r.data);
+      const tx = bitcoin.Transaction.fromHex(rawHex);
+      const out = tx.outs[utxo.vout];
+      const scriptType = bitcoin.script.classifyOutput(out.script);
+
+      if (scriptType === "witnesspubkeyhash") {
+        psbt.addInput({
+          hash: utxo.txid,
+          index: utxo.vout,
+          witnessUtxo: { script: out.script, value: BigInt(utxo.value) },
+        });
+      } else {
+        psbt.addInput({
+          hash: utxo.txid,
+          index: utxo.vout,
+          nonWitnessUtxo: Buffer.from(rawHex, "hex"),
+        });
+      }
+
+      total += utxo.value;
+      if (total >= amountInBTC * 1e8) break;
     }
 
-    const fee = 1000; // 1000 sats fee
-    const amountToSend = Math.floor(amountInBTC * 1e8);
-    const change = totalInput - amountToSend - fee;
-
-    if (change < 0) throw new Error("Insufficient funds");
-
-    txb.addOutput({ address: toAddress, value: amountToSend });
-
-    if (change > 0) {
-      txb.addOutput({ address: fromAddress, value: change });
+    // 3) outputs
+    const sats = Math.floor(amountInBTC * 1e8);
+    const fee = 1000;
+    if (total < sats + fee) throw new Error("Insufficient funds");
+    psbt.addOutput({ address: toAddress, value: sats });
+    if (total > sats + fee) {
+      psbt.addOutput({ address: fromAddress, value: total - sats - fee });
     }
 
-    txb.signAllInputs(keyPair);
-    txb.finalizeAllInputs();
+    // 4) sign & validate
+    psbt.signAllInputs(keyPair);
+    psbt.validateSignaturesOfAllInputs(); // <-- throws if any input failed
+    psbt.finalizeAllInputs();
 
-    const txHex = txb.extractTransaction().toHex();
-
-    // 3. Broadcast transaction
-    const broadcastRes = await axios.post(
+    // 5) broadcast
+    const txHex = psbt.extractTransaction().toHex();
+    const { data: txid } = await axios.post(
       "https://blockstream.info/testnet/api/tx",
       txHex
     );
-    return broadcastRes.data; // returns txid
+    return txid;
   }
 
   const checkPrivateKeyAndAddress = async () => {
