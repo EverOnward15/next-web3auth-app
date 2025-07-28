@@ -159,13 +159,14 @@ async function sendTestnetBTC({ fromAddress, toAddress, privateKeyHex, amountInB
 
 try {
   for (let i = 0; i < psbt.inputCount; i++) {
-    await psbt.signInputAsync(i, {
-      publicKey,
-      sign: async (hash) => {
-        const sig = await secp.sign(hash, privateKey);
-        return Buffer.from(sig);
-      },
-    });
+  await psbt.signInputAsync(i, {
+    publicKey,          // your Buffer(pubkey)
+    network,            // optional, but safe to include
+    sign: async (hash) => {
+      const sig = await secp.sign(hash, privateKey);    // returns Uint8Array
+      return Buffer.from(secp.signatureExport(sig));    // DER-encoded
+    },
+  });
   }
   psbt.validateSignaturesOfAllInputs();
   psbt.finalizeAllInputs();
