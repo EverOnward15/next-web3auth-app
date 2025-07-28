@@ -1,17 +1,21 @@
 ///Users/prathameshbhoite/Code/lotus-app/next-web3auth-app/components/Web3AuthComponent.js
 "use client";
+import { initializeCrypto } from "../lib/cryptoInit";
+
 import { useEffect, useState } from "react";
+import styles from "../components/Web3AuthComponent.module.css";
+import axios from "axios";
+
 import { Web3Auth } from "@web3auth/single-factor-auth";
 import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
-import styles from "../components/Web3AuthComponent.module.css";
 import { CommonPrivateKeyProvider } from "@web3auth/base-provider";
+import { Signature } from "@noble/secp256k1";
+
+// Ensure Buffer is available in browser
 import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
-
-import { payments, networks } from "bitcoinjs-lib";
-import * as secp from "@noble/secp256k1";
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
@@ -19,7 +23,8 @@ const CLIENT_ID =
 /*------------------ Start of Code --------------------*/
 
 //Function to derive BTC Address
-async function deriveBTCAddress(privateKeyHex) {
+async function deriveBTCAddress(privateKeyHex, bitcoin, secp) {
+  const { payments, networks } = bitcoin;
   const hex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
 
   if (!/^[a-f0-9]{64}$/.test(hex)) {
@@ -32,20 +37,18 @@ async function deriveBTCAddress(privateKeyHex) {
     throw new Error("Private key must be 32 bytes.");
   }
 
-  // Get compressed public key (33 bytes)
   const publicKey = await secp.getPublicKey(privateKeyBytes, true);
-
-  // Generate p2pkh Bitcoin testnet address
-  const { address } = payments.p2pkh({
+ 
+  const { address } = payments.p2wpkh({
     pubkey: Buffer.from(publicKey),
-    network: networks.testnet, // Change to networks.bitcoin for mainnet
+    network: networks.testnet,
   });
 
   return address;
 }
 
 //Function to call deriveBTCWallet
-async function deriveBTCWallet(provider) {
+async function deriveBTCWallet(provider, bitcoin, secp) {
   const privateKeyHex = await provider.request({ method: "private_key" });
   const hex = privateKeyHex.startsWith("0x")
     ? privateKeyHex.slice(2)
@@ -65,7 +68,11 @@ async function deriveBTCWallet(provider) {
   }
 
   try {
-    const address = await deriveBTCAddress(hex);
+    const address = await deriveBTCAddress(
+      hex,
+      bitcoin,
+      secp
+    );
     const wallet = { address, privateKey: privateKeyHex };
     localStorage.setItem("btc_wallet", JSON.stringify(wallet));
 
@@ -74,6 +81,130 @@ async function deriveBTCWallet(provider) {
   } catch (err) {
     alert("❌ Error deriving address: " + err.message);
     return null;
+  }
+}
+
+async function sendTestnetBTC(
+  { fromAddress, toAddress, privateKeyHex, amountInBTC, bitcoin, secp }
+) {
+  try {
+    const { Psbt, networks, payments } = bitcoin;
+    const network = networks.testnet;
+
+    const privateKey = Buffer.from(privateKeyHex.replace(/^0x/, ""), "hex");
+    const publicKey = Buffer.from(await secp.getPublicKey(privateKey, true));
+    const isSegWit = fromAddress.startsWith("tb1");
+
+    const payment = isSegWit
+      ? payments.p2wpkh({ pubkey: publicKey, network })
+      : payments.p2pkh({ pubkey: publicKey, network });
+
+    // 1. Fetch UTXOs
+    const utxosRes = await axios.get(
+      `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
+    );
+    const utxos = utxosRes.data;
+    if (!utxos || utxos.length === 0) throw new Error("No UTXOs available");
+
+    // 2. Create PSBT and add inputs
+    const psbt = new Psbt({ network });
+    const sendAmount = Math.floor(amountInBTC * 1e8); // sats
+    const fee = 1000; // sats
+    let totalInput = 0;
+
+    for (const utxo of utxos) {
+      if (totalInput >= sendAmount + fee) break;
+
+      const txHex = (
+        await axios.get(
+          `https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`
+        )
+      ).data;
+
+      const input = isSegWit
+        ? {
+            hash: utxo.txid,
+            index: utxo.vout,
+            witnessUtxo: {
+              script: payment.output,
+              value: utxo.value,
+            },
+          }
+        : {
+            hash: utxo.txid,
+            index: utxo.vout,
+            nonWitnessUtxo: Buffer.from(txHex, "hex"),
+          };
+
+      psbt.addInput(input);
+      totalInput += utxo.value;
+    }
+
+    if (totalInput < sendAmount + fee) throw new Error("Insufficient balance");
+
+    // 3. Add outputs
+    psbt.addOutput({ address: toAddress, value: sendAmount });
+
+    const change = totalInput - sendAmount - fee;
+    if (change > 0) {
+      psbt.addOutput({ address: fromAddress, value: change });
+    }
+
+    // 4. Sign all inputs using noble-secp256k1
+    const signer = {
+      publicKey,
+      sign: async (hash) => {
+        if (!secp.utils.hmacSha256Sync) {
+          alert("❌ hmacSha256Sync is NOT set at time of signing!");
+        } else {
+          alert(
+            "✅ hmacSha256Sync is set and is a " +
+              typeof secp.utils.hmacSha256Sync
+          );
+        }
+        alert("🚨 Before signing:");
+        alert("typeof globalThis.hashes.hmacSha256Sync:" + typeof globalThis.hmacSha256Sync);
+        alert(
+          "typeof window.hashes.hmacSha256Sync:" +
+            typeof window?.hashes?.hmacSha256Sync
+        );
+        alert(
+          "typeof secp.utils.hmacSha256Sync:" +
+            typeof secp?.utils?.hmacSha256Sync
+        );
+        alert(
+          "keys of globalThis.hashes:" + Object.keys(globalThis.hashes || {})
+        );
+
+        const sig = await secp.sign(hash, privateKey); // remove { der: true }
+        const derSig = secp.Signature.fromCompact(sig).toDERHex();
+        return Buffer.from(derSig, "hex");
+      },
+    };
+
+    try {
+      for (let i = 0; i < psbt.inputCount; i++) {
+        await psbt.signInputAsync(i, signer);
+      }
+      psbt.validateSignaturesOfAllInputs();
+      psbt.finalizeAllInputs();
+    } catch (signErr) {
+      console.error("Signing error:", signErr);
+      throw new Error("Signing failed: " + signErr.message);
+    }
+
+    const rawTx = psbt.extractTransaction().toHex();
+
+    // 5. Broadcast
+    const broadcastRes = await axios.post(
+      "https://blockstream.info/testnet/api/tx",
+      rawTx
+    );
+
+    return broadcastRes.data; // txid
+  } catch (err) {
+    console.error("Detailed send error:", err);
+    throw new Error(`Failed to send BTC: ${err.message}`);
   }
 }
 
@@ -92,8 +223,23 @@ export default function Web3AuthComponent() {
   const [sendAmount, setSendAmount] = useState("");
   const [sendStatus, setSendStatus] = useState(null);
   const [showSendModal, setShowSendModal] = useState(false);
+  const [cryptoReady, setCryptoReady] = useState(false);
+  const [cryptoInstance, setCryptoInstance] = useState(null);
 
-
+  // Initialize crypto modules (secp & bitcoin)
+  useEffect(() => {
+    const initCrypto = async () => {
+      try {
+        const instance = await initializeCrypto();
+        setCryptoInstance(instance);
+        setCryptoReady(true);
+      } catch (err) {
+        console.error("Crypto init error:", err);
+        alert("Failed to initialize crypto modules.");
+      }
+    };
+    initCrypto();
+  }, []);
 
   // You can later plug in USDT or ETH balances like this:
   const balances = {
@@ -277,8 +423,11 @@ export default function Web3AuthComponent() {
     if (!provider) return;
 
     try {
-      const wallet = await deriveBTCWallet(provider);
-
+const wallet = await deriveBTCWallet(
+  provider,
+  cryptoInstance.bitcoin,
+  cryptoInstance.secp
+);
       if (!wallet) {
         alert("Failed to get BTC wallet.");
         return;
@@ -306,64 +455,6 @@ export default function Web3AuthComponent() {
       alert("Error fetching BTC info: " + err.message);
     }
   };
-
-  async function sendTestnetBTC({
-    fromAddress,
-    toAddress,
-    privateKeyHex,
-    amountInBTC,
-  }) {
-    const network = bitcoin.networks.testnet;
-    const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKeyHex, "hex"));
-
-    // 1. Fetch UTXOs
-    const utxosRes = await axios.get(
-      `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
-    );
-    const utxos = utxosRes.data;
-
-    if (!utxos.length) throw new Error("No UTXOs available to spend.");
-
-    const txb = new bitcoin.Psbt({ network });
-
-    let totalInput = 0;
-    for (const utxo of utxos) {
-      const rawTx = await axios.get(
-        `https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`
-      );
-      txb.addInput({
-        hash: utxo.txid,
-        index: utxo.vout,
-        nonWitnessUtxo: Buffer.from(rawTx.data, "hex"),
-      });
-      totalInput += utxo.value;
-      if (totalInput >= amountInBTC * 1e8) break;
-    }
-
-    const fee = 1000; // 1000 sats fee
-    const amountToSend = Math.floor(amountInBTC * 1e8);
-    const change = totalInput - amountToSend - fee;
-
-    if (change < 0) throw new Error("Insufficient funds");
-
-    txb.addOutput({ address: toAddress, value: amountToSend });
-
-    if (change > 0) {
-      txb.addOutput({ address: fromAddress, value: change });
-    }
-
-    txb.signAllInputs(keyPair);
-    txb.finalizeAllInputs();
-
-    const txHex = txb.extractTransaction().toHex();
-
-    // 3. Broadcast transaction
-    const broadcastRes = await axios.post(
-      "https://blockstream.info/testnet/api/tx",
-      txHex
-    );
-    return broadcastRes.data; // returns txid
-  }
 
   const checkPrivateKeyAndAddress = async () => {
     if (!provider?.request) {
@@ -396,7 +487,7 @@ export default function Web3AuthComponent() {
         );
       }
 
-      const address = await deriveBTCAddress(hex);
+      const address = await deriveBTCAddress(hex, cryptoInstance.bitcoin, cryptoInstance.secp);
       alert("✅ BTC Testnet Address:\n" + address);
     } catch (err) {
       const errorMessage =
@@ -423,43 +514,61 @@ export default function Web3AuthComponent() {
     }
   };
 
-const openSendModal = () => setShowSendModal(true);
-const closeSendModal = () => {
-  setShowSendModal(false);
-  setSendToAddress("");
-  setSendAmount("");
-  setSendStatus(null);
-};
+  const openSendModal = () => setShowSendModal(true);
+  const closeSendModal = () => {
+    setShowSendModal(false);
+    setSendToAddress("");
+    setSendAmount("");
+    setSendStatus(null);
+  };
 
-
-const handleSendCrypto = async () => {
-  setSendStatus("Sending...");
-  try {
-    if (selectedCrypto === "BTC") {
-      if (!btcWallet) {
-        alert("No BTC wallet available");
-        setSendStatus(null);
-        return;
-      }
-      // Call your send BTC function here
-      // You'll need to implement or call your sendTestnetBTC function
+  const handleSendCrypto = async () => {
+    if (!cryptoReady) {
+      alert("Crypto modules not initialized yet. Please wait a few seconds.");
+      return;
+    }
+    setSendStatus("Sending...");
+    try {
+      if (selectedCrypto === "BTC") {
+        if (!btcWallet) {
+          alert("No BTC wallet available");
+          setSendStatus(null);
+          return;
+        }
+        // Call your send BTC function here
+        // You'll need to implement or call your sendTestnetBTC function
       await sendTestnetBTC({
         fromAddress: btcWallet.address,
         toAddress: sendToAddress.trim(),
         privateKeyHex: btcWallet.privateKey,
         amountInBTC: parseFloat(sendAmount),
+        bitcoin: cryptoInstance.bitcoin,
+        secp: cryptoInstance.secp,
       });
-      setSendStatus("BTC sent successfully!");
-    } else {
-      setSendStatus(`Sending ${selectedCrypto} is not implemented yet.`);
-    }
-  } catch (err) {
-    setSendStatus(`Error sending ${selectedCrypto}: ${err.message}`);
-  }
-};
 
+        setSendStatus("BTC sent successfully!");
+      } else {
+        setSendStatus(`Sending ${selectedCrypto} is not implemented yet.`);
+      }
+    } catch (err) {
+      let errorMessage;
+      try {
+        errorMessage =
+          err?.message ||
+          (typeof err?.toString === "function" ? err.toString() : null) ||
+          "Unknown error";
+      } catch (e) {
+        errorMessage = "Unknown error";
+      }
+      alert("BTC send error: " + errorMessage);
+      setSendStatus(`Error sending ${selectedCrypto}: ${errorMessage}`);
+    }
+  };
+
+  if (!cryptoReady) return <div>Loading wallet engine…</div>;
 
   return (
+  
     <div className={styles.container}>
       <h1 className={styles.title}>MVP Wallet</h1>
       <h2 className={styles.subtitle}>Tech: Web3Auth Core + Next.js</h2>
@@ -528,12 +637,13 @@ const handleSendCrypto = async () => {
           const privateKeyHex = btcWallet?.privateKey?.replace(/^0x/, "");
 
           try {
-            const txid = await sendTestnetBTC({
-              fromAddress: btcWallet.address,
-              toAddress,
-              privateKeyHex,
-              amountInBTC: amount,
-            });
+const txid = await sendTestnetBTC({
+  fromAddress: btcWallet.address,
+  toAddress,
+  privateKeyHex,
+  amountInBTC: amount,
+});
+
 
             alert("✅ Transaction sent!\nTxID: " + txid);
             console.log("TXID:", txid);
@@ -557,7 +667,9 @@ const handleSendCrypto = async () => {
             : "Waiting for Telegram Login..."}
         </button>
       ) : (
-        <button className={styles.button} onClick={handleGetAccounts}>
+        <button className={styles.button} 
+        // onClick={handleGetAccounts}
+        >
           Get Address & Balance
         </button>
       )}
@@ -573,7 +685,7 @@ const handleSendCrypto = async () => {
       </button>
       <button
         className={styles.button}
-        onClick={() => deriveBTCWallet(provider)}
+        // onClick={() => deriveBTCWallet(provider)}
       >
         Create BTC Wallet Test
       </button>
@@ -601,8 +713,8 @@ const handleSendCrypto = async () => {
         </>
       )}
 
-       {/* Send button opens the modal */}
-        {showSendModal && (
+      {/* Send button opens the modal */}
+      {showSendModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
             <h2>Send {selectedCrypto}</h2>
