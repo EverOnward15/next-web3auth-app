@@ -1,6 +1,5 @@
 ///Users/prathameshbhoite/Code/lotus-app/next-web3auth-app/components/Web3AuthComponent.js
 "use client";
-// pages/_app.js
 import "../lib/cryptoPatch";
 
 import { useEffect, useState } from "react";
