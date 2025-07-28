@@ -14,7 +14,6 @@ import * as secp from "@noble/secp256k1";
 import axios from "axios";
 import { payments, networks, Psbt } from "bitcoinjs-lib";
 import ECPairFactory from "ecpair";
-import ECPairFactory from "ecpair";
 import * as tinysecp from "tiny-secp256k1";
 
 
