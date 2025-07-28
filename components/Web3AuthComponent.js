@@ -15,6 +15,8 @@ import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
+import * as secp from "@noble/secp256k1";
+
 import * as bitcoin from "bitcoinjs-lib";
 // Destructure if you need them
 const { payments, networks } = bitcoin;
