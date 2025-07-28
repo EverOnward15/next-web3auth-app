@@ -100,8 +100,6 @@ export default function Web3AuthComponent() {
   const [sendStatus, setSendStatus] = useState(null);
   const [showSendModal, setShowSendModal] = useState(false);
 
-
-
   // You can later plug in USDT or ETH balances like this:
   const balances = {
     BTC: {
@@ -324,14 +322,14 @@ export default function Web3AuthComponent() {
     const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKeyHex, "hex"));
 
     // Ensure the key matches the address
-      const { address } = bitcoin.payments.p2pkh({
-        pubkey: keyPair.publicKey,
-        network,
-      });
+    const { address } = bitcoin.payments.p2pkh({
+      pubkey: keyPair.publicKey,
+      network,
+    });
 
-      if (address !== fromAddress) {
-        throw new Error("Private key does not match fromAddress");
-      }
+    if (address !== fromAddress) {
+      throw new Error("Private key does not match fromAddress");
+    }
     // 1. Fetch UTXOs
     const utxosRes = await axios.get(
       `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
@@ -439,41 +437,41 @@ export default function Web3AuthComponent() {
     }
   };
 
-const openSendModal = () => setShowSendModal(true);
-const closeSendModal = () => {
-  setShowSendModal(false);
-  setSendToAddress("");
-  setSendAmount("");
-  setSendStatus(null);
-};
+  const openSendModal = () => setShowSendModal(true);
+  const closeSendModal = () => {
+    setShowSendModal(false);
+    setSendToAddress("");
+    setSendAmount("");
+    setSendStatus(null);
+  };
 
-
-const handleSendCrypto = async () => {
-  setSendStatus("Sending...");
-  try {
-    if (selectedCrypto === "BTC") {
-      if (!btcWallet) {
-        alert("No BTC wallet available");
-        setSendStatus(null);
-        return;
+  const handleSendCrypto = async () => {
+    setSendStatus("Sending...");
+    try {
+      if (selectedCrypto === "BTC") {
+        if (!btcWallet) {
+          alert("No BTC wallet available");
+          setSendStatus(null);
+          return;
+        }
+        // Call your send BTC function here
+        // You'll need to implement or call your sendTestnetBTC function
+        await sendTestnetBTC({
+          fromAddress: btcWallet.address,
+          toAddress: sendToAddress.trim(),
+          privateKeyHex: btcWallet.privateKey,
+          amountInBTC: parseFloat(sendAmount),
+        });
+        setSendStatus("BTC sent successfully!");
+      } else {
+        setSendStatus(`Sending ${selectedCrypto} is not implemented yet.`);
       }
-      // Call your send BTC function here
-      // You'll need to implement or call your sendTestnetBTC function
-      await sendTestnetBTC({
-        fromAddress: btcWallet.address,
-        toAddress: sendToAddress.trim(),
-        privateKeyHex: btcWallet.privateKey,
-        amountInBTC: parseFloat(sendAmount),
-      });
-      setSendStatus("BTC sent successfully!");
-    } else {
-      setSendStatus(`Sending ${selectedCrypto} is not implemented yet.`);
+    } catch (err) {
+      alert("BTC send error:" + err);
+      const errorMessage = err?.message || err?.toString?.() || "Unknown error";
+      setSendStatus(`Error sending ${selectedCrypto}: ${errorMessage}`);
     }
-  } catch (err) {
-    setSendStatus(`Error sending ${selectedCrypto}: ${err.message}`);
-  }
-};
-
+  };
 
   return (
     <div className={styles.container}>
@@ -617,8 +615,8 @@ const handleSendCrypto = async () => {
         </>
       )}
 
-       {/* Send button opens the modal */}
-        {showSendModal && (
+      {/* Send button opens the modal */}
+      {showSendModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
             <h2>Send {selectedCrypto}</h2>
