@@ -1,6 +1,6 @@
 ///Users/prathameshbhoite/Code/lotus-app/next-web3auth-app/components/Web3AuthComponent.js
 "use client";
-import { initializeCrypto } from '../lib/cryptoInit';
+import { initializeCrypto } from "../lib/cryptoInit";
 
 import { useEffect, useState } from "react";
 import styles from "../components/Web3AuthComponent.module.css";
@@ -85,7 +85,12 @@ async function deriveBTCWallet(provider) {
   }
 }
 
-async function sendTestnetBTC({ fromAddress, toAddress, privateKeyHex, amountInBTC }) {
+async function sendTestnetBTC({
+  fromAddress,
+  toAddress,
+  privateKeyHex,
+  amountInBTC,
+}) {
   try {
     const { bitcoin, secp } = await initializeCrypto();
     const { Psbt, networks, payments } = bitcoin;
@@ -116,7 +121,9 @@ async function sendTestnetBTC({ fromAddress, toAddress, privateKeyHex, amountInB
       if (totalInput >= sendAmount + fee) break;
 
       const txHex = (
-        await axios.get(`https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`)
+        await axios.get(
+          `https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`
+        )
       ).data;
 
       const input = isSegWit
@@ -157,24 +164,24 @@ async function sendTestnetBTC({ fromAddress, toAddress, privateKeyHex, amountInB
       },
     };
 
-try {
-  for (let i = 0; i < psbt.inputCount; i++) {
-  await psbt.signInputAsync(i, {
-    publicKey,          // your Buffer(pubkey)
-    network,            // optional, but safe to include
-    sign: async (hash) => {
-      const sig = await secp.sign(hash, privateKey);    // returns Uint8Array
-      return Buffer.from(secp.signatureExport(sig));    // DER-encoded
-    },
-  });
-  }
-  psbt.validateSignaturesOfAllInputs();
-  psbt.finalizeAllInputs();
-} catch (signErr) {
-  console.error("Signing error:", signErr);
-  throw new Error("Signing failed: " + signErr.message);
-}
-
+    try {
+      for (let i = 0; i < psbt.inputCount; i++) {
+        await psbt.signInputAsync(i, {
+          publicKey,
+          network,
+          sign: async (hash) => {
+            const sig = await secp.sign(hash, privateKey);
+            const derSig = secp.exportSignature(sig);
+            return Buffer.from(derSig);
+          },
+        });
+      }
+      psbt.validateSignaturesOfAllInputs();
+      psbt.finalizeAllInputs();
+    } catch (signErr) {
+      console.error("Signing error:", signErr);
+      throw new Error("Signing failed: " + signErr.message);
+    }
 
     const rawTx = psbt.extractTransaction().toHex();
 
@@ -232,15 +239,15 @@ export default function Web3AuthComponent() {
   };
 
   useEffect(() => {
-  const verifyCrypto = async () => {
-    const bitcoin = await import('bitcoinjs-lib');
-    console.log('BitcoinJS crypto available:', {
-      sha256: typeof bitcoin.crypto.sha256,
-      hmac: typeof bitcoin.crypto.hmacSha256Sync
-    });
-  };
-  verifyCrypto();
-}, []);
+    const verifyCrypto = async () => {
+      const bitcoin = await import("bitcoinjs-lib");
+      console.log("BitcoinJS crypto available:", {
+        sha256: typeof bitcoin.crypto.sha256,
+        hmac: typeof bitcoin.crypto.hmacSha256Sync,
+      });
+    };
+    verifyCrypto();
+  }, []);
 
   /*Wallet UI functions*/
   // Automatically get wallet + balance if provider is availabl
@@ -386,18 +393,18 @@ export default function Web3AuthComponent() {
   }, [web3auth]);
 
   // Add this to your component
-useEffect(() => {
-  if (cryptoReady) {
-    const verify = async () => {
-      const { bitcoin } = await initializeCrypto();
-      console.log("Final verification:", {
-        hmacExists: typeof bitcoin.crypto.hmacSha256Sync,
-        nobleHmac: typeof hmac
-      });
-    };
-    verify();
-  }
-}, [cryptoReady]);
+  useEffect(() => {
+    if (cryptoReady) {
+      const verify = async () => {
+        const { bitcoin } = await initializeCrypto();
+        console.log("Final verification:", {
+          hmacExists: typeof bitcoin.crypto.hmacSha256Sync,
+          nobleHmac: typeof hmac,
+        });
+      };
+      verify();
+    }
+  }, [cryptoReady]);
 
   const handleLogout = async () => {
     // if (!web3auth) return;
