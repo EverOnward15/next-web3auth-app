@@ -1,6 +1,6 @@
 ///Users/prathameshbhoite/Code/lotus-app/next-web3auth-app/components/Web3AuthComponent.js
 "use client";
-import { initializeCrypto } from "../lib/cryptoInit";
+import { initializeCrypto } from '../lib/cryptoInit';
 
 import { useEffect, useState } from "react";
 import styles from "../components/Web3AuthComponent.module.css";
@@ -15,6 +15,11 @@ import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
+import * as secp from "@noble/secp256k1";
+
+import * as bitcoin from "bitcoinjs-lib";
+// Destructure if you need them
+const { payments, networks } = bitcoin;
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
@@ -23,38 +28,30 @@ const CLIENT_ID =
 
 //Function to derive BTC Address
 async function deriveBTCAddress(privateKeyHex) {
-  try {
-    const { bitcoin } = await initializeCrypto();
-    const hex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
+  const hex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
 
-    if (!/^[a-f0-9]{64}$/.test(hex)) {
-      throw new Error("privateKeyHex must be a 64-character hex string.");
-    }
-
-    // Add this check in deriveBTCAddress
-if (!bitcoin.networks.testnet) {
-  throw new Error("Bitcoin testnet network not properly configured");
-}
-    const privateKeyBytes = Uint8Array.from(Buffer.from(hex, "hex"));
-    const secp = await import("@noble/secp256k1");
-    const publicKey = await secp.getPublicKey(privateKeyBytes, true);
-
-    // Create payment object directly without destructuring
-    const payment = bitcoin.payments.p2pkh({
-      pubkey: Buffer.from(publicKey),
-      network: bitcoin.networks.testnet,
-    });
-
-    if (!payment.address) {
-      throw new Error("Failed to generate address from public key");
-    }
-
-    return payment.address;
-  } catch (err) {
-    console.error("Address derivation error:", err);
-    throw new Error(`Failed to derive address: ${err.message}`);
+  if (!/^[a-f0-9]{64}$/.test(hex)) {
+    throw new Error("privateKeyHex must be a 64-character hex string.");
   }
+
+  const privateKeyBytes = Uint8Array.from(Buffer.from(hex, "hex"));
+
+  if (privateKeyBytes.length !== 32) {
+    throw new Error("Private key must be 32 bytes.");
+  }
+
+  // Get compressed public key (33 bytes)
+  const publicKey = await secp.getPublicKey(privateKeyBytes, true);
+
+  // Generate p2pkh Bitcoin testnet address
+  const { address } = payments.p2pkh({
+    pubkey: Buffer.from(publicKey),
+    network: networks.testnet, // Change to networks.bitcoin for mainnet
+  });
+
+  return address;
 }
+
 //Function to call deriveBTCWallet
 async function deriveBTCWallet(provider) {
   const privateKeyHex = await provider.request({ method: "private_key" });
@@ -106,10 +103,9 @@ async function sendTestnetBTC({
 
     // Verify crypto functions are available
     if (!bitcoin.crypto?.hmacSha256Sync) {
-      throw new Error(
-        "bitcoinjs-lib crypto functions not properly initialized"
-      );
+      throw new Error("bitcoinjs-lib crypto functions not properly initialized");
     }
+
 
     const isSegWit = fromAddress.startsWith("tb1");
     const payment = isSegWit
@@ -176,7 +172,7 @@ async function sendTestnetBTC({
     // Sign all inputs
     for (let i = 0; i < psbt.inputCount; i++) {
       const sighashType = Transaction.SIGHASH_ALL;
-
+      
       // Get the sighash
       const sighash = psbt.__CACHE.__TX.hashForSignature(
         i,
@@ -209,14 +205,11 @@ async function sendTestnetBTC({
 
     return broadcast.data;
   } catch (err) {
-        console.error("Full error details:", {
-      message: err.message,
-      stack: err.stack,
-      cause: err.cause
-    });
+    console.error("Detailed send error:", err);
     throw new Error(`Failed to send BTC: ${err.message}`);
   }
 }
+
 
 export default function Web3AuthComponent() {
   const [web3auth, setWeb3auth] = useState(null);
@@ -259,15 +252,15 @@ export default function Web3AuthComponent() {
   };
 
   useEffect(() => {
-    const verifyCrypto = async () => {
-      const bitcoin = await import("bitcoinjs-lib");
-      console.log("BitcoinJS crypto available:", {
-        sha256: typeof bitcoin.crypto.sha256,
-        hmac: typeof bitcoin.crypto.hmacSha256Sync,
-      });
-    };
-    verifyCrypto();
-  }, []);
+  const verifyCrypto = async () => {
+    const bitcoin = await import('bitcoinjs-lib');
+    console.log('BitcoinJS crypto available:', {
+      sha256: typeof bitcoin.crypto.sha256,
+      hmac: typeof bitcoin.crypto.hmacSha256Sync
+    });
+  };
+  verifyCrypto();
+}, []);
 
   /*Wallet UI functions*/
   // Automatically get wallet + balance if provider is availabl
@@ -412,21 +405,19 @@ export default function Web3AuthComponent() {
     tryRestoreSession();
   }, [web3auth]);
 
+  // Add this to your component
 useEffect(() => {
-  const verifySetup = async () => {
-    try {
-      const { bitcoin, secp } = await initializeCrypto();
-      console.log("Crypto Verification:", {
-        paymentsReady: typeof bitcoin.payments.p2pkh === 'function',
-        networksReady: !!bitcoin.networks.testnet,
-        secpReady: typeof secp.getPublicKey === 'function'
+  if (cryptoReady) {
+    const verify = async () => {
+      const { bitcoin } = await initializeCrypto();
+      console.log("Final verification:", {
+        hmacExists: typeof bitcoin.crypto.hmacSha256Sync,
+        nobleHmac: typeof hmac
       });
-    } catch (err) {
-      console.error("Crypto verification failed:", err);
-    }
-  };
-  verifySetup();
-}, []);
+    };
+    verify();
+  }
+}, [cryptoReady]);
 
   const handleLogout = async () => {
     // if (!web3auth) return;
@@ -437,8 +428,6 @@ useEffect(() => {
       setSkipRestore(true);
       setUser(null);
       setProvider(null);
-      // Add this at the start of deriveBTCWallet
-      localStorage.removeItem("btc_wallet"); // Temporary - remove after testin
       // setIsLoggingIn(null);
       // setJwtToken(null);
       await web3auth.logout();
