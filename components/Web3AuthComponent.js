@@ -318,10 +318,7 @@ export default function Web3AuthComponent() {
     privateKeyHex, // WIF??
     amountInBTC,
   }) {
-    alert(fromAddress);
-    alert(toAddress);
-    alert(privateKeyHex);
-    alert(amountInBTC);
+    aleert ("I'm working?");
 
     const network = networks.testnet;
 
