@@ -1,5 +1,6 @@
 "use client"; // Only needed if this is inside `app/` directory
 
+import "../lib/cryptoPatch";
 import dynamic from "next/dynamic";
 
 // Dynamically import the component with SSR disabled
