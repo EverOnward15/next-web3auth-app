@@ -10,9 +10,10 @@ if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
 import axios from "axios";
-
 import * as bitcoin from "bitcoinjs-lib";
 const { payments, networks } = bitcoin;
+import { hmac } from "@noble/hashes/hmac";
+
 
 import * as secp from "@noble/secp256k1";
 
