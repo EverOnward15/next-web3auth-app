@@ -325,7 +325,10 @@ export default function Web3AuthComponent() {
 
     const network = networks.testnet;
 
-    const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKeyHex, "hex"));
+    const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKeyHex, "hex"), {
+      network: networks.testnet,
+      compressed: true, // Must match your publicKey format
+    });
     // Use fromWIF if your private key is in WIF format
     // const keyPair = ECPair.fromWIF(privateKeyHex, network);
 
@@ -334,10 +337,12 @@ export default function Web3AuthComponent() {
       pubkey: keyPair.publicKey,
       network,
     });
+    alert("Derived from private key:"+ derivedAddress);
+    alert("From wallet object:"+ fromAddress);
+
     if (derivedAddress !== fromAddress) {
       throw new Error("Private key does not match fromAddress");
     }
-
     // 1. Fetch UTXOs
     const utxosRes = await axios.get(
       `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
