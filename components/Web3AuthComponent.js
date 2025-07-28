@@ -11,31 +11,21 @@ if (typeof window !== "undefined") {
 }
 import axios from "axios";
 import * as secp from "@noble/secp256k1";
-
 import { hmac } from "@noble/hashes/hmac";
 import { sha256 } from "@noble/hashes/sha256";
+import { Buffer } from "buffer";
+import bitcoin from "bitcoinjs-lib";
 
-// Monkey patch bitcoinjs-lib's internal hashes.hmacSha256Sync before importing bitcoinjs-lib
-// We have to import bitcoinjs-lib after patching
+// Patch bitcoinjs-lib's hmacSha256Sync before using it
+if (!bitcoin.crypto || !bitcoin.crypto.hmacSha256Sync) {
+  bitcoin.crypto = bitcoin.crypto || {};
+  bitcoin.crypto.hmacSha256Sync = (key, data) => {
+    return Buffer.from(hmac(sha256, key, data));
+  };
+}
 
-// Use dynamic import for bitcoinjs-lib
-let bitcoin;
-
-(async () => {
-  bitcoin = await import("bitcoinjs-lib");
-
-  if (!bitcoin.crypto || !bitcoin.crypto.hmacSha256Sync) {
-    bitcoin.crypto = bitcoin.crypto || {};
-    bitcoin.crypto.hmacSha256Sync = (key, data) => {
-      return Buffer.from(hmac(sha256, key, data));
-    };
-  }
-
-  // Now bitcoinjs-lib can be used with patched crypto.hmacSha256Sync
-  const { payments, networks } = bitcoin;
-
-  // The rest of your code that uses bitcoinjs-lib here...
-})();
+// Now you can safely use bitcoinjs-lib's payments, networks, Psbt, etc.
+const { payments, networks, Psbt, Transaction } = bitcoin;
 
 
 const CLIENT_ID =
