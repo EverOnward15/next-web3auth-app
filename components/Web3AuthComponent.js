@@ -83,7 +83,6 @@ async function deriveBTCWallet(provider) {
     return null;
   }
 }
-
 async function sendTestnetBTC({
   fromAddress,
   toAddress,
@@ -91,10 +90,15 @@ async function sendTestnetBTC({
   amountInBTC,
 }) {
   try {
-    // Ensure all required modules are dynamically imported
-    const { default: secp } = await import("@noble/secp256k1");
-    const { default: bitcoin } = await import("bitcoinjs-lib");
-    const { payments, networks, Psbt, Transaction } = bitcoin;
+    // Import the modules properly without destructuring initially
+    const secp = await import("@noble/secp256k1");
+    const bitcoin = await import("bitcoinjs-lib");
+    
+    // Now safely access the needed components
+    const networks = bitcoin.networks;
+    const payments = bitcoin.payments;
+    const Psbt = bitcoin.Psbt;
+    const Transaction = bitcoin.Transaction;
 
     // Verify crypto functions are available
     if (!bitcoin.crypto?.hmacSha256Sync) {
@@ -119,9 +123,55 @@ async function sendTestnetBTC({
 
     const psbt = new Psbt({ network });
 
-    // ... rest of your existing code ...
+    let total = 0;
+    const sendAmount = Math.floor(amountInBTC * 1e8);
+    const fee = 1000;
 
-    // Modified signing section
+    // Add inputs
+    for (const utxo of utxos) {
+      if (total >= sendAmount + fee) break;
+
+      const rawTx = await axios.get(
+        `https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`
+      );
+      const txHex = rawTx.data;
+
+      const input = {
+        hash: utxo.txid,
+        index: utxo.vout,
+        ...(isSegWit
+          ? {
+              witnessUtxo: {
+                script: payment.output,
+                value: utxo.value,
+              },
+            }
+          : {
+              nonWitnessUtxo: Buffer.from(txHex, "hex"),
+            }),
+      };
+
+      psbt.addInput(input);
+      total += utxo.value;
+    }
+
+    if (total < sendAmount + fee) throw new Error("Insufficient balance");
+
+    // Add outputs
+    psbt.addOutput({
+      address: toAddress,
+      value: sendAmount,
+    });
+
+    const change = total - sendAmount - fee;
+    if (change > 0) {
+      psbt.addOutput({
+        address: fromAddress,
+        value: change,
+      });
+    }
+
+    // Sign all inputs
     for (let i = 0; i < psbt.inputCount; i++) {
       const sighashType = Transaction.SIGHASH_ALL;
       
@@ -161,6 +211,7 @@ async function sendTestnetBTC({
     throw new Error(`Failed to send BTC: ${err.message}`);
   }
 }
+
 export default function Web3AuthComponent() {
   const [web3auth, setWeb3auth] = useState(null);
   const [provider, setProvider] = useState(null);
