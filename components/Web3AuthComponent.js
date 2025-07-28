@@ -16,6 +16,10 @@ import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
+// At the top-level component or module
+const cryptoInstance = await initializeCrypto();
+// Then pass cryptoInstance.bitcoin and cryptoInstance.secp to functions
+const { bitcoin, secp } = cryptoInstance;
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
@@ -24,7 +28,6 @@ const CLIENT_ID =
 
 //Function to derive BTC Address
 async function deriveBTCAddress(privateKeyHex) {
-  const { bitcoin, secp } = await initializeCrypto();
   const { payments, networks } = bitcoin;
   const hex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
 
@@ -90,7 +93,6 @@ async function sendTestnetBTC({
   amountInBTC,
 }) {
   try {
-    const { bitcoin, secp } = await initializeCrypto();
     const { Psbt, networks, payments } = bitcoin;
     const network = networks.testnet;
 
@@ -218,12 +220,6 @@ export default function Web3AuthComponent() {
   const [showSendModal, setShowSendModal] = useState(false);
   const [cryptoReady, setCryptoReady] = useState(false);
 
-  useEffect(() => {
-    initializeCrypto().then(() => {
-      console.log("Crypto fully initialized");
-      setCryptoReady(true);
-    });
-  }, []);
 
   // You can later plug in USDT or ETH balances like this:
   const balances = {
@@ -385,19 +381,7 @@ export default function Web3AuthComponent() {
     tryRestoreSession();
   }, [web3auth]);
 
-  // Add this to your component
-  useEffect(() => {
-    if (cryptoReady) {
-      const verify = async () => {
-        const { bitcoin } = await initializeCrypto();
-        console.log("Final verification:", {
-          hmacExists: typeof bitcoin.crypto.hmacSha256Sync,
-          nobleHmac: typeof hmac,
-        });
-      };
-      verify();
-    }
-  }, [cryptoReady]);
+
 
   const handleLogout = async () => {
     // if (!web3auth) return;
