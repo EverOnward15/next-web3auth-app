@@ -12,7 +12,7 @@ if (typeof window !== "undefined") {
 import axios from "axios";
 import { payments, networks } from "bitcoinjs-lib";
 import * as secp from "@noble/secp256k1";
-import { ECPair, payments, Psbt } from "bitcoinjs-lib";
+import { ECPair, Psbt } from "bitcoinjs-lib";
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
