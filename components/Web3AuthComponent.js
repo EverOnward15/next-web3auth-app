@@ -9,10 +9,15 @@ import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
-import axios from "axios";
-import { payments, networks } from "bitcoinjs-lib";
+
 import * as secp from "@noble/secp256k1";
-import { ECPair, Psbt } from "bitcoinjs-lib";
+import axios from "axios";
+import { payments, networks, Psbt } from "bitcoinjs-lib";
+import ECPairFactory from "ecpair";
+import tinysecp from "tiny-secp256k1";
+
+// Create an ECPair that bitcoinjs-lib’s Psbt can use:
+const ECPair = ECPairFactory(tinysecp);
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
