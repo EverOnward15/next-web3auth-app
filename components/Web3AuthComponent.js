@@ -13,7 +13,14 @@ import axios from "axios";
 import * as bitcoin from "bitcoinjs-lib";
 const { payments, networks } = bitcoin;
 
+
+import { hmac } from "@noble/hashes/hmac";
+import { sha256 } from "@noble/hashes/sha256";
 import * as secp from "@noble/secp256k1";
+
+// Set the required hash function
+secp.utils.hmacSha256Sync = (key, ...msgs) => hmac(sha256, key, ...msgs);
+
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
