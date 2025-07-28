@@ -17,9 +17,6 @@ if (typeof window !== "undefined") {
 }
 import * as secp from "@noble/secp256k1";
 
-// import * as bitcoin from "bitcoinjs-lib";
-// const { payments, networks } = bitcoin;
-
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
 
@@ -27,6 +24,8 @@ const CLIENT_ID =
 
 //Function to derive BTC Address
 async function deriveBTCAddress(privateKeyHex) {
+  const { bitcoin, secp } = await initializeCrypto();
+  const { payments, networks } = bitcoin;
   const hex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
 
   if (!/^[a-f0-9]{64}$/.test(hex)) {
@@ -41,10 +40,6 @@ async function deriveBTCAddress(privateKeyHex) {
 
   // Get compressed public key (33 bytes)
   const publicKey = await secp.getPublicKey(privateKeyBytes, true);
-
-  const { bitcoin } = await initializeCrypto();
-  const { payments, networks } = bitcoin;
-
 
   // Generate p2pkh Bitcoin testnet address
   const { address } = payments.p2pkh({
@@ -95,7 +90,8 @@ async function sendTestnetBTC({
   amountInBTC,
 }) {
   try {
-    const { bitcoin, secp } = await initializeCrypto();
+    const { bitcoin } = await initializeCrypto();
+    const secp = await import("@noble/secp256k1");
     const { Psbt, networks, payments } = bitcoin;
     const network = networks.testnet;
 
@@ -159,18 +155,16 @@ async function sendTestnetBTC({
     }
 
     // 4. Sign all inputs using noble-secp256k1
-const signer = {
-  publicKey,
-  sign: async (hash) => {
-    const sig = await secp.sign(hash, privateKey, { der: true });
-    return Buffer.from(sig);
-  },
-};
-
+    const signer = {
+      publicKey,
+      sign: async (hash) => {
+        const sig = await secp.sign(hash, privateKey, { der: true });
+        return Buffer.from(sig);
+      },
+    };
     try {
       for (let i = 0; i < psbt.inputCount; i++) {
         await psbt.signInputAsync(i, signer);
-;
       }
       psbt.validateSignaturesOfAllInputs();
       psbt.finalizeAllInputs();
