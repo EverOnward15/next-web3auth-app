@@ -16,8 +16,6 @@ import { payments, networks, Psbt } from "bitcoinjs-lib";
 import ECPairFactory from "ecpair";
 import * as tinysecp from "tiny-secp256k1";
 
-
-
 // Create an ECPair that bitcoinjs-lib’s Psbt can use:
 const ECPair = ECPairFactory(tinysecp);
 
@@ -320,13 +318,18 @@ export default function Web3AuthComponent() {
     amountInBTC,
   }) {
     const network = networks.testnet;
-    const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKeyHex, "hex"));
+
+    const hex = privateKeyHex.startsWith("0x")
+      ? privateKeyHex.slice(2)
+      : privateKeyHex;
+    if (hex.length !== 64) {
+      throw new Error(`Invalid private key length ${hex.length}.`);
+    }
+    const keyPair = ECPair.fromPrivateKey(Buffer.from(hex, "hex"));
 
     if (!ECPair?.fromPrivateKey) {
-  alert("ECPair is not correctly initialized");
-}
-
-
+      alert("ECPair is not correctly initialized");
+    }
     // 1. Fetch UTXOs
     const utxosRes = await axios.get(
       `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
