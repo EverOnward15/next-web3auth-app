@@ -16,10 +16,6 @@ import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
-// At the top-level component or module
-const cryptoInstance = await initializeCrypto();
-// Then pass cryptoInstance.bitcoin and cryptoInstance.secp to functions
-const { bitcoin, secp } = cryptoInstance;
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
@@ -27,7 +23,7 @@ const CLIENT_ID =
 /*------------------ Start of Code --------------------*/
 
 //Function to derive BTC Address
-async function deriveBTCAddress(privateKeyHex) {
+async function deriveBTCAddress(privateKeyHex, bitcoin, secp) {
   const { payments, networks } = bitcoin;
   const hex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
 
@@ -74,7 +70,11 @@ async function deriveBTCWallet(provider) {
   }
 
   try {
-    const address = await deriveBTCAddress(hex);
+    const address = await deriveBTCAddress(
+      hex,
+      cryptoInstance.bitcoin,
+      cryptoInstance.secp
+    );
     const wallet = { address, privateKey: privateKeyHex };
     localStorage.setItem("btc_wallet", JSON.stringify(wallet));
 
@@ -86,12 +86,11 @@ async function deriveBTCWallet(provider) {
   }
 }
 
-async function sendTestnetBTC({
-  fromAddress,
-  toAddress,
-  privateKeyHex,
-  amountInBTC,
-}) {
+async function sendTestnetBTC(
+  { fromAddress, toAddress, privateKeyHex, amountInBTC },
+  bitcoin,
+  secp
+) {
   try {
     const { Psbt, networks, payments } = bitcoin;
     const network = networks.testnet;
@@ -159,19 +158,29 @@ async function sendTestnetBTC({
     const signer = {
       publicKey,
       sign: async (hash) => {
-
         if (!secp.utils.hmacSha256Sync) {
-  alert("❌ hmacSha256Sync is NOT set at time of signing!");
-} else {
-  alert("✅ hmacSha256Sync is set and is a " + typeof secp.utils.hmacSha256Sync);
-}
-alert("🚨 Before signing:");
-alert("typeof hashes.hmacSha256Sync:" + typeof hashes?.hmacSha256Sync);
-alert("typeof window.hashes.hmacSha256Sync:"+ typeof window?.hashes?.hmacSha256Sync);
-alert("typeof secp.utils.hmacSha256Sync:"+ typeof secp?.utils?.hmacSha256Sync); 
-alert("keys of globalThis.hashes:" + Object.keys(globalThis.hashes || {}));
+          alert("❌ hmacSha256Sync is NOT set at time of signing!");
+        } else {
+          alert(
+            "✅ hmacSha256Sync is set and is a " +
+              typeof secp.utils.hmacSha256Sync
+          );
+        }
+        alert("🚨 Before signing:");
+        alert("typeof hashes.hmacSha256Sync:" + typeof hashes?.hmacSha256Sync);
+        alert(
+          "typeof window.hashes.hmacSha256Sync:" +
+            typeof window?.hashes?.hmacSha256Sync
+        );
+        alert(
+          "typeof secp.utils.hmacSha256Sync:" +
+            typeof secp?.utils?.hmacSha256Sync
+        );
+        alert(
+          "keys of globalThis.hashes:" + Object.keys(globalThis.hashes || {})
+        );
 
-const sig = await secp.sign(hash, privateKey); // remove { der: true }
+        const sig = await secp.sign(hash, privateKey); // remove { der: true }
         const derSig = secp.Signature.fromCompact(sig).toDERHex();
         return Buffer.from(derSig, "hex");
       },
@@ -219,7 +228,22 @@ export default function Web3AuthComponent() {
   const [sendStatus, setSendStatus] = useState(null);
   const [showSendModal, setShowSendModal] = useState(false);
   const [cryptoReady, setCryptoReady] = useState(false);
+  const [cryptoInstance, setCryptoInstance] = useState(null);
 
+  // Initialize crypto modules (secp & bitcoin)
+  useEffect(() => {
+    const initCrypto = async () => {
+      try {
+        const instance = await initializeCrypto();
+        setCryptoInstance(instance);
+        setCryptoReady(true);
+      } catch (err) {
+        console.error("Crypto init error:", err);
+        alert("Failed to initialize crypto modules.");
+      }
+    };
+    initCrypto();
+  }, []);
 
   // You can later plug in USDT or ETH balances like this:
   const balances = {
@@ -236,7 +260,6 @@ export default function Web3AuthComponent() {
       balance: "0.034 ETH",
     },
   };
-
 
   /*Wallet UI functions*/
   // Automatically get wallet + balance if provider is availabl
@@ -381,8 +404,6 @@ export default function Web3AuthComponent() {
     tryRestoreSession();
   }, [web3auth]);
 
-
-
   const handleLogout = async () => {
     // if (!web3auth) return;
     // await web3auth.logout();
@@ -504,9 +525,9 @@ export default function Web3AuthComponent() {
 
   const handleSendCrypto = async () => {
     if (!cryptoReady) {
-  alert("Crypto modules not initialized yet. Please wait a few seconds.");
-  return;
-}
+      alert("Crypto modules not initialized yet. Please wait a few seconds.");
+      return;
+    }
     setSendStatus("Sending...");
     try {
       if (selectedCrypto === "BTC") {
@@ -517,12 +538,16 @@ export default function Web3AuthComponent() {
         }
         // Call your send BTC function here
         // You'll need to implement or call your sendTestnetBTC function
-        await sendTestnetBTC({
-          fromAddress: btcWallet.address,
-          toAddress: sendToAddress.trim(),
-          privateKeyHex: btcWallet.privateKey,
-          amountInBTC: parseFloat(sendAmount),
-        });
+        await sendTestnetBTC(
+          {
+            fromAddress: btcWallet.address,
+            toAddress: sendToAddress.trim(),
+            privateKeyHex: btcWallet.privateKey,
+            amountInBTC: parseFloat(sendAmount),
+          },
+          bitcoin,
+          secp
+        );
         setSendStatus("BTC sent successfully!");
       } else {
         setSendStatus(`Sending ${selectedCrypto} is not implemented yet.`);
@@ -543,6 +568,7 @@ export default function Web3AuthComponent() {
   };
 
   return (
+   
     <div className={styles.container}>
       <h1 className={styles.title}>MVP Wallet</h1>
       <h2 className={styles.subtitle}>Tech: Web3Auth Core + Next.js</h2>
