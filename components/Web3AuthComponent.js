@@ -157,8 +157,13 @@ async function sendTestnetBTC({
     const signer = {
       publicKey,
       sign: async (hash) => {
-          alert("signing with hmacSha256Sync:" + typeof secp.utils.hmacSha256Sync);
-        const sig = await secp.sign(hash, privateKey); // remove { der: true }
+
+        if (!secp.utils.hmacSha256Sync) {
+  alert("❌ hmacSha256Sync is NOT set at time of signing!");
+} else {
+  alert("✅ hmacSha256Sync is set and is a " + typeof secp.utils.hmacSha256Sync);
+}
+    const sig = await secp.sign(hash, privateKey); // remove { der: true }
         const derSig = secp.Signature.fromCompact(sig).toDERHex();
         return Buffer.from(derSig, "hex");
       },
