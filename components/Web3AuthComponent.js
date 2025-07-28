@@ -11,15 +11,18 @@ if (typeof window !== "undefined") {
 }
 import axios from "axios";
 import * as bitcoin from "bitcoinjs-lib";
-const { payments, networks } = bitcoin;
 import { hmac } from "@noble/hashes/hmac";
-
+import { sha256 } from "@noble/hashes/sha256";
+// Monkey patch bitcoinjs-lib's internal hashes.hmacSha256Sync
+if (!bitcoin.crypto || !bitcoin.crypto.hmacSha256Sync) {
+  bitcoin.crypto = bitcoin.crypto || {};
+  bitcoin.crypto.hmacSha256Sync = (key, data) => {
+    return Buffer.from(hmac(sha256, key, data));
+  };
+}
+const { payments, networks } = bitcoin;
 
 import * as secp from "@noble/secp256k1";
-
-import { ECPairFactory } from "ecpair";
-import * as ecc from "tiny-secp256k1";
-const ECPair = ECPairFactory(ecc); // One-time setup
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
