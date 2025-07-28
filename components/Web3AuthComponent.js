@@ -9,8 +9,11 @@ import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 }
+import axios from "axios";
 
-import { payments, networks } from "bitcoinjs-lib";
+import * as bitcoin from "bitcoinjs-lib";
+const { payments, networks } = bitcoin;
+
 import * as secp from "@noble/secp256k1";
 
 import { ECPairFactory } from "ecpair";
