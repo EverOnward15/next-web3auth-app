@@ -17,7 +17,8 @@ if (typeof window !== "undefined") {
 
 // noble + patch for secp256k1
 import * as secp from "@noble/secp256k1";
-import { sha256, hmac } from "@noble/hashes/sha256";
+import { sha256 } from "@noble/hashes/sha256";
+import { hmac } from "@noble/hashes/hmac";       // ← correct module!
 import { ripemd160 } from "@noble/hashes/ripemd160";
 
 // Patch noble HMAC for signing
@@ -31,16 +32,14 @@ if (typeof window !== "undefined") {
   bitcoin.crypto.sha256 = (buffer) => Buffer.from(sha256(buffer));
   bitcoin.crypto.hash256 = (buffer) => Buffer.from(sha256(sha256(buffer)));
   bitcoin.crypto.ripemd160 = (buffer) => Buffer.from(ripemd160(buffer));
-  bitcoin.crypto.hmacSha256 = (key, buffer) => Buffer.from(hmac(sha256, key, buffer));
-  
-  // Add this line to patch the sync function
-  bitcoin.crypto.hmacSha256Sync = (key, buffer) => Buffer.from(hmac(sha256, key, buffer));
+  bitcoin.crypto.hmacSha256 = (key, buffer) =>
+    Buffer.from(hmac(sha256, key, buffer));
+  bitcoin.crypto.hmacSha256Sync = (key, buffer) =>
+    Buffer.from(hmac(sha256, key, buffer));
 }
 
-
-// Optional: destructure if you're using payments/networks
+// Destructure if you need them
 const { payments, networks } = bitcoin;
-
 
 
 
