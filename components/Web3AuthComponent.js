@@ -15,6 +15,10 @@ import { hmac } from "@noble/hashes/hmac";
 import { sha256 } from "@noble/hashes/sha256";
 import bitcoin from "bitcoinjs-lib";
 
+
+if (!bitcoin.crypto) {
+  bitcoin.crypto = {};
+}
 // Patch bitcoinjs-lib's hmacSha256Sync before using it
 if (!bitcoin.crypto || !bitcoin.crypto.hmacSha256Sync) {
   bitcoin.crypto = bitcoin.crypto || {};
