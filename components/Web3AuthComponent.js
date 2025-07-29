@@ -9,7 +9,7 @@ if (typeof window !== "undefined" && !window.Buffer) {
   window.Buffer = Buffer;
 }
 
-import { Tx, Address } from '@scure/btc-signer';
+import { Tx, p2wpkh } from '@scure/btc-signer';
 import { hex } from '@noble/hashes/utils';
 import { getPublicKey, sign } from '@noble/secp256k1';
 // Then import everything else
@@ -24,18 +24,6 @@ const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
 
 /*------------------ Start of Code --------------------*/
-
-
-function hexToUint8Array(hexString) {
-  if (hexString.length % 2 !== 0) {
-    throw new Error("Invalid hex string");
-  }
-  const arr = new Uint8Array(hexString.length / 2);
-  for (let i = 0; i < hexString.length; i += 2) {
-    arr[i / 2] = parseInt(hexString.substr(i, 2), 16);
-  }
-  return arr;
-}
 
 //Function to derive BTC Address
 async function deriveBTCAddress(privateKeyHex) {
@@ -333,7 +321,7 @@ export default function Web3AuthComponent() {
     const pub = await getPublicKey(priv, true);
 
     alert('🏗️ Step 2: Building sender address...');
-    const fromScript = Address.p2wpkh(pub, 'testnet'); // or 'mainnet'
+    const fromScript = p2wpkh(pub, 'testnet'); // Mainnet later
     const fromAddrDerived = fromScript.address;
     if (fromAddrDerived !== fromAddress) {
       alert(`⚠️ Warning: Derived address ${fromAddrDerived} doesn't match input ${fromAddress}`);
