@@ -345,6 +345,7 @@ export default function Web3AuthComponent() {
         hash: utxo.txid,
         index: utxo.vout,
         nonWitnessUtxo: Buffer.from(rawHex, "hex"),
+        witnessUtxo: { script: output.script, value: utxo.value },
       });
 
       total += utxo.value;
