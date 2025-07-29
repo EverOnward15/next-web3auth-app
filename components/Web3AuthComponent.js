@@ -6,32 +6,40 @@ import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
 import styles from "../components/Web3AuthComponent.module.css";
 import { CommonPrivateKeyProvider } from "@web3auth/base-provider";
 import { Buffer } from "buffer";
-if (typeof window !== "undefined") {
-  window.Buffer = Buffer;
-}
-
 import * as secp from "@noble/secp256k1";
 import axios from "axios";
 
 import { sha256 } from "@noble/hashes/sha256";
-import { hmac }   from "@noble/hashes/hmac";
-import { sign, getPublicKey } from "@noble/secp256k1";
-import * as bitcoin from "bitcoinjs-lib";
-const { payments, networks, Psbt, Transaction } = bitcoin;
+import { hmac } from "@noble/hashes/hmac";
+import { Buffer } from "buffer";
+if (typeof window !== "undefined") {
+  window.Buffer = Buffer;
+}
 
-// --- Inject the two synchronous hash functions bitcoinjs-lib expects ---
+// Patch functions before bitcoinjs-lib
+function sha256Noble(buffer) {
+  return sha256(buffer);
+}
 
-bitcoin.crypto = bitcoin.crypto || {};
-bitcoin.crypto.sha256 = (buffer) => Buffer.from(sha256Noble(buffer));
+function hmacSha256Noble(hashFunc, key, data) {
+  return hmac(hashFunc, key, data);
+}
 
-bitcoin.crypto.hmacSha256Sync = (key, data) => {
+// Patch BEFORE bitcoinjs-lib
+globalThis.crypto = globalThis.crypto || {};
+globalThis.crypto.sha256 = sha256Noble;
+globalThis.crypto.hmacSha256Sync = (key, data) => {
   const keyBytes =
     typeof key === "string" ? Buffer.from(key, "utf8") : Buffer.from(key);
   const dataBytes =
     typeof data === "string" ? Buffer.from(data, "utf8") : Buffer.from(data);
-  return Buffer.from(hmacSha256Noble(sha256Noble, keyBytes, dataBytes));
+  return Buffer.from(hmacSha256Noble(sha256, keyBytes, dataBytes));
 };
 
+import * as bitcoin from "bitcoinjs-lib";
+const { payments, networks, Psbt, Transaction } = bitcoin;
+
+alert("hmacSha256Sync:" + typeof bitcoin.crypto.hmacSha256Sync);
 alert("Patched hmacSha256Sync:" + typeof bitcoin.crypto.hmacSha256Sync);
 
 
