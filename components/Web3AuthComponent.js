@@ -19,7 +19,7 @@ import * as tinysecp from "tiny-secp256k1";
 
 const ECPair = ECPairFactory(tinysecp);
 
-import { signSync, getPublicKey } from "@noble/secp256k1";
+import { sign, getPublicKey } from "@noble/secp256k1";
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
@@ -414,7 +414,7 @@ export default function Web3AuthComponent() {
         sighashType
       );
 
-      const signature = signSync(sighash, keyBuffer);
+      const signature = await sign(sighash, keyBuffer);
       const finalSig = Buffer.concat([
         Buffer.from(signature),
         Buffer.from([sighashType]),
