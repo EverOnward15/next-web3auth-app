@@ -11,15 +11,6 @@ import axios from "axios";
 
 import { patchBitcoinCrypto } from "../utils/patchBitcoinCrypto";
 
-let bitcoin; // Declare it globally
-
-(async () => {
-  if (typeof window !== "undefined") {
-    bitcoin = await patchBitcoinCrypto();
-    alert("✅ Patched bitcoinjs-lib with module");
-  }
-})();
-
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
 
@@ -28,7 +19,7 @@ const CLIENT_ID =
 //Function to derive BTC Address
 
 async function deriveBTCAddress(privateKeyHex) {
-  const { payments, networks, Psbt, Transaction } = bitcoin;
+  const { payments, networks, Psbt, Transaction } = patchedBitcoin;
   const hex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
 
   if (!/^[a-f0-9]{64}$/.test(hex)) {
@@ -102,6 +93,18 @@ export default function Web3AuthComponent() {
   const [sendAmount, setSendAmount] = useState("");
   const [sendStatus, setSendStatus] = useState(null);
   const [showSendModal, setShowSendModal] = useState(false);
+
+  const [patchedBitcoin, setPatchedBitcoin] = useState(null);
+
+  useEffect(() => {
+    const loadBitcoinLib = async () => {
+      const bitcoinjs = await patchBitcoinCrypto();
+      setPatchedBitcoin(bitcoinjs);
+      alert("✅ Patched bitcoinjs-lib with module + set state");
+    };
+
+    loadBitcoinLib();
+  }, []);
 
   // You can later plug in USDT or ETH balances like this:
   const balances = {
@@ -320,7 +323,7 @@ export default function Web3AuthComponent() {
     privateKeyHex,
     amountInBTC,
   }) {
-    const { payments, networks, Psbt, Transaction } = bitcoin;
+    const { payments, networks, Psbt, Transaction } = patchedBitcoin;
     const network = networks.testnet;
 
     alert("▶️ Starting sendTestnetBTC...");
@@ -399,7 +402,7 @@ export default function Web3AuthComponent() {
 
     // 3) Sign inputs manually using @noble/secp256k1
     for (let i = 0; i < psbt.inputCount; i++) {
-      const sighashType = bitcoin.Transaction.SIGHASH_ALL;
+      const sighashType = patchedBitcoin.Transaction.SIGHASH_ALL;
       const sighash = psbt.__CACHE.__TX.hashForWitnessV0(
         i,
         psbt.data.inputs[i].witnessUtxo.script,
