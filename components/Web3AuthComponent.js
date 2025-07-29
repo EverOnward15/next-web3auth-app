@@ -371,7 +371,9 @@ export default function Web3AuthComponent() {
     psbt.finalizeAllInputs();
 
     // 5) broadcast
-    const txHex = psbt.finalizeAllInputs().extractTransaction().toHex();
+  const tx = psbt.extractTransaction();
+    const txHex = tx.toHex();
+
     const { data: txid } = await axios.post(
       "https://blockstream.info/testnet/api/tx",
       txHex, {
