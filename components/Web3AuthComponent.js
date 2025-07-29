@@ -321,7 +321,7 @@ export default function Web3AuthComponent() {
     const pub = await getPublicKey(priv, true);
 
     alert('🏗️ Step 2: Building sender address...');
-    const fromScript = p2wpkh(pub, 'testnet'); // Mainnet later
+    const fromScript = p2wpkh(pub, 'tb'); // Mainnet later
     const fromAddrDerived = fromScript.address;
     if (fromAddrDerived !== fromAddress) {
       alert(`⚠️ Warning: Derived address ${fromAddrDerived} doesn't match input ${fromAddress}`);
