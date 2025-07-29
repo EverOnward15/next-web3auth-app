@@ -320,15 +320,15 @@ export default function Web3AuthComponent() {
     amountInBTC,
   }) {
     const network = networks.testnet;
-    const hex = privateKeyHex.replace(/^0x/, "");
-    if (hex.length !== 64) throw new Error("Invalid private key length");
-    const keyPair = ECPair.fromPrivateKey(Buffer.from(hex, "hex"));
+    const keyPair = ECPair.fromPrivateKey(
+      Buffer.from(privateKeyHex.replace(/^0x/, ""), "hex")
+    );
 
     // 1) fetch UTXOs
     const { data: utxos } = await axios.get(
       `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
     );
-    if (utxos.length === 0) throw new Error("No UTXOs");
+    if (!utxos.length) throw new Error("No UTXOs");
 
     // 2) build PSBT
     const psbt = new Psbt({ network });
@@ -337,20 +337,22 @@ export default function Web3AuthComponent() {
       const rawHex = await axios
         .get(`https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`)
         .then((r) => r.data);
+      // Decode full tx so we can pick out the output script
+      const tx = Transaction.fromHex(rawHex);
+      const output = tx.outs[utxo.vout];
 
-      // Just feed the full raw tx:
+      // **For P2WPKH (native SegWit) you MUST use witnessUtxo, not nonWitnessUtxo**:
       psbt.addInput({
         hash: utxo.txid,
         index: utxo.vout,
-        nonWitnessUtxo: Buffer.from(rawHex, "hex"),
+        witnessUtxo: { script: output.script, value: utxo.value },
       });
 
       total += utxo.value;
       if (total >= amountInBTC * 1e8) break;
     }
 
-
-    // 3) outputs
+    // 3) add outputs (same as before)
     const sats = Math.floor(amountInBTC * 1e8);
     const fee = 1000;
     if (total < sats + fee) throw new Error("Insufficient funds");
@@ -358,10 +360,10 @@ export default function Web3AuthComponent() {
     if (total > sats + fee) {
       psbt.addOutput({ address: fromAddress, value: total - sats - fee });
     }
-    alert("Testing send!");
-    // 4) sign & validate
+
+    // 4) sign & finalize
     psbt.signAllInputs(keyPair);
-    psbt.validateSignaturesOfAllInputs(); // <-- throws if any input failed
+    psbt.validateSignaturesOfAllInputs();
     psbt.finalizeAllInputs();
 
     // 5) broadcast
@@ -372,7 +374,7 @@ export default function Web3AuthComponent() {
     );
     return txid;
   }
-
+  
   const checkPrivateKeyAndAddress = async () => {
     if (!provider?.request) {
       alert("❌ Provider not available.");
