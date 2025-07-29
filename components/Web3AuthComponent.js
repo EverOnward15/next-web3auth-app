@@ -381,19 +381,19 @@ export default function Web3AuthComponent() {
     try {
       if (toAddress.startsWith("tb1")) {
         // Native SegWit
-        toOutput = bitcoin.payments.p2wpkh({
+        toOutput = payments.p2wpkh({
           address: toAddress,
           network,
         }).output;
       } else if (toAddress.startsWith("2")) {
         // P2SH testnet
-        toOutput = bitcoin.payments.p2sh({
+        toOutput = payments.p2sh({
           address: toAddress,
           network,
         }).output;
       } else if (toAddress.startsWith("m") || toAddress.startsWith("n")) {
         // Legacy P2PKH testnet
-        toOutput = bitcoin.payments.p2pkh({
+        toOutput = payments.p2pkh({
           address: toAddress,
           network,
         }).output;
