@@ -14,7 +14,11 @@ import * as secp from "@noble/secp256k1";
 import axios from "axios";
 import * as bitcoin from "bitcoinjs-lib";
 const { payments, networks, Psbt } = bitcoin;
-const { ECPair } = bitcoin;
+import ECPairFactory from 'ecpair';
+import * as tinysecp from 'tiny-secp256k1';
+
+const ECPair = ECPairFactory(tinysecp);
+
 
 
 const CLIENT_ID =
