@@ -70,13 +70,13 @@ const nextConfig = {
       ],
     };
 
-    config.resolve.alias = {
-            "bitcoinjs-lib/original": require.resolve("bitcoinjs-lib"),
-      // Force all imports of "bitcoinjs-lib" to point to *this* exact path:
-      'bitcoinjs-lib$': path.resolve(__dirname, 'node_modules/bitcoinjs-lib'),
-      ...config.resolve.alias,
-    };
+  // **Alias the real package** under a different name…
+  config.resolve.alias["bitcoinjs-lib/original"] =
+    require.resolve("bitcoinjs-lib");
 
+  // **Point all other imports** of "bitcoinjs-lib" at your patch:
+  config.resolve.alias["bitcoinjs-lib$"] =
+    path.resolve(__dirname, "utils/bitcoinjs-lib.js");
     return config;
   },
 
