@@ -2,10 +2,14 @@
 
 import { useEffect, useState } from "react";
 import {payments, networks, Transaction } from "bitcoinjs-lib";
+import { Buffer } from 'buffer';
 import * as hashes from 'bitcoinjs-lib/src/crypto'; // internal module
 import { hmac } from '@noble/hashes/hmac';
 import { sha256 } from '@noble/hashes/sha256';
 import { concatBytes } from '@noble/hashes/utils';
+
+// Required for browser
+window.Buffer = Buffer;
 
 hashes.hmacSha256Sync = (key, ...msgs) =>
   Buffer.from(hmac(sha256, key, concatBytes(...msgs)));
