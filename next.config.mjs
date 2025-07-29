@@ -2,6 +2,9 @@
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 
+const path = require('path');
+
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Enable React strict mode
@@ -62,6 +65,12 @@ const nextConfig = {
           },
         },
       ],
+    };
+
+    config.resolve.alias = {
+      // Force all imports of "bitcoinjs-lib" to point to *this* exact path:
+      'bitcoinjs-lib$': path.resolve(__dirname, 'node_modules/bitcoinjs-lib'),
+      ...config.resolve.alias,
     };
 
     return config;
