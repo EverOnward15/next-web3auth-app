@@ -6,6 +6,7 @@ import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
 import styles from "../components/Web3AuthComponent.module.css";
 import { CommonPrivateKeyProvider } from "@web3auth/base-provider";
 import { Buffer } from "buffer";
+if (!window.Buffer) window.Buffer = Buffer;
 import * as secp from "@noble/secp256k1";
 import axios from "axios";
 
