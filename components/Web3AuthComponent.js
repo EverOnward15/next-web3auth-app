@@ -1,7 +1,8 @@
 ///Users/prathameshbhoite/Code/lotus-app/next-web3auth-app/components/Web3AuthComponent.js
 
 import { useEffect, useState } from "react";
-import { Psbt, payments, networks, Transaction } from "bitcoinjs-lib";
+import {payments, networks, Transaction } from "bitcoinjs-lib";
+
 
 // Then import everything else
 import { Web3Auth } from "@web3auth/single-factor-auth";
