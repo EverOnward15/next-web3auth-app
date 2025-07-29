@@ -319,9 +319,19 @@ export default function Web3AuthComponent() {
     amountInBTC,
   }) {
     const network = networks.testnet;
-    const keyPair = ECPair.fromPrivateKey(
-      Buffer.from(privateKeyHex.replace(/^0x/, ""), "hex")
-    );
+    alert("Using private key: " + privateKeyHex);
+    alert("Length: " + privateKeyHex.replace(/^0x/, "").length);
+
+    const privateKeyClean = privateKeyHex.replace(/^0x/, "");
+    if (privateKeyClean.length !== 64) {
+      throw new Error("Private key must be 64 hex chars (32 bytes).");
+    }
+
+    const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKeyClean, "hex"), {
+      compressed: true,
+    });
+    alert("KeyPair address: " + payments.p2wpkh({ pubkey: keyPair.publicKey, network }).address);
+
     // 1) fetch UTXOs
     const { data: utxos } = await axios.get(
       `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
@@ -360,16 +370,36 @@ export default function Web3AuthComponent() {
       psbt.addOutput({ address: fromAddress, value: total - sats - fee });
     }
 
-    alert("Derived keyPair address:" + payments.p2wpkh({
-      pubkey: keyPair.publicKey,
-      network,
-    }).address);
+    alert(
+      "Derived keyPair address:" +
+        payments.p2wpkh({
+          pubkey: keyPair.publicKey,
+          network,
+        }).address
+    );
     alert("Sender address:" + fromAddress);
 
     // 4) sign & finalize
-    psbt.signAllInputs(keyPair);
-    psbt.validateSignaturesOfAllInputs();
-    psbt.finalizeAllInputs();
+    try {
+      psbt.signAllInputs(keyPair);
+    } catch (e) {
+      alert("❌ Error during signing: " + (e?.message || JSON.stringify(e)));
+      throw e;
+    }
+
+    try {
+      psbt.validateSignaturesOfAllInputs();
+    } catch (e) {
+      alert("❌ Error during validation: " + (e?.message || JSON.stringify(e)));
+      throw e;
+    }
+
+    try {
+      psbt.finalizeAllInputs();
+    } catch (e) {
+      alert("❌ Error during finalizing: " + (e?.message || JSON.stringify(e)));
+      throw e;
+    }
 
     // 5) broadcast
     const tx = psbt.extractTransaction();
@@ -379,7 +409,6 @@ export default function Web3AuthComponent() {
     if (!toAddress || !bitcoin.address.toOutputScript(toAddress, network)) {
       throw new Error("Invalid destination address.");
     }
-
 
     let txid;
     try {
