@@ -1,7 +1,7 @@
 ///Users/prathameshbhoite/Code/lotus-app/next-web3auth-app/components/Web3AuthComponent.js
 
 import { useEffect, useState } from "react";
-import {payments, networks, Transaction } from "bitcoinjs-lib/original";
+import {payments, networks, Transaction } from "bitcoinjs-lib";
 import { Buffer } from 'buffer';
 import * as hashes from 'bitcoinjs-lib/src/crypto'; // internal module
 import { hmac } from '@noble/hashes/hmac';
@@ -315,160 +315,128 @@ export default function Web3AuthComponent() {
     }
   };
 
-  async function sendTestnetBTC({
-    fromAddress,
-    toAddress,
-    privateKeyHex,
-    amountInBTC,
-  }) {
-    const network = networks.testnet;
 
-    alert("▶️ Starting sendTestnetBTC...");
 
-    if (!privateKeyHex || typeof privateKeyHex !== "string") {
-      alert("❌ Invalid private key input.");
-      return;
-    }
 
-    const privateKeyClean = privateKeyHex.replace(/^0x/, "");
-    const keyBuffer = Buffer.from(privateKeyClean, "hex");
-    if (keyBuffer.length !== 32) {
-      alert("❌ Private key must be 32 bytes.");
-      return;
-    }
+// ——— Inline BIP143 sighash helper ———
+// (P2WPKH-only, assumes SIGHASH_ALL)
+function computeBIP143Sighash(tx, vin, scriptPubKey, value) {
+  // __getBufferForWitnessSignature is a PRIVATE bitcoinjs-lib method
+  const buffer = tx.__getBufferForWitnessSignature(
+    vin,
+    scriptPubKey,
+    value,
+    Transaction.SIGHASH_ALL
+  );
+  // double-SHA256
+  const h1 = sha256(buffer);
+  const h2 = sha256(h1);
+  return Buffer.from(h2);
+}
 
-    const pubkey = Buffer.from(await secp.getPublicKey(keyBuffer, true));
-    const p2wpkh = payments.p2wpkh({ pubkey, network });
-    const derivedAddress = p2wpkh.address;
+async function sendTestnetBTC({
+  fromAddress,
+  toAddress,
+  privateKeyHex,
+  amountInBTC,
+}) {
+  const network = networks.testnet;
+  alert("▶️ Starting sendTestnetBTC…");
 
-    alert("✅ Derived address: " + derivedAddress);
-
-    if (derivedAddress !== fromAddress) {
-      alert("⚠️ Mismatch between derived address and fromAddress");
-    }
-
-    // 1. Fetch UTXOs
-    let utxos;
-    try {
-      const res = await axios.get(
-        `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
-      );
-      utxos = res.data;
-    } catch (err) {
-      alert("❌ Failed to fetch UTXOs:\n" + err.message);
-      return;
-    }
-
-    if (!utxos.length) {
-      alert("❌ No UTXOs found.");
-      return;
-    }
-
-    // 2. Select UTXOs and build transaction
-    const valueToSend = Math.floor(amountInBTC * 1e8);
-    const fee = 1000;
-    let totalInput = 0;
-    const selectedUtxos = [];
-
-    for (const utxo of utxos) {
-      selectedUtxos.push(utxo);
-      totalInput += utxo.value;
-      if (totalInput >= valueToSend + fee) break;
-    }
-
-    if (totalInput < valueToSend + fee) {
-      alert("❌ Insufficient balance.");
-      return;
-    }
-
-    const tx = new Transaction();
-    tx.version = 2;
-
-    for (const utxo of selectedUtxos) {
-      tx.addInput(Buffer.from(utxo.txid, "hex").reverse(), utxo.vout);
-    }
-
-    // Create output script from address
-    let toOutput;
-    try {
-      if (toAddress.startsWith("tb1")) {
-        // Native SegWit
-        toOutput = payments.p2wpkh({
-          address: toAddress,
-          network,
-        }).output;
-      } else if (toAddress.startsWith("2")) {
-        // P2SH testnet
-        toOutput = payments.p2sh({
-          address: toAddress,
-          network,
-        }).output;
-      } else if (toAddress.startsWith("m") || toAddress.startsWith("n")) {
-        // Legacy P2PKH testnet
-        toOutput = payments.p2pkh({
-          address: toAddress,
-          network,
-        }).output;
-      } else {
-        alert("❌ Unknown or unsupported address type.");
-        return;
-      }
-    } catch (err) {
-      alert("❌ Invalid recipient address:\n" + err.message);
-      return;
-    }
-
-    tx.addOutput(toOutput, valueToSend);
-
-    const change = totalInput - valueToSend - fee;
-    if (change > 0) {
-      const changeOutput = payments.p2wpkh({
-        address: fromAddress,
-        network,
-      }).output;
-      tx.addOutput(changeOutput, change);
-    }
-    // 3. Sign inputs manually (SegWit)
-    for (let i = 0; i < selectedUtxos.length; i++) {
-      const utxo = selectedUtxos[i];
-
-      const scriptPubKey = p2wpkh.output;
-      const value = utxo.value;
-
-      const sighash = tx.hashForWitnessV0(
-        i,
-        scriptPubKey,
-        value,
-        Transaction.SIGHASH_ALL
-      );
-      const sig = await secp.sign(sighash, keyBuffer);
-      const signature = Buffer.concat([
-        Buffer.from(sig),
-        Buffer.from([Transaction.SIGHASH_ALL]),
-      ]);
-
-      tx.setWitness(i, [signature, pubkey]);
-    }
-
-    const txHex = tx.toHex();
-
-    // 4. Broadcast
-    try {
-      const res = await axios.post(
-        "https://blockstream.info/testnet/api/tx",
-        txHex,
-        {
-          headers: { "Content-Type": "text/plain" },
-        }
-      );
-      const txid = res.data;
-      alert("✅ Transaction sent! TXID:\n" + txid);
-      return txid;
-    } catch (err) {
-      alert("❌ Failed to broadcast:\n" + err.message);
-      return;
-    }
+  // 0. Validate & derive keypair
+  if (!privateKeyHex || typeof privateKeyHex !== "string") {
+    alert("❌ Invalid private key input."); return;
   }
+  const keyClean = privateKeyHex.replace(/^0x/, "");
+  const priv = Buffer.from(keyClean, "hex");
+  if (priv.length !== 32) {
+    alert("❌ Private key must be 32 bytes."); return;
+  }
+  const pubkey = Buffer.from(await secp.getPublicKey(priv, true));
+  const p2wpkh = payments.p2wpkh({ pubkey, network });
+  if (p2wpkh.address !== fromAddress) {
+    alert("⚠️ Warning: derived address mismatch."); 
+  }
+  alert("✅ Derived address: " + p2wpkh.address);
+
+  // 1. Fetch UTXOs
+  let utxos;
+  try {
+    const res = await axios.get(
+      `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
+    );
+    utxos = res.data;
+  } catch (e) {
+    alert("❌ Failed to fetch UTXOs:\n" + e.message); return;
+  }
+  if (!utxos.length) {
+    alert("❌ No UTXOs found."); return;
+  }
+
+  // 2. Select UTXOs
+  const valueSat = Math.floor(amountInBTC * 1e8);
+  const fee = 1000;
+  let total = 0;
+  const inputs = [];
+  for (const u of utxos) {
+    inputs.push(u);
+    total += u.value;
+    if (total >= valueSat + fee) break;
+  }
+  if (total < valueSat + fee) {
+    alert("❌ Insufficient balance."); return;
+  }
+
+  // 3. Build raw Transaction
+  const tx = new Transaction();
+  tx.version = 2;
+  inputs.forEach((u) =>
+    tx.addInput(Buffer.from(u.txid, "hex").reverse(), u.vout)
+  );
+
+  // helper to get scriptPubKey from an address (handles P2WPKH / P2PKH / P2SH)
+  const makeOutput = (addr) => {
+    if (addr.startsWith("tb1"))      return payments.p2wpkh({ address: addr, network }).output;
+    else if (addr.startsWith("2"))    return payments.p2sh({ address: addr, network }).output;
+    else if (/^[mn1]/.test(addr[0]))  return payments.p2pkh({ address: addr, network }).output;
+    else throw new Error("Unsupported address type");
+  };
+
+  // add recipient output
+  tx.addOutput(makeOutput(toAddress), valueSat);
+  // add change
+  const change = total - valueSat - fee;
+  if (change > 0) {
+    tx.addOutput(makeOutput(fromAddress), change);
+  }
+
+  // 4. Sign each input (P2WPKH / SIGHASH_ALL)
+  for (let i = 0; i < inputs.length; i++) {
+    const u = inputs[i];
+    const scriptPubKey = p2wpkh.output;
+    const sighash = computeBIP143Sighash(tx, i, scriptPubKey, u.value);
+    const sig = await secp.sign(sighash, priv);
+    const finalSig = Buffer.concat([Buffer.from(sig), Buffer.from([Transaction.SIGHASH_ALL])]);
+    tx.setWitness(i, [finalSig, pubkey]);
+  }
+
+  // 5. Broadcast
+  const raw = tx.toHex();
+  try {
+    const res = await axios.post(
+      "https://blockstream.info/testnet/api/tx",
+      raw,
+      { headers: { "Content-Type": "text/plain" } }
+    );
+    alert("✅ TX sent! TXID:\n" + res.data);
+    return res.data;
+  } catch (e) {
+    alert("❌ Broadcast failed:\n" + e.message);
+  }
+}
+
+
+  
 
   const checkPrivateKeyAndAddress = async () => {
     if (!provider?.request) {
