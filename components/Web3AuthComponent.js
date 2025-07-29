@@ -25,14 +25,15 @@ function hmacSha256Noble(hashFunc, key, data) {
 }
 
 // Patch BEFORE bitcoinjs-lib
-globalThis.crypto = globalThis.crypto || {};
-globalThis.crypto.sha256 = sha256Noble;
-globalThis.crypto.hmacSha256Sync = (key, data) => {
+// Patch bitcoinjs-lib's internal `crypto` object
+bitcoin.crypto = bitcoin.crypto || {};
+bitcoin.crypto.sha256 = (buffer) => Buffer.from(sha256Noble(buffer));
+bitcoin.crypto.hmacSha256Sync = (key, data) => {
   const keyBytes =
     typeof key === "string" ? Buffer.from(key, "utf8") : Buffer.from(key);
   const dataBytes =
     typeof data === "string" ? Buffer.from(data, "utf8") : Buffer.from(data);
-  return Buffer.from(hmacSha256Noble(sha256, keyBytes, dataBytes));
+  return Buffer.from(hmacSha256Noble(sha256Noble, keyBytes, dataBytes));
 };
 
 import * as bitcoin from "bitcoinjs-lib";
