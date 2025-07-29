@@ -344,7 +344,6 @@ export default function Web3AuthComponent() {
       psbt.addInput({
         hash: utxo.txid,
         index: utxo.vout,
-        nonWitnessUtxo: Buffer.from(rawHex, "hex"),
         witnessUtxo: { script: output.script, value: utxo.value },
       });
 
@@ -361,6 +360,12 @@ export default function Web3AuthComponent() {
       psbt.addOutput({ address: fromAddress, value: total - sats - fee });
     }
 
+    alert("Derived keyPair address:" + payments.p2wpkh({
+      pubkey: keyPair.publicKey,
+      network,
+    }).address);
+    alert("Sender address:" + fromAddress);
+
     // 4) sign & finalize
     psbt.signAllInputs(keyPair);
     psbt.validateSignaturesOfAllInputs();
@@ -370,6 +375,11 @@ export default function Web3AuthComponent() {
     const tx = psbt.extractTransaction();
     const txHex = tx.toHex();
     alert("Send me money");
+
+    if (!toAddress || !bitcoin.address.toOutputScript(toAddress, network)) {
+      throw new Error("Invalid destination address.");
+    }
+
 
     let txid;
     try {
