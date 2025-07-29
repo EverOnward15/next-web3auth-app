@@ -13,13 +13,13 @@ if (typeof window !== "undefined") {
 import * as secp from "@noble/secp256k1";
 import axios from "axios";
 import * as bitcoin from "bitcoinjs-lib";
-const { payments, networks, Psbt } = bitcoin;
-import ECPairFactory from 'ecpair';
-import * as tinysecp from 'tiny-secp256k1';
+const { payments, networks, Psbt, Transaction } = bitcoin;
+import ECPairFactory from "ecpair";
+import * as tinysecp from "tiny-secp256k1";
 
 const ECPair = ECPairFactory(tinysecp);
 
-
+import { signSync, getPublicKey } from "@noble/secp256k1";
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
@@ -329,106 +329,117 @@ export default function Web3AuthComponent() {
     amountInBTC,
   }) {
     const network = networks.testnet;
-    alert("Using private key: " + privateKeyHex);
-    alert("Length: " + privateKeyHex.replace(/^0x/, "").length);
 
-    const privateKeyClean = privateKeyHex.replace(/^0x/, "");
-    if (privateKeyClean.length !== 64) {
-      throw new Error("Private key must be 64 hex chars (32 bytes).");
+    alert("▶️ Starting sendTestnetBTC...");
+    if (!privateKeyHex || typeof privateKeyHex !== "string") {
+      alert("❌ Invalid private key input.");
+      return;
     }
 
-    // const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKeyClean, "hex"), {
-    //   compressed: true,
-    // });
+    const privateKeyClean = privateKeyHex.replace(/^0x/, "");
+    const keyBuffer = Buffer.from(privateKeyClean, "hex");
 
-    const keyPair = ECPair.fromPrivateKey(
-      Buffer.from(privateKeyClean, "hex"),
-      { compressed: true }
-    );
+    if (keyBuffer.length !== 32) {
+      alert("❌ Private key must be 32 bytes.");
+      return;
+    }
 
-    alert("KeyPair address: " + payments.p2wpkh({ pubkey: keyPair.publicKey, network }).address);
+    const pubkey = Buffer.from(getPublicKey(keyBuffer, true)); // compressed public key
+    const addressCheck = payments.p2wpkh({ pubkey, network }).address;
+    alert("✅ Derived from pubkey: " + addressCheck);
 
-    // 1) fetch UTXOs
-    const { data: utxos } = await axios.get(
-      `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
-    );
-    if (!utxos.length) throw new Error("No UTXOs");
+    // 1) Fetch UTXOs
+    let utxos;
+    try {
+      const utxoRes = await axios.get(
+        `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
+      );
+      utxos = utxoRes.data;
+    } catch (err) {
+      alert("❌ Failed to fetch UTXOs:\n" + err.message);
+      return;
+    }
 
-    // 2) build PSBT
+    if (!utxos || !utxos.length) {
+      alert("❌ No UTXOs found for address.");
+      return;
+    }
+
+    // 2) Build PSBT
     const psbt = new Psbt({ network });
     let total = 0;
+
     for (const utxo of utxos) {
       const rawHex = await axios
         .get(`https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`)
         .then((r) => r.data);
 
-      // decode the full transaction so we can re‐extract the scriptPubKey
-      const tx = bitcoin.Transaction.fromHex(rawHex);
+      const tx = Transaction.fromHex(rawHex);
       const output = tx.outs[utxo.vout];
 
-      // P2WPKH native witness input:
       psbt.addInput({
         hash: utxo.txid,
         index: utxo.vout,
-        witnessUtxo: { script: output.script, value: utxo.value },
+        witnessUtxo: {
+          script: output.script,
+          value: utxo.value,
+        },
       });
 
       total += utxo.value;
-      if (total >= Math.floor(amountInBTC * 1e8)) break;
+      if (total >= Math.floor(amountInBTC * 1e8) + 1000) break;
     }
 
-    // 3) add outputs (same as before)
     const sats = Math.floor(amountInBTC * 1e8);
     const fee = 1000;
-    if (total < sats + fee) throw new Error("Insufficient funds");
+    if (total < sats + fee) {
+      alert("❌ Insufficient balance.");
+      return;
+    }
+
     psbt.addOutput({ address: toAddress, value: sats });
     if (total > sats + fee) {
       psbt.addOutput({ address: fromAddress, value: total - sats - fee });
     }
 
-    alert(
-      "Derived keyPair address:" +
-        payments.p2wpkh({
-          pubkey: keyPair.publicKey,
-          network,
-        }).address
-    );
-    alert("Sender address:" + fromAddress);
+    alert("🛠 PSBT constructed. Signing...");
 
-    // 4) sign & finalize
-    try {
-      psbt.signAllInputs(keyPair);
-    } catch (e) {
-      alert("❌ Error during signing: " + (e?.message || JSON.stringify(e)));
-      throw e;
+    // 3) Sign inputs manually using @noble/secp256k1
+    for (let i = 0; i < psbt.inputCount; i++) {
+      const sighashType = bitcoin.Transaction.SIGHASH_ALL;
+      const sighash = psbt.__CACHE.__TX.hashForWitnessV0(
+        i,
+        psbt.data.inputs[i].witnessUtxo.script,
+        psbt.data.inputs[i].witnessUtxo.value,
+        sighashType
+      );
+
+      const signature = signSync(sighash, keyBuffer);
+      const finalSig = Buffer.concat([
+        Buffer.from(signature),
+        Buffer.from([sighashType]),
+      ]);
+
+      psbt.updateInput(i, {
+        partialSig: [{ pubkey, signature: finalSig }],
+      });
     }
 
     try {
       psbt.validateSignaturesOfAllInputs();
-    } catch (e) {
-      alert("❌ Error during validation: " + (e?.message || JSON.stringify(e)));
-      throw e;
-    }
-
-    try {
       psbt.finalizeAllInputs();
     } catch (e) {
-      alert("❌ Error during finalizing: " + (e?.message || JSON.stringify(e)));
-      throw e;
+      alert("❌ Error finalizing transaction: " + e.message);
+      return;
     }
 
-    // 5) broadcast
     const tx = psbt.extractTransaction();
     const txHex = tx.toHex();
-    alert("Send me money");
 
-    if (!toAddress || !bitcoin.address.toOutputScript(toAddress, network)) {
-      throw new Error("Invalid destination address.");
-    }
-
+    // 4) Broadcast transaction
     let txid;
     try {
-      const response = await axios.post(
+      const res = await axios.post(
         "https://blockstream.info/testnet/api/tx",
         txHex,
         {
@@ -436,13 +447,13 @@ export default function Web3AuthComponent() {
           timeout: 30000,
         }
       );
-      txid = response.data;
-    } catch (err) {
-      alert("❌ Failed to broadcast TX:\n" + (err?.message || err));
-      throw err;
+      txid = res.data;
+    } catch (e) {
+      alert("❌ Broadcast failed: " + e.message);
+      return;
     }
-    // as soon as we get a txid back, it’s been *accepted* by the API
-    alert("✅ Transaction broadcasted!  TxID:\n" + txid);
+
+    alert("✅ Transaction sent! TXID:\n" + txid);
     return txid;
   }
 
