@@ -2,7 +2,7 @@
 
 
 import { useEffect, useState } from "react";
-import { Psbt, payments, networks, Transaction } from "../utils/patchBitcoinCrypto.js";
+import { Psbt, payments, networks, Transaction } from "bitcoinjs-lib";
 
 // Then import everything else
 import { Web3Auth } from "@web3auth/single-factor-auth";
