@@ -336,9 +336,9 @@ export default function Web3AuthComponent() {
       const rawHex = await axios
         .get(`https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`)
         .then((r) => r.data);
-      const tx = bitcoin.Transaction.fromHex(rawHex);
-      const out = tx.outs[utxo.vout];
-      const scriptType = bitcoin.script.classifyOutput(out.script);
+      // const tx = bitcoin.Transaction.fromHex(rawHex);
+      // const out = tx.outs[utxo.vout];
+      // const scriptType = bitcoin.script.classifyOutput(out.script);
 
       // if (scriptType === "witnesspubkeyhash") {
       //   psbt.addInput({
@@ -360,7 +360,7 @@ export default function Web3AuthComponent() {
         index: utxo.vout,
         nonWitnessUtxo: Buffer.from(rawHex, "hex"),
       });
-      
+
       total += utxo.value;
       if (total >= amountInBTC * 1e8) break;
     }
