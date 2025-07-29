@@ -365,7 +365,7 @@ export default function Web3AuthComponent() {
     if (total > sats + fee) {
       psbt.addOutput({ address: fromAddress, value: total - sats - fee });
     }
-    alert("hey there");
+    alert("Testing send!");
     // 4) sign & validate
     psbt.signAllInputs(keyPair);
     psbt.validateSignaturesOfAllInputs(); // <-- throws if any input failed
