@@ -347,7 +347,7 @@ export default function Web3AuthComponent() {
         index: utxo.vout,
         witnessUtxo: {
           script: output.script,
-          value: utxo.value,    // <-- BigInt here
+          value: BigInt(utxo.value),    // <-- BigInt here
         },
       });
 
@@ -374,7 +374,8 @@ export default function Web3AuthComponent() {
     const txHex = psbt.extractTransaction().toHex();
     const { data: txid } = await axios.post(
       "https://blockstream.info/testnet/api/tx",
-      txHex
+      txHex, {
+  headers: { "Content-Type": "text/plain" }}
     );
     return txid;
   }
