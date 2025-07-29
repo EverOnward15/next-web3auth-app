@@ -161,7 +161,6 @@ export default function Web3AuthComponent() {
             .then((res) => res.json())
             .then((data) => {
               setJwtToken(data.token);
-              alert(data);
               alert(data.token);
               alert("JWT data received");
               console.log("Received JWT Token:", data.token);
@@ -428,7 +427,7 @@ export default function Web3AuthComponent() {
       if (web3auth.connected) {
         const userInfo = await web3auth.getUserInfo();
         console.log("User Info:", userInfo);
-        alert("User is logged in:\n" + JSON.stringify(userInfo, null, 2));
+        alert("User is logged in:\n");
       } else {
         alert("User is NOT logged in.");
       }
