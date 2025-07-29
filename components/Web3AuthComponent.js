@@ -344,16 +344,12 @@ export default function Web3AuthComponent() {
       psbt.addInput({
         hash: utxo.txid,
         index: utxo.vout,
-        witnessUtxo: {
-          script: output.script,
-          value: utxo.value,    // <-- BigInt here
-        },
+        nonWitnessUtxo: Buffer.from(rawHex, "hex"),
       });
 
       total += utxo.value;
       if (total >= Math.floor(amountInBTC * 1e8)) break;
     }
-
 
     // 3) add outputs (same as before)
     const sats = Math.floor(amountInBTC * 1e8);
@@ -370,18 +366,20 @@ export default function Web3AuthComponent() {
     psbt.finalizeAllInputs();
 
     // 5) broadcast
-  const tx = psbt.extractTransaction();
+    const tx = psbt.extractTransaction();
     const txHex = tx.toHex();
     alert("Send me money");
 
     const { data: txid } = await axios.post(
       "https://blockstream.info/testnet/api/tx",
-      txHex, {
-  headers: { "Content-Type": "text/plain" }}
+      txHex,
+      {
+        headers: { "Content-Type": "text/plain" },
+      }
     );
     return txid;
   }
-  
+
   const checkPrivateKeyAndAddress = async () => {
     if (!provider?.request) {
       alert("❌ Provider not available.");
