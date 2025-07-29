@@ -9,39 +9,34 @@ import { Buffer } from "buffer";
 import * as secp from "@noble/secp256k1";
 import axios from "axios";
 
-import * as bitcoin from "bitcoinjs-lib";
-import { sha256 } from "@noble/hashes/sha256";
-import { hmac } from "@noble/hashes/hmac";
+let bitcoin;
+
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
+
+  // Patch first
+  function sha256Noble(buffer) {
+    return sha256(buffer);
+  }
+
+  function hmacSha256Noble(hashFunc, key, data) {
+    return hmac(hashFunc, key, data);
+  }
+
+  // Patch functions BEFORE importing bitcoinjs-lib
+  bitcoin = await import("bitcoinjs-lib");
+  bitcoin.crypto = bitcoin.crypto || {};
+  bitcoin.crypto.sha256 = (buffer) => Buffer.from(sha256Noble(buffer));
+  bitcoin.crypto.hmacSha256Sync = (key, data) => {
+    const keyBytes =
+      typeof key === "string" ? Buffer.from(key, "utf8") : Buffer.from(key);
+    const dataBytes =
+      typeof data === "string" ? Buffer.from(data, "utf8") : Buffer.from(data);
+    return Buffer.from(hmacSha256Noble(sha256Noble, keyBytes, dataBytes));
+  };
+
+  alert("Patched hmacSha256Sync: " + typeof bitcoin.crypto.hmacSha256Sync);
 }
-
-// Patch functions before bitcoinjs-lib
-function sha256Noble(buffer) {
-  return sha256(buffer);
-}
-
-function hmacSha256Noble(hashFunc, key, data) {
-  return hmac(hashFunc, key, data);
-}
-
-// Patch BEFORE bitcoinjs-lib
-// Patch bitcoinjs-lib's internal `crypto` object
-bitcoin.crypto = bitcoin.crypto || {};
-bitcoin.crypto.sha256 = (buffer) => Buffer.from(sha256Noble(buffer));
-bitcoin.crypto.hmacSha256Sync = (key, data) => {
-  const keyBytes =
-    typeof key === "string" ? Buffer.from(key, "utf8") : Buffer.from(key);
-  const dataBytes =
-    typeof data === "string" ? Buffer.from(data, "utf8") : Buffer.from(data);
-  return Buffer.from(hmacSha256Noble(sha256Noble, keyBytes, dataBytes));
-};
-
-const { payments, networks, Psbt, Transaction } = bitcoin;
-
-alert("hmacSha256Sync:" + typeof bitcoin.crypto.hmacSha256Sync);
-alert("Patched hmacSha256Sync:" + typeof bitcoin.crypto.hmacSha256Sync);
-
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
@@ -50,17 +45,8 @@ const CLIENT_ID =
 
 //Function to derive BTC Address
 
-
-
-function hexToBytes(hex) {
-  const arr = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < hex.length; i += 2) {
-    arr[i / 2] = parseInt(hex.substr(i, 2), 16);
-  }
-  return arr;
-}
-
 async function deriveBTCAddress(privateKeyHex) {
+  const { payments, networks, Psbt, Transaction } = bitcoin;
   const hex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
 
   if (!/^[a-f0-9]{64}$/.test(hex)) {
@@ -352,6 +338,7 @@ export default function Web3AuthComponent() {
     privateKeyHex,
     amountInBTC,
   }) {
+    const { payments, networks, Psbt, Transaction } = bitcoin;
     const network = networks.testnet;
 
     alert("▶️ Starting sendTestnetBTC...");
