@@ -4,6 +4,7 @@ import * as ecc from "@noble/secp256k1";
 import { sha256 } from "@noble/hashes/sha256";
 import { hmac } from "@noble/hashes/hmac";
 import { Buffer } from "buffer";
+import ecc from '@bitcoinerlab/secp256k1';
 
 // Polyfill Buffer in browser
 if (typeof window !== "undefined" && !window.Buffer) {
@@ -11,39 +12,42 @@ if (typeof window !== "undefined" && !window.Buffer) {
 }
 
 export function initBitcoinEcc() {
-  bitcoinjs.initEccLib({
-    isPoint: (p) => {
-      if (!p) return false;
-      try {
-        // p should be Buffer or Uint8Array representing a public key
-        ecc.Point.fromHex(p);
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    pointFromScalar: (scalar, compressed = true) => {
-      // scalar is a Buffer or Uint8Array of private key bytes
-      return ecc.Point.fromPrivateKey(scalar).toRawBytes(compressed);
-    },
-    pointCompress: (pubkey, compressed = true) => {
-      // pubkey is a Buffer/Uint8Array of uncompressed public key bytes
-      // decompress then re-compress it with noble to ensure correct format
-      const point = ecc.Point.fromHex(pubkey);
-      return point.toRawBytes(compressed);
-    },
-    sign: (hash, privateKey, options) => {
-      // options can be { der: boolean }
-      // noble's sign returns a Promise that resolves to signature Uint8Array
-      // bitcoinjs expects a Buffer signature synchronously
-      // So we use the sync version
-      // Actually noble provides only async sign by default, but you can force sync via signSync (available since v1.7.0)
-      return ecc.signSync(hash, privateKey, options);
-    },
-    verify: (hash, publicKey, signature) => {
-      return ecc.verify(signature, hash, publicKey);
-    },
-  });
+//   bitcoinjs.initEccLib({
+//     isPoint: (p) => {
+//       if (!p) return false;
+//       try {
+//         // p should be Buffer or Uint8Array representing a public key
+//         ecc.Point.fromHex(p);
+//         return true;
+//       } catch {
+//         return false;
+//       }
+//     },
+//     pointFromScalar: (scalar, compressed = true) => {
+//       // scalar is a Buffer or Uint8Array of private key bytes
+//       return ecc.Point.fromPrivateKey(scalar).toRawBytes(compressed);
+//     },
+//     pointCompress: (pubkey, compressed = true) => {
+//       // pubkey is a Buffer/Uint8Array of uncompressed public key bytes
+//       // decompress then re-compress it with noble to ensure correct format
+//       const point = ecc.Point.fromHex(pubkey);
+//       return point.toRawBytes(compressed);
+//     },
+//     sign: (hash, privateKey, options) => {
+//       // options can be { der: boolean }
+//       // noble's sign returns a Promise that resolves to signature Uint8Array
+//       // bitcoinjs expects a Buffer signature synchronously
+//       // So we use the sync version
+//       // Actually noble provides only async sign by default, but you can force sync via signSync (available since v1.7.0)
+//       return ecc.signSync(hash, privateKey, options);
+//     },
+//     verify: (hash, publicKey, signature) => {
+//       return ecc.verify(signature, hash, publicKey);
+//     },
+//   });
+
+bitcoinjs.initEccLib(ecc);
+
 
   // Patch crypto hashes
   bitcoinjs.crypto.sha256 = (buffer) =>
