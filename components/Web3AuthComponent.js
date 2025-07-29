@@ -312,6 +312,9 @@ export default function Web3AuthComponent() {
     privateKeyHex,
     amountInBTC,
   }) {
+      const { Psbt, Transaction, payments, networks } = await import(
+    "../utils/patchBitcoinCrypto.js"
+  );
     const network = networks.testnet;
 
     alert("▶️ Starting sendTestnetBTC...");
