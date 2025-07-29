@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { payments, networks, Transaction } from "bitcoinjs-lib";
 import { Buffer } from "buffer";
-import { Tx, Address, hex } from '@scure/btc-signer';
+
+import { Tx, Address } from '@scure/btc-signer';
+import { hex } from '@noble/hashes/hex';
 import { getPublicKey, sign } from '@noble/secp256k1';
 // Then import everything else
 import { Web3Auth } from "@web3auth/single-factor-auth";
@@ -304,7 +306,6 @@ export default function Web3AuthComponent() {
       alert("Error fetching BTC info: " + err.message);
     }
   };
-
 
 
   async function sendTestnetBTC({ fromAddress, toAddress, privateKeyHex, amountInBTC }) {
