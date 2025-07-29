@@ -340,20 +340,27 @@ export default function Web3AuthComponent() {
       const out = tx.outs[utxo.vout];
       const scriptType = bitcoin.script.classifyOutput(out.script);
 
-      if (scriptType === "witnesspubkeyhash") {
-        psbt.addInput({
-          hash: utxo.txid,
-          index: utxo.vout,
-          witnessUtxo: { script: out.script, value: BigInt(utxo.value) },
-        });
-      } else {
-        psbt.addInput({
-          hash: utxo.txid,
-          index: utxo.vout,
-          nonWitnessUtxo: Buffer.from(rawHex, "hex"),
-        });
-      }
+      // if (scriptType === "witnesspubkeyhash") {
+      //   psbt.addInput({
+      //     hash: utxo.txid,
+      //     index: utxo.vout,
+      //     witnessUtxo: { script: out.script, value: BigInt(utxo.value) },
+      //   });
+      // } else {
+      //   psbt.addInput({
+      //     hash: utxo.txid,
+      //     index: utxo.vout,
+      //     nonWitnessUtxo: Buffer.from(rawHex, "hex"),
+      //   });
+      // }
 
+      // Always use nonWitnessUtxo for every UTXO:
+      psbt.addInput({
+        hash: utxo.txid,
+        index: utxo.vout,
+        nonWitnessUtxo: Buffer.from(rawHex, "hex"),
+      });
+      
       total += utxo.value;
       if (total >= amountInBTC * 1e8) break;
     }
