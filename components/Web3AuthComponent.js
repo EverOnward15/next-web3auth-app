@@ -9,7 +9,12 @@ import { Buffer } from "buffer";
 import * as secp from "@noble/secp256k1";
 import axios from "axios";
 
-import patchedBitcoin from "../utils/patchBitcoinCrypto.js";
+import {
+  Psbt,
+  Transaction,
+  payments,
+  networks,
+} from "../utils/patchBitcoinCrypto.js";
 
 
 const CLIENT_ID =
@@ -20,7 +25,6 @@ const CLIENT_ID =
 //Function to derive BTC Address
 
 async function deriveBTCAddress(privateKeyHex) {
-  const { payments, networks, Psbt, Transaction } = patchedBitcoin;
   const hex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
 
   if (!/^[a-f0-9]{64}$/.test(hex)) {
@@ -48,7 +52,6 @@ async function deriveBTCAddress(privateKeyHex) {
 
 //Function to call deriveBTCWallet
 async function deriveBTCWallet(provider) {
-  const { payments, networks, Psbt, Transaction } = patchedBitcoin;
 
   const privateKeyHex = await provider.request({ method: "private_key" });
   const hex = privateKeyHex.startsWith("0x")
@@ -313,7 +316,6 @@ export default function Web3AuthComponent() {
     privateKeyHex,
     amountInBTC,
   }) {
-    const { payments, networks, Psbt, Transaction } = patchedBitcoin;
     const network = networks.testnet;
 
     alert("▶️ Starting sendTestnetBTC...");

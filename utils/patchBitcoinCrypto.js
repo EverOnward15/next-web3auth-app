@@ -1,9 +1,9 @@
-// patchedBitcoin.js
+import * as bitcoinjs from "bitcoinjs-lib";
 import { sha256 } from "@noble/hashes/sha256";
 import { hmac } from "@noble/hashes/hmac";
 import { Buffer } from "buffer";
-import * as bitcoinjs from "bitcoinjs-lib";
 
+// Important: override `crypto` BEFORE anything else is imported or used
 bitcoinjs.crypto = {
   ...bitcoinjs.crypto,
   sha256: (buffer) => Buffer.from(sha256(Buffer.from(buffer))),
@@ -14,4 +14,4 @@ bitcoinjs.crypto = {
   },
 };
 
-export default bitcoinjs;
+export const { Psbt, Transaction, payments, networks, ECPair } = bitcoinjs;
