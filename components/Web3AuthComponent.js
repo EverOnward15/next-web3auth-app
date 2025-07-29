@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { payments, networks, Transaction } from "bitcoinjs-lib";
-import { Buffer } from "buffer";\
+import { Buffer } from "buffer";
 
 // 1) polyfill Buffer
 if (typeof window !== "undefined" && !window.Buffer) {
