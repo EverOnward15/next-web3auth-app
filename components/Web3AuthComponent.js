@@ -43,9 +43,10 @@ async function deriveBTCAddress(privateKeyHex) {
   const publicKey = await secp.getPublicKey(privateKeyBytes, true);
 
   // Generate p2pkh Bitcoin testnet address
-  const { address } = payments.p2pkh({
+  // Generate p2wpkh (SegWit) Bitcoin testnet address
+  const { address } = payments.p2wpkh({
     pubkey: Buffer.from(publicKey),
-    network: networks.testnet, // Change to networks.bitcoin for mainnet
+    network: networks.testnet,
   });
 
   return address;
@@ -336,25 +337,8 @@ export default function Web3AuthComponent() {
       const rawHex = await axios
         .get(`https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`)
         .then((r) => r.data);
-      // const tx = bitcoin.Transaction.fromHex(rawHex);
-      // const out = tx.outs[utxo.vout];
-      // const scriptType = bitcoin.script.classifyOutput(out.script);
 
-      // if (scriptType === "witnesspubkeyhash") {
-      //   psbt.addInput({
-      //     hash: utxo.txid,
-      //     index: utxo.vout,
-      //     witnessUtxo: { script: out.script, value: BigInt(utxo.value) },
-      //   });
-      // } else {
-      //   psbt.addInput({
-      //     hash: utxo.txid,
-      //     index: utxo.vout,
-      //     nonWitnessUtxo: Buffer.from(rawHex, "hex"),
-      //   });
-      // }
-
-      // Always use nonWitnessUtxo for every UTXO:
+      // Just feed the full raw tx:
       psbt.addInput({
         hash: utxo.txid,
         index: utxo.vout,
@@ -364,6 +348,7 @@ export default function Web3AuthComponent() {
       total += utxo.value;
       if (total >= amountInBTC * 1e8) break;
     }
+
 
     // 3) outputs
     const sats = Math.floor(amountInBTC * 1e8);
