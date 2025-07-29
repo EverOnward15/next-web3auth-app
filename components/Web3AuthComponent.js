@@ -12,7 +12,8 @@ if (typeof window !== "undefined") {
 
 import * as secp from "@noble/secp256k1";
 import axios from "axios";
-import { payments, networks, Psbt } from "bitcoinjs-lib";
+import * as bitcoin from "bitcoinjs-lib";
+const { payments, networks, Psbt } = bitcoin;
 import ECPairFactory from "ecpair";
 import * as tinysecp from "tiny-secp256k1";
 
