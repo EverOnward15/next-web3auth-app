@@ -307,142 +307,118 @@ export default function Web3AuthComponent() {
     }
   };
 
-  async function sendTestnetBTC({
-    fromAddress,
-    toAddress,
-    privateKeyHex,
-    amountInBTC,
-  }) {
 
-    const network = networks.testnet;
 
-    alert("▶️ Starting sendTestnetBTC...");
-    if (!privateKeyHex || typeof privateKeyHex !== "string") {
-      alert("❌ Invalid private key input.");
-      return;
-    }
+async function sendTestnetBTC({ fromAddress, toAddress, privateKeyHex, amountInBTC }) {
+  const network = networks.testnet;
 
-    const privateKeyClean = privateKeyHex.replace(/^0x/, "");
-    const keyBuffer = Buffer.from(privateKeyClean, "hex");
+  alert("▶️ Starting sendTestnetBTC...");
 
-    if (keyBuffer.length !== 32) {
-      alert("❌ Private key must be 32 bytes.");
-      return;
-    }
+  if (!privateKeyHex || typeof privateKeyHex !== "string") {
+    alert("❌ Invalid private key input.");
+    return;
+  }
 
-    const pubkey = Buffer.from(await secp.getPublicKey(keyBuffer, true));
-    const addressCheck = payments.p2wpkh({ pubkey, network }).address;
-    alert("✅ Derived from pubkey: " + addressCheck);
+  const privateKeyClean = privateKeyHex.replace(/^0x/, "");
+  const keyBuffer = Buffer.from(privateKeyClean, "hex");
+  if (keyBuffer.length !== 32) {
+    alert("❌ Private key must be 32 bytes.");
+    return;
+  }
 
-    // 1) Fetch UTXOs
-    let utxos;
-    try {
-      const utxoRes = await axios.get(
-        `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
-      );
-      utxos = utxoRes.data;
-    } catch (err) {
-      alert("❌ Failed to fetch UTXOs:\n" + err.message);
-      return;
-    }
+  const pubkey = Buffer.from(await secp.getPublicKey(keyBuffer, true));
+  const p2wpkh = payments.p2wpkh({ pubkey, network });
+  const derivedAddress = p2wpkh.address;
 
-    if (!utxos || !utxos.length) {
-      alert("❌ No UTXOs found for address.");
-      return;
-    }
+  alert("✅ Derived address: " + derivedAddress);
 
-    // 2) Build PSBT
-    const psbt = new Psbt({ network });
-    console.log("✅ PSBT created");
-    let total = 0;
+  if (derivedAddress !== fromAddress) {
+    alert("⚠️ Mismatch between derived address and fromAddress");
+  }
 
-    for (const utxo of utxos) {
-      const rawHex = await axios
-        .get(`https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`)
-        .then((r) => r.data);
+  // 1. Fetch UTXOs
+  let utxos;
+  try {
+    const res = await axios.get(`https://blockstream.info/testnet/api/address/${fromAddress}/utxo`);
+    utxos = res.data;
+  } catch (err) {
+    alert("❌ Failed to fetch UTXOs:\n" + err.message);
+    return;
+  }
 
-      const tx = Transaction.fromHex(rawHex);
-      const output = tx.outs[utxo.vout];
+  if (!utxos.length) {
+    alert("❌ No UTXOs found.");
+    return;
+  }
 
-      psbt.addInput({
-        hash: utxo.txid,
-        index: utxo.vout,
-        witnessUtxo: {
-          script: output.script,
-          value: utxo.value,
-        },
-      });
+  // 2. Select UTXOs and build transaction
+  const valueToSend = Math.floor(amountInBTC * 1e8);
+  const fee = 1000;
+  let totalInput = 0;
+  const selectedUtxos = [];
 
-      total += utxo.value;
-      if (total >= Math.floor(amountInBTC * 1e8) + 1000) break;
-    }
+  for (const utxo of utxos) {
+    selectedUtxos.push(utxo);
+    totalInput += utxo.value;
+    if (totalInput >= valueToSend + fee) break;
+  }
 
-    const sats = Math.floor(amountInBTC * 1e8);
-    const fee = 1000;
-    if (total < sats + fee) {
-      alert("❌ Insufficient balance.");
-      return;
-    }
+  if (totalInput < valueToSend + fee) {
+    alert("❌ Insufficient balance.");
+    return;
+  }
 
-    psbt.addOutput({ address: toAddress, value: sats });
-    if (total > sats + fee) {
-      psbt.addOutput({ address: fromAddress, value: total - sats - fee });
-    }
+  const tx = new Transaction();
+  tx.version = 2;
 
-    alert("🛠 PSBT constructed. Signing...");
+  for (const utxo of selectedUtxos) {
+    tx.addInput(Buffer.from(utxo.txid, "hex").reverse(), utxo.vout);
+  }
 
-    // 3) Sign inputs manually using @noble/secp256k1
-    for (let i = 0; i < psbt.inputCount; i++) {
-      const sighashType = Transaction.SIGHASH_ALL;
-      const sighash = psbt.__CACHE.__TX.hashForWitnessV0(
-        i,
-        psbt.data.inputs[i].witnessUtxo.script,
-        psbt.data.inputs[i].witnessUtxo.value,
-        sighashType
-      );
+  tx.addOutput(toAddress, valueToSend);
+  const change = totalInput - valueToSend - fee;
+  if (change > 0) {
+    tx.addOutput(fromAddress, change);
+  }
 
-      const signature = await secp.sign(sighash, keyBuffer);
-      const finalSig = Buffer.concat([
-        Buffer.from(signature),
-        Buffer.from([sighashType]),
-      ]);
+  // 3. Sign inputs manually (SegWit)
+  for (let i = 0; i < selectedUtxos.length; i++) {
+    const utxo = selectedUtxos[i];
 
-      psbt.updateInput(i, {
-        partialSig: [{ pubkey, signature: finalSig }],
-      });
-    }
+    const scriptPubKey = p2wpkh.output;
+    const value = utxo.value;
 
-    try {
-      // psbt.validateSignaturesOfAllInputs();
-      psbt.finalizeAllInputs();
-    } catch (e) {
-      alert("❌ Error finalizing transaction: " + e.message);
-      return;
-    }
+    const sighash = tx.hashForWitnessV0(i, scriptPubKey, value, Transaction.SIGHASH_ALL);
+    const sig = await secp.sign(sighash, keyBuffer);
+    const signature = Buffer.concat([Buffer.from(sig), Buffer.from([Transaction.SIGHASH_ALL])]);
 
-    const tx = psbt.extractTransaction();
-    const txHex = tx.toHex();
+    tx.setWitness(i, [
+      signature,
+      pubkey,
+    ]);
+  }
 
-    // 4) Broadcast transaction
-    let txid;
-    try {
-      const res = await axios.post(
-        "https://blockstream.info/testnet/api/tx",
-        txHex,
-        {
-          headers: { "Content-Type": "text/plain" },
-          timeout: 30000,
-        }
-      );
-      txid = res.data;
-    } catch (e) {
-      alert("❌ Broadcast failed: " + e.message);
-      return;
-    }
+  const txHex = tx.toHex();
 
+  // 4. Broadcast
+  try {
+    const res = await axios.post(
+      "https://blockstream.info/testnet/api/tx",
+      txHex,
+      {
+        headers: { "Content-Type": "text/plain" },
+      }
+    );
+    const txid = res.data;
     alert("✅ Transaction sent! TXID:\n" + txid);
     return txid;
+  } catch (err) {
+    alert("❌ Failed to broadcast:\n" + err.message);
+    return;
   }
+}
+
+
 
   const checkPrivateKeyAndAddress = async () => {
     if (!provider?.request) {
