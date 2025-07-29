@@ -1,19 +1,18 @@
 ///Users/prathameshbhoite/Code/lotus-app/next-web3auth-app/components/Web3AuthComponent.js
 
 import { useEffect, useState } from "react";
-import {payments, networks, Transaction } from "bitcoinjs-lib";
-import { Buffer } from 'buffer';
-import * as hashes from 'bitcoinjs-lib/src/crypto'; // internal module
-import { hmac } from '@noble/hashes/hmac';
-import { sha256 } from '@noble/hashes/sha256';
-import { concatBytes } from '@noble/hashes/utils';
+import { payments, networks, Transaction } from "bitcoinjs-lib";
+import { Buffer } from "buffer";
+import * as hashes from "bitcoinjs-lib/src/crypto"; // internal module
+import { hmac } from "@noble/hashes/hmac";
+import { sha256 } from "@noble/hashes/sha256";
+import { concatBytes } from "@noble/hashes/utils";
 
 // Required for browser
 window.Buffer = Buffer;
 
 hashes.hmacSha256Sync = (key, ...msgs) =>
   Buffer.from(hmac(sha256, key, concatBytes(...msgs)));
-
 
 // Then import everything else
 import { Web3Auth } from "@web3auth/single-factor-auth";
@@ -315,128 +314,128 @@ export default function Web3AuthComponent() {
     }
   };
 
-
-
-
-// ——— Inline BIP143 sighash helper ———
-// (P2WPKH-only, assumes SIGHASH_ALL)
-function computeBIP143Sighash(tx, vin, scriptPubKey, value) {
-  // __getBufferForWitnessSignature is a PRIVATE bitcoinjs-lib method
-  const buffer = tx.__getBufferForWitnessSignature(
-    vin,
-    scriptPubKey,
-    value,
-    Transaction.SIGHASH_ALL
-  );
-  // double-SHA256
-  const h1 = sha256(buffer);
-  const h2 = sha256(h1);
-  return Buffer.from(h2);
-}
-
-async function sendTestnetBTC({
-  fromAddress,
-  toAddress,
-  privateKeyHex,
-  amountInBTC,
-}) {
-  const network = networks.testnet;
-  alert("▶️ Starting sendTestnetBTC…");
-
-  // 0. Validate & derive keypair
-  if (!privateKeyHex || typeof privateKeyHex !== "string") {
-    alert("❌ Invalid private key input."); return;
-  }
-  const keyClean = privateKeyHex.replace(/^0x/, "");
-  const priv = Buffer.from(keyClean, "hex");
-  if (priv.length !== 32) {
-    alert("❌ Private key must be 32 bytes."); return;
-  }
-  const pubkey = Buffer.from(await secp.getPublicKey(priv, true));
-  const p2wpkh = payments.p2wpkh({ pubkey, network });
-  if (p2wpkh.address !== fromAddress) {
-    alert("⚠️ Warning: derived address mismatch."); 
-  }
-  alert("✅ Derived address: " + p2wpkh.address);
-
-  // 1. Fetch UTXOs
-  let utxos;
-  try {
-    const res = await axios.get(
-      `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
+  // ——— Inline BIP143 sighash helper ———
+  function computeBIP143Sighash(tx, vin, scriptPubKey, value) {
+    // use the public API in bitcoinjs-lib
+    return tx.hashForWitnessV0(
+      vin,
+      scriptPubKey,
+      value,
+      Transaction.SIGHASH_ALL
     );
-    utxos = res.data;
-  } catch (e) {
-    alert("❌ Failed to fetch UTXOs:\n" + e.message); return;
-  }
-  if (!utxos.length) {
-    alert("❌ No UTXOs found."); return;
   }
 
-  // 2. Select UTXOs
-  const valueSat = Math.floor(amountInBTC * 1e8);
-  const fee = 1000;
-  let total = 0;
-  const inputs = [];
-  for (const u of utxos) {
-    inputs.push(u);
-    total += u.value;
-    if (total >= valueSat + fee) break;
-  }
-  if (total < valueSat + fee) {
-    alert("❌ Insufficient balance."); return;
-  }
+  async function sendTestnetBTC({
+    fromAddress,
+    toAddress,
+    privateKeyHex,
+    amountInBTC,
+  }) {
+    const network = networks.testnet;
+    alert("▶️ Starting sendTestnetBTC…");
 
-  // 3. Build raw Transaction
-  const tx = new Transaction();
-  tx.version = 2;
-  inputs.forEach((u) =>
-    tx.addInput(Buffer.from(u.txid, "hex").reverse(), u.vout)
-  );
+    // 0. Validate & derive keypair
+    if (!privateKeyHex || typeof privateKeyHex !== "string") {
+      alert("❌ Invalid private key input.");
+      return;
+    }
+    const keyClean = privateKeyHex.replace(/^0x/, "");
+    const priv = Buffer.from(keyClean, "hex");
+    if (priv.length !== 32) {
+      alert("❌ Private key must be 32 bytes.");
+      return;
+    }
+    const pubkey = Buffer.from(await secp.getPublicKey(priv, true));
+    const p2wpkh = payments.p2wpkh({ pubkey, network });
+    if (p2wpkh.address !== fromAddress) {
+      alert("⚠️ Warning: derived address mismatch.");
+    }
+    alert("✅ Derived address: " + p2wpkh.address);
 
-  // helper to get scriptPubKey from an address (handles P2WPKH / P2PKH / P2SH)
-  const makeOutput = (addr) => {
-    if (addr.startsWith("tb1"))      return payments.p2wpkh({ address: addr, network }).output;
-    else if (addr.startsWith("2"))    return payments.p2sh({ address: addr, network }).output;
-    else if (/^[mn1]/.test(addr[0]))  return payments.p2pkh({ address: addr, network }).output;
-    else throw new Error("Unsupported address type");
-  };
+    // 1. Fetch UTXOs
+    let utxos;
+    try {
+      const res = await axios.get(
+        `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
+      );
+      utxos = res.data;
+    } catch (e) {
+      alert("❌ Failed to fetch UTXOs:\n" + e.message);
+      return;
+    }
+    if (!utxos.length) {
+      alert("❌ No UTXOs found.");
+      return;
+    }
 
-  // add recipient output
-  tx.addOutput(makeOutput(toAddress), valueSat);
-  // add change
-  const change = total - valueSat - fee;
-  if (change > 0) {
-    tx.addOutput(makeOutput(fromAddress), change);
-  }
+    // 2. Select UTXOs
+    const valueSat = Math.floor(amountInBTC * 1e8);
+    const fee = 1000;
+    let total = 0;
+    const inputs = [];
+    for (const u of utxos) {
+      inputs.push(u);
+      total += u.value;
+      if (total >= valueSat + fee) break;
+    }
+    if (total < valueSat + fee) {
+      alert("❌ Insufficient balance.");
+      return;
+    }
 
-  // 4. Sign each input (P2WPKH / SIGHASH_ALL)
-  for (let i = 0; i < inputs.length; i++) {
-    const u = inputs[i];
-    const scriptPubKey = p2wpkh.output;
-    const sighash = computeBIP143Sighash(tx, i, scriptPubKey, u.value);
-    const sig = await secp.sign(sighash, priv);
-    const finalSig = Buffer.concat([Buffer.from(sig), Buffer.from([Transaction.SIGHASH_ALL])]);
-    tx.setWitness(i, [finalSig, pubkey]);
-  }
-
-  // 5. Broadcast
-  const raw = tx.toHex();
-  try {
-    const res = await axios.post(
-      "https://blockstream.info/testnet/api/tx",
-      raw,
-      { headers: { "Content-Type": "text/plain" } }
+    // 3. Build raw Transaction
+    const tx = new Transaction();
+    tx.version = 2;
+    inputs.forEach((u) =>
+      tx.addInput(Buffer.from(u.txid, "hex").reverse(), u.vout)
     );
-    alert("✅ TX sent! TXID:\n" + res.data);
-    return res.data;
-  } catch (e) {
-    alert("❌ Broadcast failed:\n" + e.message);
+
+    // helper to get scriptPubKey from an address (handles P2WPKH / P2PKH / P2SH)
+    const makeOutput = (addr) => {
+      if (addr.startsWith("tb1"))
+        return payments.p2wpkh({ address: addr, network }).output;
+      else if (addr.startsWith("2"))
+        return payments.p2sh({ address: addr, network }).output;
+      else if (/^[mn1]/.test(addr[0]))
+        return payments.p2pkh({ address: addr, network }).output;
+      else throw new Error("Unsupported address type");
+    };
+
+    // add recipient output
+    tx.addOutput(makeOutput(toAddress), valueSat);
+    // add change
+    const change = total - valueSat - fee;
+    if (change > 0) {
+      tx.addOutput(makeOutput(fromAddress), change);
+    }
+
+    // 4. Sign each input (P2WPKH / SIGHASH_ALL)
+    for (let i = 0; i < inputs.length; i++) {
+      const u = inputs[i];
+      const scriptPubKey = p2wpkh.output;
+      const sighash = computeBIP143Sighash(tx, i, scriptPubKey, u.value);
+      const sig = await secp.sign(sighash, priv);
+      const finalSig = Buffer.concat([
+        Buffer.from(sig),
+        Buffer.from([Transaction.SIGHASH_ALL]),
+      ]);
+      tx.setWitness(i, [finalSig, pubkey]);
+    }
+
+    // 5. Broadcast
+    const raw = tx.toHex();
+    try {
+      const res = await axios.post(
+        "https://blockstream.info/testnet/api/tx",
+        raw,
+        { headers: { "Content-Type": "text/plain" } }
+      );
+      alert("✅ TX sent! TXID:\n" + res.data);
+      return res.data;
+    } catch (e) {
+      alert("❌ Broadcast failed:\n" + e.message);
+    }
   }
-}
-
-
-  
 
   const checkPrivateKeyAndAddress = async () => {
     if (!provider?.request) {
