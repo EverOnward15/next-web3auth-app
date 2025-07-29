@@ -338,7 +338,7 @@ export default function Web3AuthComponent() {
         .get(`https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`)
         .then((r) => r.data);
       // Decode full tx so we can pick out the output script
-      const tx = Transaction.fromHex(rawHex);
+      const tx = bitcoin.transaction.fromHex(rawHex);
       const output = tx.outs[utxo.vout];
 
       // **For P2WPKH (native SegWit) you MUST use witnessUtxo, not nonWitnessUtxo**:
