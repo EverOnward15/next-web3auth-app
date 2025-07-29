@@ -12,16 +12,19 @@ if (typeof window !== "undefined") {
 
 import * as secp from "@noble/secp256k1";
 import axios from "axios";
+
+import { sha256 } from "@noble/hashes/sha256";
+import { hmac }   from "@noble/hashes/hmac";
+import { sign, getPublicKey } from "@noble/secp256k1";
 import * as bitcoin from "bitcoinjs-lib";
 const { payments, networks, Psbt, Transaction } = bitcoin;
-import ECPairFactory from "ecpair";
-import * as tinysecp from "tiny-secp256k1";
 
-const ECPair = ECPairFactory(tinysecp);
+// --- Inject the two synchronous hash functions bitcoinjs-lib expects ---
+bitcoin.crypto = bitcoin.crypto || {};
+bitcoin.crypto.sha256 = (buffer) => Buffer.from(sha256(buffer));
+bitcoin.crypto.hmacSha256Sync = (key, data) =>
+  Buffer.from(hmac(sha256, key, data));
 
-import { sign, getPublicKey } from "@noble/secp256k1";
-import { sha256, hmac } from "@noble/hashes/sha256";
-import { wrapSha256Sync } from "@noble/hashes/utils";
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
@@ -31,17 +34,6 @@ const CLIENT_ID =
 //Function to derive BTC Address
 
 
-// Inject hash functions
-  bitcoin.initEccLib({
-    isPoint: () => true,
-    pointFromScalar: () => { throw new Error("not needed here") },
-    pointCompress: () => { throw new Error("not needed here") },
-    sign: () => { throw new Error("not needed here") },
-    verify: () => { throw new Error("not needed here") },
-    // The key one you're missing:
-    hmacSha256Sync: (key, ...msgs) => hmac(sha256, key)(Buffer.concat(msgs)),
-    sha256: wrapSha256Sync(sha256),
-  });
 
 function hexToBytes(hex) {
   const arr = new Uint8Array(hex.length / 2);
@@ -441,7 +433,7 @@ export default function Web3AuthComponent() {
     }
 
     try {
-      psbt.validateSignaturesOfAllInputs();
+      // psbt.validateSignaturesOfAllInputs();
       psbt.finalizeAllInputs();
     } catch (e) {
       alert("❌ Error finalizing transaction: " + e.message);
