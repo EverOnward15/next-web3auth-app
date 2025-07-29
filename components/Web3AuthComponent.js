@@ -6,8 +6,9 @@ import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
 import styles from "../components/Web3AuthComponent.module.css";
 import { CommonPrivateKeyProvider } from "@web3auth/base-provider";
 import { Buffer } from "buffer";
-window.Buffer = Buffer;
-
+if (typeof window !== "undefined") {
+  window.Buffer = Buffer;
+}
 
 import * as secp from "@noble/secp256k1";
 import axios from "axios";
@@ -25,6 +26,15 @@ const CLIENT_ID =
 /*------------------ Start of Code --------------------*/
 
 //Function to derive BTC Address
+
+function hexToBytes(hex) {
+  const arr = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    arr[i / 2] = parseInt(hex.substr(i, 2), 16);
+  }
+  return arr;
+}
+
 async function deriveBTCAddress(privateKeyHex) {
   const hex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
 
@@ -326,7 +336,11 @@ export default function Web3AuthComponent() {
       throw new Error("Private key must be 64 hex chars (32 bytes).");
     }
 
-    const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKeyClean, "hex"), {
+    // const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKeyClean, "hex"), {
+    //   compressed: true,
+    // });
+
+    const keyPair = ECPair.fromPrivateKey(hexToBytes(privateKeyClean), {
       compressed: true,
     });
     alert("KeyPair address: " + payments.p2wpkh({ pubkey: keyPair.publicKey, network }).address);
