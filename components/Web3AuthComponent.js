@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import {payments, networks, Transaction } from "bitcoinjs-lib";
+import { crypto } from "bitcoinjs-lib";
+import { hmac } from "@noble/hashes/hmac";
+import { sha256 } from "@noble/hashes/sha256";
+import { concatBytes } from "@noble/hashes/utils";
 
+crypto.hmacSha256 = (key, ...msgs) =>
+  Buffer.from(hmac(sha256, key, concatBytes(...msgs)));
 
 // Then import everything else
 import { Web3Auth } from "@web3auth/single-factor-auth";
