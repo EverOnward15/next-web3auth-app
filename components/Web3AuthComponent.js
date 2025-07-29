@@ -14,29 +14,25 @@ let bitcoin;
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
 
-  // Patch first
-  function sha256Noble(buffer) {
-    return sha256(buffer);
-  }
+  const { sha256 } = await import("@noble/hashes/sha256");
+  const { hmac } = await import("@noble/hashes/hmac");
 
-  function hmacSha256Noble(hashFunc, key, data) {
-    return hmac(hashFunc, key, data);
-  }
-
-  // Patch functions BEFORE importing bitcoinjs-lib
   bitcoin = await import("bitcoinjs-lib");
   bitcoin.crypto = bitcoin.crypto || {};
-  bitcoin.crypto.sha256 = (buffer) => Buffer.from(sha256Noble(buffer));
+
+  bitcoin.crypto.sha256 = (buffer) =>
+    Buffer.from(sha256(Buffer.from(buffer)));
+
   bitcoin.crypto.hmacSha256Sync = (key, data) => {
     const keyBytes =
       typeof key === "string" ? Buffer.from(key, "utf8") : Buffer.from(key);
     const dataBytes =
       typeof data === "string" ? Buffer.from(data, "utf8") : Buffer.from(data);
-    return Buffer.from(hmacSha256Noble(sha256Noble, keyBytes, dataBytes));
+    return Buffer.from(hmac(sha256, keyBytes, dataBytes));
   };
-
-  alert("Patched hmacSha256Sync: " + typeof bitcoin.crypto.hmacSha256Sync);
+    alert("Patched hmacSha256Sync: " + typeof bitcoin.crypto.hmacSha256Sync);
 }
+
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
