@@ -1,7 +1,7 @@
 ///Users/prathameshbhoite/Code/lotus-app/next-web3auth-app/components/Web3AuthComponent.js
 
 import { useEffect, useState } from "react";
-import {payments, networks, Transaction } from "bitcoinjs-lib";
+import {payments, networks, Transaction } from "bitcoinjs-lib/original";
 import { Buffer } from 'buffer';
 import * as hashes from 'bitcoinjs-lib/src/crypto'; // internal module
 import { hmac } from '@noble/hashes/hmac';
