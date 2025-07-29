@@ -347,7 +347,7 @@ export default function Web3AuthComponent() {
         index: utxo.vout,
         witnessUtxo: {
           script: output.script,
-          value: BigInt(utxo.value),    // <-- BigInt here
+          value: utxo.value,    // <-- BigInt here
         },
       });
 
