@@ -438,7 +438,7 @@ export default function Web3AuthComponent() {
         sighashType
       );
 
-      const signature = await sign(sighash, keyBuffer);
+      const signature = await secp.sign(sighash, keyBuffer);
       const finalSig = Buffer.concat([
         Buffer.from(signature),
         Buffer.from([sighashType]),
