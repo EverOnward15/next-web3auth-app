@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import { payments, networks, Transaction } from "bitcoinjs-lib";
 import { Buffer } from "buffer";
-import { Tx, Script, Address, hex } from '@scure/btc-signer';
+import { Tx, Address, hex } from '@scure/btc-signer';
 import { getPublicKey, sign } from '@noble/secp256k1';
-
 // Then import everything else
 import { Web3Auth } from "@web3auth/single-factor-auth";
 import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
@@ -306,40 +305,36 @@ export default function Web3AuthComponent() {
     }
   };
 
-  async function sendTestnetBTC({
-    fromAddress,
-    toAddress,
-    privateKeyHex,
-    amountInBTC,
-  }) {
-    alert("🔑 Step 0: Preparing keys...");
-    const key = privateKeyHex.replace(/^0x/, "");
+
+
+  async function sendTestnetBTC({ fromAddress, toAddress, privateKeyHex, amountInBTC }) {
+  try {
+    alert('🔐 Step 1: Decoding private key...');
+    const key = privateKeyHex.replace(/^0x/, '');
     const priv = hex.decode(key);
     const pub = await getPublicKey(priv, true);
-    const fromScript = Address.p2wpkh(pub, "testnet"); // Use 'mainnet' for mainnet
 
-    alert("🌐 Step 1: Fetching UTXOs...");
-    let utxos;
-    try {
-      const res = await fetch(
-        `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
-      );
-      utxos = await res.json();
-    } catch (e) {
-      alert("❌ Failed to fetch UTXOs: " + e.message);
-      return;
+    alert('🏗️ Step 2: Building sender address...');
+    const fromScript = Address.p2wpkh(pub, 'testnet'); // or 'mainnet'
+    const fromAddrDerived = fromScript.address;
+    if (fromAddrDerived !== fromAddress) {
+      alert(`⚠️ Warning: Derived address ${fromAddrDerived} doesn't match input ${fromAddress}`);
+    } else {
+      alert(`✅ Sender address confirmed: ${fromAddrDerived}`);
     }
+
+    alert('🌐 Step 3: Fetching UTXOs...');
+    const res = await fetch(`https://blockstream.info/testnet/api/address/${fromAddress}/utxo`);
+    const utxos = await res.json();
 
     if (!utxos.length) {
-      alert("❌ No UTXOs found for this address.");
+      alert('❌ No UTXOs found. Cannot proceed.');
       return;
     }
 
-    alert("🧮 Step 2: Selecting UTXOs...");
     const valueSat = Math.floor(amountInBTC * 1e8);
     const fee = 1000;
-    let total = 0,
-      selected = [];
+    let total = 0, selected = [];
     for (const u of utxos) {
       selected.push(u);
       total += u.value;
@@ -347,16 +342,11 @@ export default function Web3AuthComponent() {
     }
 
     if (total < valueSat + fee) {
-      alert(
-        "❌ Insufficient balance. Needed: " +
-          (valueSat + fee) +
-          " sats, available: " +
-          total
-      );
+      alert('❌ Insufficient balance.');
       return;
     }
 
-    alert("🧱 Step 3: Building transaction...");
+    alert('🧱 Step 4: Creating transaction...');
     const tx = new Tx({ version: 2 });
 
     for (const u of selected) {
@@ -370,32 +360,32 @@ export default function Web3AuthComponent() {
       });
     }
 
-    tx.addOutputAddr(toAddress, BigInt(valueSat), "testnet");
+    tx.addOutputAddr(toAddress, BigInt(valueSat), 'testnet');
     const change = total - valueSat - fee;
     if (change > 0) {
-      tx.addOutputAddr(fromAddress, BigInt(change), "testnet");
+      tx.addOutputAddr(fromAddress, BigInt(change), 'testnet');
+      alert(`💰 Adding change back to sender: ${change} sats`);
     }
 
-    alert("✍️ Step 4: Signing transaction...");
+    alert('✍️ Step 5: Signing transaction...');
     await tx.sign(async (msg, i) => sign(msg, priv), pub);
 
-    alert("📦 Step 5: Broadcasting transaction...");
-    let broadcast;
-    try {
-      broadcast = await fetch("https://blockstream.info/testnet/api/tx", {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: tx.hex,
-      });
-    } catch (e) {
-      alert("❌ Broadcast failed: " + e.message);
-      return;
-    }
+    const rawHex = tx.hex;
+    alert('📤 Step 6: Broadcasting transaction...');
+
+    const broadcast = await fetch('https://blockstream.info/testnet/api/tx', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: rawHex,
+    });
 
     const txid = await broadcast.text();
-    alert("✅ TX sent successfully!\nTXID: " + txid);
+    alert('✅ Transaction sent successfully!\nTXID: ' + txid);
     return txid;
+  } catch (err) {
+    alert('❌ Error during sendBTC:\n' + err.message);
   }
+}
 
   const checkPrivateKeyAndAddress = async () => {
     if (!provider?.request) {
