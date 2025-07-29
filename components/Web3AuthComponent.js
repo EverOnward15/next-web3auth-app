@@ -9,6 +9,7 @@ import { Buffer } from "buffer";
 import * as secp from "@noble/secp256k1";
 import axios from "axios";
 
+import * as bitcoin from "bitcoinjs-lib";
 import { sha256 } from "@noble/hashes/sha256";
 import { hmac } from "@noble/hashes/hmac";
 if (typeof window !== "undefined") {
@@ -36,7 +37,6 @@ bitcoin.crypto.hmacSha256Sync = (key, data) => {
   return Buffer.from(hmacSha256Noble(sha256Noble, keyBytes, dataBytes));
 };
 
-import * as bitcoin from "bitcoinjs-lib";
 const { payments, networks, Psbt, Transaction } = bitcoin;
 
 alert("hmacSha256Sync:" + typeof bitcoin.crypto.hmacSha256Sync);
