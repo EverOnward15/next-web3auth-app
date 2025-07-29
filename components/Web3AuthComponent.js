@@ -376,8 +376,11 @@ export default function Web3AuthComponent() {
       txHex,
       {
         headers: { "Content-Type": "text/plain" },
+        timeout: 10_000, // give up after 10s
       }
     );
+    // as soon as we get a txid back, it’s been *accepted* by the API
+    alert("✅ Transaction broadcasted!  TxID:\n" + txid);
     return txid;
   }
 
