@@ -337,20 +337,25 @@ export default function Web3AuthComponent() {
       const rawHex = await axios
         .get(`https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`)
         .then((r) => r.data);
-      // Decode full tx so we can pick out the output script
+
+      // decode the full transaction so we can re‐extract the scriptPubKey
       const tx = bitcoin.Transaction.fromHex(rawHex);
       const output = tx.outs[utxo.vout];
 
-      // **For P2WPKH (native SegWit) you MUST use witnessUtxo, not nonWitnessUtxo**:
+      // P2WPKH native witness input:
       psbt.addInput({
         hash: utxo.txid,
         index: utxo.vout,
-        witnessUtxo: { script: output.script, value: utxo.value },
+        witnessUtxo: {
+          script: output.script,
+          value: BigInt(utxo.value),    // <-- BigInt here
+        },
       });
 
       total += utxo.value;
-      if (total >= amountInBTC * 1e8) break;
+      if (total >= Math.floor(amountInBTC * 1e8)) break;
     }
+
 
     // 3) add outputs (same as before)
     const sats = Math.floor(amountInBTC * 1e8);
