@@ -9,6 +9,9 @@ import { Buffer } from "buffer";
 import * as secp from "@noble/secp256k1";
 import axios from "axios";
 
+let bitcoin; // Global-scoped within the module
+
+
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
 
