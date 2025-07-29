@@ -20,6 +20,8 @@ import * as tinysecp from "tiny-secp256k1";
 const ECPair = ECPairFactory(tinysecp);
 
 import { sign, getPublicKey } from "@noble/secp256k1";
+import { sha256, hmac } from "@noble/hashes/sha256";
+import { wrapSha256Sync } from "@noble/hashes/utils";
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
@@ -27,6 +29,19 @@ const CLIENT_ID =
 /*------------------ Start of Code --------------------*/
 
 //Function to derive BTC Address
+
+
+// Inject hash functions
+  bitcoin.initEccLib({
+    isPoint: () => true,
+    pointFromScalar: () => { throw new Error("not needed here") },
+    pointCompress: () => { throw new Error("not needed here") },
+    sign: () => { throw new Error("not needed here") },
+    verify: () => { throw new Error("not needed here") },
+    // The key one you're missing:
+    hmacSha256Sync: (key, ...msgs) => hmac(sha256, key)(Buffer.concat(msgs)),
+    sha256: wrapSha256Sync(sha256),
+  });
 
 function hexToBytes(hex) {
   const arr = new Uint8Array(hex.length / 2);
