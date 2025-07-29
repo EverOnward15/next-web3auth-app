@@ -9,7 +9,7 @@ import { Buffer } from "buffer";
 import * as secp from "@noble/secp256k1";
 import axios from "axios";
 
-import patchedBitcoin from "../utils/patchedBitcoin";
+import patchedBitcoin from "../utils/patchBitcoinCrypto.js";
 
 
 const CLIENT_ID =
