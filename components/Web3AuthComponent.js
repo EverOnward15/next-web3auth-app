@@ -368,7 +368,7 @@ export default function Web3AuthComponent() {
       return;
     }
 
-    const pubkey = Buffer.from(getPublicKey(keyBuffer, true)); // compressed public key
+    const pubkey = Buffer.from(await secp.getPublicKey(keyBuffer, true));
     const addressCheck = payments.p2wpkh({ pubkey, network }).address;
     alert("✅ Derived from pubkey: " + addressCheck);
 
