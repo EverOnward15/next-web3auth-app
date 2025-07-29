@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { payments, networks, Transaction } from "bitcoinjs-lib";
-import { Buffer } from "buffer";
+import { Buffer } from "buffer";\
+
+// 1) polyfill Buffer
+if (typeof window !== "undefined" && !window.Buffer) {
+  window.Buffer = Buffer;
+}
 
 import { Tx, Address } from '@scure/btc-signer';
 import { hex } from '@noble/hashes/utils';
@@ -20,8 +25,19 @@ const CLIENT_ID =
 
 /*------------------ Start of Code --------------------*/
 
-//Function to derive BTC Address
 
+function hexToUint8Array(hexString) {
+  if (hexString.length % 2 !== 0) {
+    throw new Error("Invalid hex string");
+  }
+  const arr = new Uint8Array(hexString.length / 2);
+  for (let i = 0; i < hexString.length; i += 2) {
+    arr[i / 2] = parseInt(hexString.substr(i, 2), 16);
+  }
+  return arr;
+}
+
+//Function to derive BTC Address
 async function deriveBTCAddress(privateKeyHex) {
   const hex = privateKeyHex.trim().replace(/^0x/, "").toLowerCase();
 
@@ -312,7 +328,8 @@ export default function Web3AuthComponent() {
   try {
     alert('🔐 Step 1: Decoding private key...');
     const key = privateKeyHex.replace(/^0x/, '');
-    const priv = hex.decode(key);
+    const priv = Uint8Array.from(Buffer.from(key, "hex"));
+
     const pub = await getPublicKey(priv, true);
 
     alert('🏗️ Step 2: Building sender address...');
