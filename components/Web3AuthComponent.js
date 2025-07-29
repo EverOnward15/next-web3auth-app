@@ -354,6 +354,7 @@ export default function Web3AuthComponent() {
 
     // 2) Build PSBT
     const psbt = new Psbt({ network });
+    console.log("✅ PSBT created");
     let total = 0;
 
     for (const utxo of utxos) {
