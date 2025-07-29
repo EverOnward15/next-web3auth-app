@@ -9,7 +9,8 @@ import { Buffer } from "buffer";
 import * as secp from "@noble/secp256k1";
 import axios from "axios";
 
-import { patchBitcoinCrypto } from "../utils/patchBitcoinCrypto";
+import patchedBitcoin from "../utils/patchedBitcoin";
+
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
@@ -47,6 +48,8 @@ async function deriveBTCAddress(privateKeyHex) {
 
 //Function to call deriveBTCWallet
 async function deriveBTCWallet(provider) {
+  const { payments, networks, Psbt, Transaction } = patchedBitcoin;
+
   const privateKeyHex = await provider.request({ method: "private_key" });
   const hex = privateKeyHex.startsWith("0x")
     ? privateKeyHex.slice(2)
@@ -93,19 +96,6 @@ export default function Web3AuthComponent() {
   const [sendAmount, setSendAmount] = useState("");
   const [sendStatus, setSendStatus] = useState(null);
   const [showSendModal, setShowSendModal] = useState(false);
-
-  const [patchedBitcoin, setPatchedBitcoin] = useState(null);
-
-  useEffect(() => {
-    const loadBitcoinLib = async () => {
-      const bitcoinjs = await patchBitcoinCrypto();
-      setPatchedBitcoin(bitcoinjs);
-      alert("✅ Patched bitcoinjs-lib with module + set state");
-    };
-
-    loadBitcoinLib();
-  }, []);
-
   // You can later plug in USDT or ETH balances like this:
   const balances = {
     BTC: {
@@ -402,7 +392,7 @@ export default function Web3AuthComponent() {
 
     // 3) Sign inputs manually using @noble/secp256k1
     for (let i = 0; i < psbt.inputCount; i++) {
-      const sighashType = patchedBitcoin.Transaction.SIGHASH_ALL;
+      const sighashType = Transaction.SIGHASH_ALL;
       const sighash = psbt.__CACHE.__TX.hashForWitnessV0(
         i,
         psbt.data.inputs[i].witnessUtxo.script,
