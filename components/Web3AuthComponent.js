@@ -5,7 +5,7 @@ import { payments, networks, Transaction } from "bitcoinjs-lib";
 import { Buffer } from "buffer";
 
 import { Tx, Address } from '@scure/btc-signer';
-import { hex } from '@noble/hashes/hex';
+import { hex } from '@noble/hashes/utils';
 import { getPublicKey, sign } from '@noble/secp256k1';
 // Then import everything else
 import { Web3Auth } from "@web3auth/single-factor-auth";
