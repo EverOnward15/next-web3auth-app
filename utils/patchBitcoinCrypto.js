@@ -1,6 +1,6 @@
 // utils/patchBitcoinCrypto.js
 import * as bitcoinjs from "bitcoinjs-lib";
-import * as ecc from "@noble/secp256k1";
+// import * as ecc from "@noble/secp256k1";
 import { sha256 } from "@noble/hashes/sha256";
 import { hmac } from "@noble/hashes/hmac";
 import { Buffer } from "buffer";
