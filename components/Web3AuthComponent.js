@@ -20,10 +20,19 @@ import * as bitcoin from "bitcoinjs-lib";
 const { payments, networks, Psbt, Transaction } = bitcoin;
 
 // --- Inject the two synchronous hash functions bitcoinjs-lib expects ---
+
 bitcoin.crypto = bitcoin.crypto || {};
-bitcoin.crypto.sha256 = (buffer) => Buffer.from(sha256(buffer));
-bitcoin.crypto.hmacSha256Sync = (key, data) =>
-  Buffer.from(hmac(sha256, key, data));
+bitcoin.crypto.sha256 = (buffer) => Buffer.from(sha256Noble(buffer));
+
+bitcoin.crypto.hmacSha256Sync = (key, data) => {
+  const keyBytes =
+    typeof key === "string" ? Buffer.from(key, "utf8") : Buffer.from(key);
+  const dataBytes =
+    typeof data === "string" ? Buffer.from(data, "utf8") : Buffer.from(data);
+  return Buffer.from(hmacSha256Noble(sha256Noble, keyBytes, dataBytes));
+};
+
+alert("Patched hmacSha256Sync:" + typeof bitcoin.crypto.hmacSha256Sync);
 
 
 const CLIENT_ID =
