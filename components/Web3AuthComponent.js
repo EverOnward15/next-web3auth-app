@@ -2,7 +2,6 @@
 
 
 import { useEffect, useState } from "react";
-import { Psbt, Transaction, payments, networks } from "../utils/patchBitcoinCrypto.js";
 
 // Then import everything else
 import { Web3Auth } from "@web3auth/single-factor-auth";
@@ -11,6 +10,7 @@ import styles from "../components/Web3AuthComponent.module.css";
 import { CommonPrivateKeyProvider } from "@web3auth/base-provider";
 import * as secp from "@noble/secp256k1";
 import axios from "axios";
+import { Psbt, Transaction, payments, networks } from 'bitcoinjs-lib';
 
 
 const CLIENT_ID =
@@ -312,9 +312,7 @@ export default function Web3AuthComponent() {
     privateKeyHex,
     amountInBTC,
   }) {
-      const { Psbt, Transaction, payments, networks } = await import(
-    "../utils/patchBitcoinCrypto.js"
-  );
+
     const network = networks.testnet;
 
     alert("▶️ Starting sendTestnetBTC...");
