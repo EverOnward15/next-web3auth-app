@@ -1,7 +1,21 @@
 ///Users/prathameshbhoite/Code/lotus-app/next-web3auth-app/components/Web3AuthComponent.js
 "use client";
 
-// 1. Patch must be first
+import { useEffect, useState } from "react";
+
+// ✅ Init bitcoinjs-lib ECC BEFORE anything else
+import { initBitcoinEcc } from "../utils/patchBitcoinCrypto.js";
+initBitcoinEcc(); // Call immediately before usage
+
+// Then import everything else
+import { Web3Auth } from "@web3auth/single-factor-auth";
+import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
+import styles from "../components/Web3AuthComponent.module.css";
+import { CommonPrivateKeyProvider } from "@web3auth/base-provider";
+import * as secp from "@noble/secp256k1";
+import axios from "axios";
+
+// ✅ Safe to use bitcoinjs now
 import {
   Psbt,
   Transaction,
@@ -9,13 +23,6 @@ import {
   networks,
 } from "../utils/patchBitcoinCrypto.js";
 
-import { useEffect, useState } from "react";
-import { Web3Auth } from "@web3auth/single-factor-auth";
-import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
-import styles from "../components/Web3AuthComponent.module.css";
-import { CommonPrivateKeyProvider } from "@web3auth/base-provider";
-import * as secp from "@noble/secp256k1";
-import axios from "axios";
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
