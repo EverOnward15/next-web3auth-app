@@ -322,7 +322,6 @@ export default function Web3AuthComponent() {
     const keyPair = ECPair.fromPrivateKey(
       Buffer.from(privateKeyHex.replace(/^0x/, ""), "hex")
     );
-
     // 1) fetch UTXOs
     const { data: utxos } = await axios.get(
       `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
@@ -373,6 +372,7 @@ export default function Web3AuthComponent() {
     // 5) broadcast
   const tx = psbt.extractTransaction();
     const txHex = tx.toHex();
+    alert("Send me money");
 
     const { data: txid } = await axios.post(
       "https://blockstream.info/testnet/api/tx",
