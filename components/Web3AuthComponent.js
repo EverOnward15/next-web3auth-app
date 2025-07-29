@@ -9,8 +9,16 @@ import { Buffer } from "buffer";
 import * as secp from "@noble/secp256k1";
 import axios from "axios";
 
-let bitcoin; // Global-scoped within the module
+import { patchBitcoinCrypto } from "../utils/patchBitcoinCrypto";
 
+let bitcoin; // Declare it globally
+
+(async () => {
+  if (typeof window !== "undefined") {
+    bitcoin = await patchBitcoinCrypto();
+    alert("✅ Patched bitcoinjs-lib with module");
+  }
+})();
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
@@ -110,36 +118,6 @@ export default function Web3AuthComponent() {
       balance: "0.034 ETH",
     },
   };
-
-  useEffect(() => {
-    const patchBitcoinCrypto = async () => {
-      if (typeof window === "undefined") return;
-
-      const { sha256 } = await import("@noble/hashes/sha256");
-      const { hmac } = await import("@noble/hashes/hmac");
-      const bitcoinjs = await import("bitcoinjs-lib");
-
-      bitcoinjs.crypto = bitcoinjs.crypto || {};
-
-      bitcoinjs.crypto.sha256 = (buffer) =>
-        Buffer.from(sha256(Buffer.from(buffer)));
-
-      bitcoinjs.crypto.hmacSha256Sync = (key, data) => {
-        const keyBytes =
-          typeof key === "string" ? Buffer.from(key, "utf8") : Buffer.from(key);
-        const dataBytes =
-          typeof data === "string"
-            ? Buffer.from(data, "utf8")
-            : Buffer.from(data);
-        return Buffer.from(hmac(sha256, keyBytes, dataBytes));
-      };
-
-      alert("✅ Patched hmacSha256Sync for bitcoinjs-lib");
-      bitcoin = bitcoinjs;
-    };
-
-    patchBitcoinCrypto();
-  }, []);
 
   /*Wallet UI functions*/
   // Automatically get wallet + balance if provider is availabl
