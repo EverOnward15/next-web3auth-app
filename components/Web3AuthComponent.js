@@ -371,14 +371,21 @@ export default function Web3AuthComponent() {
     const txHex = tx.toHex();
     alert("Send me money");
 
-    const { data: txid } = await axios.post(
-      "https://blockstream.info/testnet/api/tx",
-      txHex,
-      {
-        headers: { "Content-Type": "text/plain" },
-        timeout: 10_000, // give up after 10s
-      }
-    );
+    let txid;
+    try {
+      const response = await axios.post(
+        "https://blockstream.info/testnet/api/tx",
+        txHex,
+        {
+          headers: { "Content-Type": "text/plain" },
+          timeout: 30000,
+        }
+      );
+      txid = response.data;
+    } catch (err) {
+      alert("❌ Failed to broadcast TX:\n" + (err?.message || err));
+      throw err;
+    }
     // as soon as we get a txid back, it’s been *accepted* by the API
     alert("✅ Transaction broadcasted!  TxID:\n" + txid);
     return txid;
