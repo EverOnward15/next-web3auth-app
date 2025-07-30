@@ -323,7 +323,7 @@ export default function Web3AuthComponent() {
       const priv = Uint8Array.from(Buffer.from(key, "hex"));
 
       const pubHex = await getPublicKey(priv, true); // returns hex string
-  
+      alert(typeof pubHex);
       const pub = hex.decode(pubHex); // convert to Uint8Array
       alert(`🧪 pub: ${hex.encode(pub)}, length: ${pub.length}`);
       if (!(pub instanceof Uint8Array) || pub.length !== 33) {
