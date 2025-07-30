@@ -387,10 +387,28 @@ export default function Web3AuthComponent() {
         });
       }
 
-      const { output: toScript } = payments.p2wpkh({
-        address: toAddress,
-        network: networks.testnet,
-      });
+      let toScript;
+      try {
+        // Try Bech32 (P2WPKH)
+        toScript = payments.p2wpkh({
+          address: toAddress,
+          network: networks.testnet,
+        }).output;
+        alert("📮 Recipient address detected as P2WPKH (Bech32)");
+      } catch (e1) {
+        try {
+          // Fallback to Legacy (P2PKH)
+          toScript = payments.p2pkh({
+            address: toAddress,
+            network: networks.testnet,
+          }).output;
+          alert("📮 Recipient address detected as P2PKH (Legacy/Base58)");
+        } catch (e2) {
+          alert("❌ Invalid recipient address: " + toAddress);
+          return;
+        }
+      }
+
       tx.addOutput({ script: toScript, amount: BigInt(valueSat) });
 
       const change = total - valueSat - fee;
