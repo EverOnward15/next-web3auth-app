@@ -331,14 +331,13 @@ export default function Web3AuthComponent() {
         );
       }
 
-      alert('Mainnet address: ' + p2wpkh(pub, MAINNET).address);
-      alert('Testnet address: ' + p2wpkh(pub, TESTNET).address);
-
-
 
       alert("🏗️ Step 2: Building sender address...");
-      const fromScript = p2wpkh(pub, TESTNET); // Mainnet later
-      const fromAddrDerived = fromScript.address;
+      // ✅ derive exactly as you do elsewhere for testnet
+      const { address: fromAddrDerived, output: fromScriptBuffer } = payments.p2wpkh({
+        pubkey: Buffer.from(pub),
+        network: networks.testnet,
+      });
       if (fromAddrDerived !== fromAddress) {
         alert(
           `⚠️ Warning: Derived address ${fromAddrDerived} doesn't match input ${fromAddress}`
