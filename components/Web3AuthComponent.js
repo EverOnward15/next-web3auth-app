@@ -10,6 +10,8 @@ if (typeof window !== "undefined" && !window.Buffer) {
 }
 
 import { Tx } from "@scure/btc-signer"; // Later MAINNET
+import * as btcSigner from '@scure/btc-signer';
+alert("Signer");
 alert(typeof btcSigner.Tx); // should be 'function'
 
 import { hex } from "@scure/base";
