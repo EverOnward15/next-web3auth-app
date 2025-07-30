@@ -422,9 +422,11 @@ export default function Web3AuthComponent() {
       }
 
       alert("✍️ Step 5: Signing transaction...");
-      await tx.sign(async (msg, i) => sign(msg, priv), pub);
+      tx.sign(priv);
+      tx.finalize();
 
       const rawHex = tx.hex;
+      alert("📤 Raw TX HEX: " + rawHex);
       alert("📤 Step 6: Broadcasting transaction...");
 
       const broadcast = await fetch("https://blockstream.info/testnet/api/tx", {
