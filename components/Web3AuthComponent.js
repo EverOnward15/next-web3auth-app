@@ -9,7 +9,9 @@ if (typeof window !== "undefined" && !window.Buffer) {
   window.Buffer = Buffer;
 }
 
-import { Tx, p2wpkh, TESTNET, MAINNET} from "@scure/btc-signer"; // Later MAINNET
+import { Tx } from "@scure/btc-signer"; // Later MAINNET
+alert(typeof btcSigner.Tx); // should be 'function'
+
 import { hex } from "@scure/base";
 import { getPublicKey, sign } from "@noble/secp256k1";
 // Then import everything else
@@ -380,7 +382,7 @@ export default function Web3AuthComponent() {
           txid: u.txid,
           index: u.vout,
           witnessUtxo: {
-            script: fromScript.script,
+            script: fromScriptBuffer,
             amount: BigInt(u.value),
           },
         });
