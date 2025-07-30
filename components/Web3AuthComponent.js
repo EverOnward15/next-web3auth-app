@@ -359,6 +359,14 @@ export default function Web3AuthComponent() {
       }
 
       const valueSat = Math.floor(amountInBTC * 1e8);
+      const dustLimit = toAddress.startsWith("1") ? 546 : 294;
+      if (valueSat < dustLimit) {
+        alert(
+          `❌ Cannot send ${valueSat} sats. It is below the dust threshold (${dustLimit} sats). Send a larger amount.`
+        );
+        return;
+      }
+
       const fee = 1000;
       let total = 0,
         selected = [];
