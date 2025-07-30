@@ -11,9 +11,6 @@ if (typeof window !== "undefined" && !window.Buffer) {
 
 import { Transaction } from "@scure/btc-signer"; // Later MAINNET
 import * as btcSigner from '@scure/btc-signer';
-alert("Signer");
-alert(typeof btcSigner.Transaction()); // should be 'function'
-
 import { hex } from "@scure/base";
 import { getPublicKey, sign } from "@noble/secp256k1";
 // Then import everything else
