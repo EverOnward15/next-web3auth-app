@@ -9,10 +9,10 @@ if (typeof window !== "undefined" && !window.Buffer) {
   window.Buffer = Buffer;
 }
 
-import { Tx } from "@scure/btc-signer"; // Later MAINNET
+import { Transaction } from "@scure/btc-signer"; // Later MAINNET
 import * as btcSigner from '@scure/btc-signer';
 alert("Signer");
-alert(typeof btcSigner.Tx); // should be 'function'
+alert(typeof btcSigner.Transaction()); // should be 'function'
 
 import { hex } from "@scure/base";
 import { getPublicKey, sign } from "@noble/secp256k1";
@@ -377,7 +377,7 @@ export default function Web3AuthComponent() {
       }
 
       alert("🧱 Step 4: Creating transaction...");
-      const tx = new Tx({ version: 2 });
+      const tx = new Transaction({ version: 2 });
 
       for (const u of selected) {
         tx.addInput({
