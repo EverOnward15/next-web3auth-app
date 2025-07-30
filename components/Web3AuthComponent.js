@@ -1,7 +1,7 @@
 ///Users/prathameshbhoite/Code/lotus-app/next-web3auth-app/components/Web3AuthComponent.js
 
 import { useEffect, useState } from "react";
-import { payments, networks, Transaction } from "bitcoinjs-lib";
+import { payments, networks } from "bitcoinjs-lib";
 import { Buffer } from "buffer";
 
 // 1) polyfill Buffer
