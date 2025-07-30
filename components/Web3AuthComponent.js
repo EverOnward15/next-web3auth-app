@@ -387,10 +387,10 @@ export default function Web3AuthComponent() {
         });
       }
 
-      tx.addOutputAddr(toAddress, BigInt(valueSat), "testnet");
+      tx.addOutputAddress(toAddress, BigInt(valueSat), "testnet");
       const change = total - valueSat - fee;
       if (change > 0) {
-        tx.addOutputAddr(fromAddress, BigInt(change), "testnet");
+        tx.addOutputAddress(fromAddress, BigInt(change), "testnet");
         alert(`💰 Adding change back to sender: ${change} sats`);
       }
 
