@@ -9,9 +9,9 @@ if (typeof window !== "undefined" && !window.Buffer) {
   window.Buffer = Buffer;
 }
 
-import { Tx, p2wpkh } from '@scure/btc-signer';
-import { hex } from '@noble/hashes/utils';
-import { getPublicKey, sign } from '@noble/secp256k1';
+import { Tx, p2wpkh } from "@scure/btc-signer";
+import { hex } from "@scure/base";
+import { getPublicKey, sign } from "@noble/secp256k1";
 // Then import everything else
 import { Web3Auth } from "@web3auth/single-factor-auth";
 import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
@@ -311,87 +311,103 @@ export default function Web3AuthComponent() {
     }
   };
 
+  async function sendTestnetBTC({
+    fromAddress,
+    toAddress,
+    privateKeyHex,
+    amountInBTC,
+  }) {
+    try {
+      alert("🔐 Step 1: Decoding private key...");
+      const key = privateKeyHex.replace(/^0x/, "");
+      const priv = Uint8Array.from(Buffer.from(key, "hex"));
 
-  async function sendTestnetBTC({ fromAddress, toAddress, privateKeyHex, amountInBTC }) {
-  try {
-    alert('🔐 Step 1: Decoding private key...');
-    const key = privateKeyHex.replace(/^0x/, '');
-    const priv = Uint8Array.from(Buffer.from(key, "hex"));
+      const pubHex = await getPublicKey(priv, true); // returns hex string
+      const pub = hex.decode(pubHex); // convert to Uint8Array
+      alert(`🧪 pub: ${pub.toString()}, length: ${pub.length}`);
+      if (!(pub instanceof Uint8Array) || pub.length !== 33) {
+        throw new Error(
+          `Invalid public key format. Expected 33-byte Uint8Array, got: ${pub}`
+        );
+      }
 
-    const pub = await getPublicKey(priv, true);
+      alert("🏗️ Step 2: Building sender address...");
+      const fromScript = p2wpkh(pub, "testnet"); // Mainnet later
+      const fromAddrDerived = fromScript.address;
+      if (fromAddrDerived !== fromAddress) {
+        alert(
+          `⚠️ Warning: Derived address ${fromAddrDerived} doesn't match input ${fromAddress}`
+        );
+      } else {
+        alert(`✅ Sender address confirmed: ${fromAddrDerived}`);
+      }
 
-    alert('🏗️ Step 2: Building sender address...');
-    const fromScript = p2wpkh(pub, 'testnet'); // Mainnet later
-    const fromAddrDerived = fromScript.address;
-    if (fromAddrDerived !== fromAddress) {
-      alert(`⚠️ Warning: Derived address ${fromAddrDerived} doesn't match input ${fromAddress}`);
-    } else {
-      alert(`✅ Sender address confirmed: ${fromAddrDerived}`);
-    }
+      alert("🌐 Step 3: Fetching UTXOs...");
+      const res = await fetch(
+        `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
+      );
+      const utxos = await res.json();
 
-    alert('🌐 Step 3: Fetching UTXOs...');
-    const res = await fetch(`https://blockstream.info/testnet/api/address/${fromAddress}/utxo`);
-    const utxos = await res.json();
+      if (!utxos.length) {
+        alert("❌ No UTXOs found. Cannot proceed.");
+        return;
+      }
 
-    if (!utxos.length) {
-      alert('❌ No UTXOs found. Cannot proceed.');
-      return;
-    }
+      const valueSat = Math.floor(amountInBTC * 1e8);
+      const fee = 1000;
+      let total = 0,
+        selected = [];
+      for (const u of utxos) {
+        selected.push(u);
+        total += u.value;
+        if (total >= valueSat + fee) break;
+      }
 
-    const valueSat = Math.floor(amountInBTC * 1e8);
-    const fee = 1000;
-    let total = 0, selected = [];
-    for (const u of utxos) {
-      selected.push(u);
-      total += u.value;
-      if (total >= valueSat + fee) break;
-    }
+      if (total < valueSat + fee) {
+        alert("❌ Insufficient balance.");
+        return;
+      }
 
-    if (total < valueSat + fee) {
-      alert('❌ Insufficient balance.');
-      return;
-    }
+      alert("🧱 Step 4: Creating transaction...");
+      const tx = new Tx({ version: 2 });
 
-    alert('🧱 Step 4: Creating transaction...');
-    const tx = new Tx({ version: 2 });
+      for (const u of selected) {
+        tx.addInput({
+          txid: u.txid,
+          index: u.vout,
+          witnessUtxo: {
+            script: fromScript.script,
+            amount: BigInt(u.value),
+          },
+        });
+      }
 
-    for (const u of selected) {
-      tx.addInput({
-        txid: u.txid,
-        index: u.vout,
-        witnessUtxo: {
-          script: fromScript.script,
-          amount: BigInt(u.value),
-        },
+      tx.addOutputAddr(toAddress, BigInt(valueSat), "testnet");
+      const change = total - valueSat - fee;
+      if (change > 0) {
+        tx.addOutputAddr(fromAddress, BigInt(change), "testnet");
+        alert(`💰 Adding change back to sender: ${change} sats`);
+      }
+
+      alert("✍️ Step 5: Signing transaction...");
+      await tx.sign(async (msg, i) => sign(msg, priv), pub);
+
+      const rawHex = tx.hex;
+      alert("📤 Step 6: Broadcasting transaction...");
+
+      const broadcast = await fetch("https://blockstream.info/testnet/api/tx", {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: rawHex,
       });
+
+      const txid = await broadcast.text();
+      alert("✅ Transaction sent successfully!\nTXID: " + txid);
+      return txid;
+    } catch (err) {
+      alert("❌ Error during sendBTC:\n" + (err.message || err));
     }
-
-    tx.addOutputAddr(toAddress, BigInt(valueSat), 'testnet');
-    const change = total - valueSat - fee;
-    if (change > 0) {
-      tx.addOutputAddr(fromAddress, BigInt(change), 'testnet');
-      alert(`💰 Adding change back to sender: ${change} sats`);
-    }
-
-    alert('✍️ Step 5: Signing transaction...');
-    await tx.sign(async (msg, i) => sign(msg, priv), pub);
-
-    const rawHex = tx.hex;
-    alert('📤 Step 6: Broadcasting transaction...');
-
-    const broadcast = await fetch('https://blockstream.info/testnet/api/tx', {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: rawHex,
-    });
-
-    const txid = await broadcast.text();
-    alert('✅ Transaction sent successfully!\nTXID: ' + txid);
-    return txid;
-  } catch (err) {
-    alert('❌ Error during sendBTC:\n' + (err.message || err));
   }
-}
 
   const checkPrivateKeyAndAddress = async () => {
     if (!provider?.request) {
