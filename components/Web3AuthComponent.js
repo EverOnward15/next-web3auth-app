@@ -323,8 +323,9 @@ export default function Web3AuthComponent() {
       const priv = Uint8Array.from(Buffer.from(key, "hex"));
 
       const pubHex = await getPublicKey(priv, true); // returns hex string
+  
       const pub = hex.decode(pubHex); // convert to Uint8Array
-      alert(`🧪 pub: ${pub.toString()}, length: ${pub.length}`);
+      alert(`🧪 pub: ${hex.encode(pub)}, length: ${pub.length}`);
       if (!(pub instanceof Uint8Array) || pub.length !== 33) {
         throw new Error(
           `Invalid public key format. Expected 33-byte Uint8Array, got: ${pub}`
