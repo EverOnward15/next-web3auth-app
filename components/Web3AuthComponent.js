@@ -9,7 +9,7 @@ if (typeof window !== "undefined" && !window.Buffer) {
   window.Buffer = Buffer;
 }
 
-import { Tx, p2wpkh } from "@scure/btc-signer";
+import { Tx, p2wpkh, TESTNET, MAINNET } from "@scure/btc-signer"; // Later MAINNET
 import { hex } from "@scure/base";
 import { getPublicKey, sign } from "@noble/secp256k1";
 // Then import everything else
@@ -332,7 +332,7 @@ export default function Web3AuthComponent() {
       }
 
       alert("🏗️ Step 2: Building sender address...");
-      const fromScript = p2wpkh(pub, "testnet"); // Mainnet later
+      const fromScript = p2wpkh(pub, TESTNET); // Mainnet later
       const fromAddrDerived = fromScript.address;
       if (fromAddrDerived !== fromAddress) {
         alert(
