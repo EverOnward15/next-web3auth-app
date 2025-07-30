@@ -321,7 +321,7 @@ export default function Web3AuthComponent() {
     const pub = await getPublicKey(priv, true);
 
     alert('🏗️ Step 2: Building sender address...');
-    const fromScript = p2wpkh(pub, 'tb'); // Mainnet later
+    const fromScript = p2wpkh(pub, 'testnet'); // Mainnet later
     const fromAddrDerived = fromScript.address;
     if (fromAddrDerived !== fromAddress) {
       alert(`⚠️ Warning: Derived address ${fromAddrDerived} doesn't match input ${fromAddress}`);
@@ -389,7 +389,7 @@ export default function Web3AuthComponent() {
     alert('✅ Transaction sent successfully!\nTXID: ' + txid);
     return txid;
   } catch (err) {
-    alert('❌ Error during sendBTC:\n' + err.message);
+    alert('❌ Error during sendBTC:\n' + (err.message || err));
   }
 }
 
