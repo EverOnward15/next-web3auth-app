@@ -10,7 +10,7 @@ if (typeof window !== "undefined" && !window.Buffer) {
 }
 
 import { Transaction } from "@scure/btc-signer"; // Later MAINNET
-import * as btcSigner from '@scure/btc-signer';
+import * as btcSigner from "@scure/btc-signer";
 import { hex } from "@scure/base";
 import { getPublicKey, sign } from "@noble/secp256k1";
 // Then import everything else
@@ -332,13 +332,13 @@ export default function Web3AuthComponent() {
         );
       }
 
-
       alert("🏗️ Step 2: Building sender address...");
       // ✅ derive exactly as you do elsewhere for testnet
-      const { address: fromAddrDerived, output: fromScriptBuffer } = payments.p2wpkh({
-        pubkey: Buffer.from(pub),
-        network: networks.testnet,
-      });
+      const { address: fromAddrDerived, output: fromScriptBuffer } =
+        payments.p2wpkh({
+          pubkey: Buffer.from(pub),
+          network: networks.testnet,
+        });
       if (fromAddrDerived !== fromAddress) {
         alert(
           `⚠️ Warning: Derived address ${fromAddrDerived} doesn't match input ${fromAddress}`
@@ -387,10 +387,19 @@ export default function Web3AuthComponent() {
         });
       }
 
-      tx.addOutputAddress(toAddress, BigInt(valueSat));
+      const { output: toScript } = payments.p2wpkh({
+        address: toAddress,
+        network: networks.testnet,
+      });
+      tx.addOutput({ script: toScript, amount: BigInt(valueSat) });
+
       const change = total - valueSat - fee;
       if (change > 0) {
-        tx.addOutputAddress(fromAddress, BigInt(change));
+        const { output: changeScript } = payments.p2wpkh({
+          address: fromAddress,
+          network: networks.testnet,
+        });
+        tx.addOutput({ script: changeScript, amount: BigInt(change) });
         alert(`💰 Adding change back to sender: ${change} sats`);
       }
 
