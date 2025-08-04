@@ -98,7 +98,7 @@ async function deriveETHAddress(provider) {
   const hash = keccak256(pubKey); // keccak256 hash
   const ethAddress = "0x" + hash.slice(-40);
   alert("ethAddress new: " + ethAddress.toLocaleLowerCase());
-localStorage.setItem('ethAddress', ethAddress.toLowerCase());
+  localStorage.setItem("ethAddress", ethAddress.toLowerCase());
   return ethAddress.toLowerCase();
 }
 
@@ -137,8 +137,10 @@ export default function Web3AuthComponent() {
 
   async function getEthBalance(address) {
     try {
-      const balanceWei = await providerEth.getBalance(address);
-      return ethers.formatEther(balanceWei);
+      const res = await fetch(`/api/eth-balance?address=${address}`);
+      const data = await res.json();
+      if (res.ok) return data.balance;
+      else throw new Error(data.error);
     } catch (err) {
       alert("Error fetching ETH balance: " + err.message);
       return null;
@@ -237,7 +239,7 @@ export default function Web3AuthComponent() {
     const fetchETHWalletAndBalance = async () => {
       if (!provider) return;
       const wallet = await deriveETHAddress(provider);
-      alert("I'm here "+ wallet);
+      alert("I'm here " + wallet);
       if (!wallet) return;
 
       const ethBalance = await getEthBalance(wallet);
@@ -806,7 +808,9 @@ export default function Web3AuthComponent() {
       <button
         className={styles.button}
         // onClick={() => getEthBalance(localStorage.getItem('ethAddress'))}
-                onClick={() => getEthBalance("0xe0ee822620933b173b56b19321e3a57e60d07fd5")}
+        onClick={() =>
+          getEthBalance("0xe0ee822620933b173b56b19321e3a57e60d07fd5")
+        }
       >
         Check Eth Wallet balance
       </button>
