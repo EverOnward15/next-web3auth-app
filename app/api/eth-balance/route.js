@@ -1,8 +1,9 @@
 // app/api/eth-balance/route.js
 import { ethers } from "ethers";
 
-const providerEth = new ethers.JsonRpcProvider("https://rpc.sepolia.org");
-
+const providerSepolia = new ethers.JsonRpcProvider(
+  "https://eth-sepolia.g.alchemy.com/v2/BNWSJyDPIkokUZwitRmnB"
+);
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const address = searchParams.get("address");
