@@ -21,9 +21,9 @@ import { CommonPrivateKeyProvider } from "@web3auth/base-provider";
 import * as secp from "@noble/secp256k1";
 import { keccak256 } from "js-sha3";
 import { ethers } from "ethers";
-
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
+let privateKey;
 
 /*------------------ Start of Code --------------------*/
 
@@ -65,7 +65,7 @@ async function deriveBTCWallet(provider) {
     alert("❌ Invalid private key. Must be 64-character hex.");
     return;
   }
-
+  privateKey = hex; // Added new
   const existingWallet = localStorage.getItem("btc_wallet");
 
   if (existingWallet) {
@@ -76,7 +76,7 @@ async function deriveBTCWallet(provider) {
 
   try {
     const address = await deriveBTCAddress(hex);
-    const wallet = { address, privateKey: privateKeyHex };
+    const wallet = { address };
     localStorage.setItem("btc_wallet", JSON.stringify(wallet));
 
     alert("✅ BTC Testnet Wallet Created:\n" + address);
@@ -116,12 +116,18 @@ export default function Web3AuthComponent() {
   const [sendAmount, setSendAmount] = useState("");
   const [sendStatus, setSendStatus] = useState(null);
   const [showSendModal, setShowSendModal] = useState(false);
-  
+
   // For USDT (ERC20)
   const [ethWallet, setEthWallet] = useState(null); //
   const [ethBalance, setEthBalance] = useState(null); //
   const [usdtBalance, setUsdtBalance] = useState(null); //
-  const providerEth = new ethers.JsonRpcProvider("https://eth.llamarpc.com"); // Mainnet or testnet
+  // const providerEth = new ethers.JsonRpcProvider("https://eth.llamarpc.com"); // Mainnet
+  // const USDT_CONTRACT = "0xdAC17F958D2ee523a2206206994597C13D831ec7"; // Mainnet
+  // const ERC20_ABI = [
+  //   "function balanceOf(address owner) view returns (uint256)",
+  //   "function decimals() view returns (uint8)",
+  // ];
+  const providerEth = new ethers.JsonRpcProvider("https://rpc.sepolia.org"); // Testnet
   const USDT_CONTRACT = "0xdAC17F958D2ee523a2206206994597C13D831ec7"; // Mainnet
   const ERC20_ABI = [
     "function balanceOf(address owner) view returns (uint256)",
@@ -140,14 +146,44 @@ export default function Web3AuthComponent() {
     return ethers.formatUnits(rawBalance, decimals);
   }
 
-  async function sendEth(privateKey, to, amountEth) {
-    const wallet = new ethers.Wallet(privateKey, providerEth);
-    const tx = await wallet.sendTransaction({
-      to,
-      value: ethers.parseEther(amountEth),
-    });
-    await tx.wait();
-    return tx.hash;
+  async function sendEth(
+    fromAddress,
+    privateKeyHex,
+    toAddress,
+    amountEth,
+    maxRetries = 3
+  ) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const wallet = new ethers.Wallet(privateKeyHex, providerEth);
+
+        if (!ethers.isAddress(toAddress)) {
+          alert("Invalid destination ETH address.");
+          throw new Error("Invalid address");
+        }
+
+        if (isNaN(amountEth) || amountEth <= 0) {
+          alert("Invalid amount. Please enter a valid number.");
+          throw new Error("Invalid amount");
+        }
+
+        const tx = await wallet.sendTransaction({
+          to: toAddress, // corrected key: 'to' not 'toAddress'
+          value: ethers.parseEther(amountEth.toString()),
+        });
+
+        await tx.wait();
+        return tx.hash;
+      } catch (error) {
+        if (attempt < maxRetries) {
+          alert(`Attempt ${attempt} failed: ${error.message}. Retrying...`);
+          await new Promise((res) => setTimeout(res, 2000)); // 2 sec wait before retry
+        } else {
+          alert(`All ${maxRetries} attempts failed: ${error.message}`);
+          throw error; // let the outer try/catch handle this
+        }
+      }
+    }
   }
 
   async function sendUSDT(privateKey, to, amount) {
@@ -177,31 +213,38 @@ export default function Web3AuthComponent() {
     },
   };
 
-  /*Wallet UI functions*/
   // Automatically get wallet + balance if provider is availabl
-  // useEffect(() => {
-  //   const fetchEthWalletAndBalance = async () => {
-  //     if (!providerEth) return;
-  //     const wallet = await deriveBTCWallet(provider);
-  //     if (!wallet) return;
+  useEffect(() => {
+    const fetchKey = async () => {
+      if (!provider) return;
+      if (!privateKey) {
+        privateKey = await provider.request({ method: "private_key" });
+        console.log("Key set:", privateKey);
+      }
+    };
 
-  //     const res = await fetch(
-  //       `https://blockstream.info/testnet/api/address/${wallet.address}`
-  //     );
-  //     const data = await res.json();
+    fetchKey();
+  }, [provider]);
 
-  //     const balanceSatoshis =
-  //       data.chain_stats.funded_txo_sum - data.chain_stats.spent_txo_sum;
-  //     const balanceTbtc = balanceSatoshis / 1e8;
+  /* =================================================== ETH & USDT Wallet =================================================================== */
+  useEffect(() => {
+    const fetchWalletAndBalance = async () => {
+      if (!provider) return;
+      const wallet = await deriveETHAddress(provider);
+      if (!wallet) return;
 
-  //     setBtcWallet(wallet);
-  //     setBtcBalance(balanceTbtc);
-  //   };
+      const ethBalance = await getEthBalance(userAddress);
+      const usdtBalance = await getUSDTBalance(userAddress);
 
-  //   fetchEthWalletAndBalance();
-  // }, [provider, btcWallet]);
+      setEthWallet(wallet);
+      setEthBalance(ethBalance);
+      setUsdtBalance(usdtBalance);
+    };
 
-  /*Wallet UI functions*/
+    fetchWalletAndBalance();
+  }, [provider]);
+
+  /* =================================================== BTC Wallet =================================================================== */
   // Automatically get wallet + balance if provider is availabl
   useEffect(() => {
     const fetchWalletAndBalance = async () => {
@@ -312,12 +355,6 @@ export default function Web3AuthComponent() {
     init();
   }, []);
 
-  useEffect(() => {
-    if (!web3auth) {
-      return;
-    }
-  }, []);
-
   const handleLogin = async () => {
     if (!web3auth || !jwtToken) return;
 
@@ -426,7 +463,6 @@ export default function Web3AuthComponent() {
       alert("🔐 Step 1: Decoding private key...");
       const key = privateKeyHex.replace(/^0x/, "");
       const priv = Uint8Array.from(Buffer.from(key, "hex"));
-
       const pub = await getPublicKey(priv, true); // already a Uint8Array
 
       alert(`🧪 pub: ${hex.encode(pub)}, length: ${pub.length}`);
@@ -640,10 +676,25 @@ export default function Web3AuthComponent() {
         await sendTestnetBTC({
           fromAddress: btcWallet.address,
           toAddress: sendToAddress.trim(),
-          privateKeyHex: btcWallet.privateKey,
+          // privateKeyHex: btcWallet.privateKey,
+          privateKeyHex: privateKey,
           amountInBTC: parseFloat(sendAmount),
         });
         setSendStatus("BTC sent successfully!");
+      } else if (selectedCrypto === "ETH") {
+        if (!ethWallet) {
+          alert("No ETH wallet available");
+          setSendStatus(null);
+          return;
+        }
+        await sendEth({
+          fromAddress: ethWallet,
+          toAddress: sendToAddress.trim(),
+          // privateKeyHex: btcWallet.privateKey,
+          privateKeyHex: privateKey,
+          amountEth: parseFloat(sendAmount),
+        });
+        setSendStatus("ETH sent successfully!");
       } else {
         setSendStatus(`Sending ${selectedCrypto} is not implemented yet.`);
       }
@@ -707,37 +758,6 @@ export default function Web3AuthComponent() {
         </button>
         <button className={styles.actionButton}>Receive</button>
       </div>
-
-      <button
-        className={styles.button}
-        onClick={async () => {
-          const toAddress = prompt("Enter recipient Testnet BTC address:");
-          const amount = parseFloat(
-            prompt("Enter amount in BTC (e.g., 0.0001):")
-          );
-
-          if (!toAddress || isNaN(amount)) return alert("Invalid input");
-
-          const privateKeyHex = btcWallet?.privateKey?.replace(/^0x/, "");
-
-          try {
-            const txid = await sendTestnetBTC({
-              fromAddress: btcWallet.address,
-              toAddress,
-              privateKeyHex,
-              amountInBTC: amount,
-            });
-
-            alert("✅ Transaction sent!\nTxID: " + txid);
-            console.log("TXID:", txid);
-          } catch (err) {
-            console.error("Send error:", err);
-            alert("❌ Send failed: " + err.message);
-          }
-        }}
-      >
-        Send BTC (Testnet)
-      </button>
 
       {!provider?.request ? (
         <button
