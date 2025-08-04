@@ -245,8 +245,6 @@ export default function Web3AuthComponent() {
       alert("I'm here " + wallet);
       if (!wallet) return;
       setEthWallet(wallet);
-      const ethBalance = await getEthBalance(wallet);
-      setEthBalance(ethBalance);
       const usdtBalance = await getUSDTBalance(wallet);
       setUsdtBalance(usdtBalance);
     };
