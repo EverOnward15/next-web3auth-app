@@ -15,6 +15,7 @@
     "@scure/btc-signer": "^1.8.1",
     "@tkey/core": "^16.0.1-alpha.0",
     "@tkey/web-storage": "^16.0.1-alpha.0",
+    "@toruslabs/config": "^3.1.0",
     "@web3auth/base": "^9.7.0",
     "@web3auth/base-provider": "^9.7.0",
     "@web3auth/core": "^4.6.0",

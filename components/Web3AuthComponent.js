@@ -19,7 +19,8 @@ import { CHAIN_NAMESPACES, WEB3AUTH_NETWORK } from "@web3auth/base";
 import styles from "../components/Web3AuthComponent.module.css";
 import { CommonPrivateKeyProvider } from "@web3auth/base-provider";
 import * as secp from "@noble/secp256k1";
-import axios from "axios";
+import { keccak256 } from "js-sha3";
+import { ethers } from "ethers";
 
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
@@ -86,6 +87,20 @@ async function deriveBTCWallet(provider) {
   }
 }
 
+async function deriveETHAddress(provider) {
+  const privateKeyHex = await provider.request({ method: "private_key" });
+  const privateKey = privateKeyHex.startsWith("0x")
+    ? privateKeyHex.slice(2)
+    : privateKeyHex;
+
+  alert("Privatekeyhexnew: " + privateKey);
+  const pubKey = getPublicKey(privateKey, false).slice(1); // uncompressed, drop 0x04
+  const hash = keccak256(pubKey); // keccak256 hash
+  const ethAddress = "0x" + hash.slice(-40);
+  alert("ethAddress new: " + ethAddress.toLocaleLowerCase());
+  return ethAddress.toLowerCase();
+}
+
 export default function Web3AuthComponent() {
   const [web3auth, setWeb3auth] = useState(null);
   const [provider, setProvider] = useState(null);
@@ -101,6 +116,47 @@ export default function Web3AuthComponent() {
   const [sendAmount, setSendAmount] = useState("");
   const [sendStatus, setSendStatus] = useState(null);
   const [showSendModal, setShowSendModal] = useState(false);
+  const providerEth = new ethers.JsonRpcProvider("https://eth.llamarpc.com"); // Mainnet or testnet
+  // For USDT (ERC20)
+  const USDT_CONTRACT = "0xdAC17F958D2ee523a2206206994597C13D831ec7"; // Mainnet
+  const ERC20_ABI = [
+    "function balanceOf(address owner) view returns (uint256)",
+    "function decimals() view returns (uint8)",
+  ];
+
+  async function getEthBalance(address) {
+    const balanceWei = await providerEth.getBalance(address);
+    return ethers.formatEther(balanceWei); // ETH
+  }
+
+  async function getUSDTBalance(address) {
+    const contract = new ethers.Contract(USDT_CONTRACT, ERC20_ABI, provider);
+    const rawBalance = await contract.balanceOf(address);
+    const decimals = await contract.decimals();
+    return ethers.formatUnits(rawBalance, decimals);
+  }
+
+  async function sendEth(privateKey, to, amountEth) {
+    const wallet = new ethers.Wallet(privateKey, providerEth);
+    const tx = await wallet.sendTransaction({
+      to,
+      value: ethers.parseEther(amountEth),
+    });
+    await tx.wait();
+    return tx.hash;
+  }
+
+  async function sendUSDT(privateKey, to, amount) {
+    const wallet = new ethers.Wallet(privateKey, providerEth);
+    const contract = new ethers.Contract(USDT_CONTRACT, ERC20_ABI, wallet);
+
+    const decimals = await contract.decimals();
+    const value = ethers.parseUnits(amount, decimals);
+    const tx = await contract.transfer(to, value);
+    await tx.wait();
+    return tx.hash;
+  }
+
   // You can later plug in USDT or ETH balances like this:
   const balances = {
     BTC: {
@@ -108,14 +164,38 @@ export default function Web3AuthComponent() {
       balance: btcBalance !== null ? `${btcBalance} BTC` : "Loading...",
     },
     USDT: {
-      address: "0xUSDTExampleAddress",
-      balance: "12.50 USDT",
+      address: ethAddress || "Unavailable",
+      balance: ethBalance !== null ? `${ethBalance} ETH` : "Loading...",
     },
     ETH: {
-      address: "0xETHExampleAddress",
-      balance: "0.034 ETH",
+      address: ethAddress || "Unavailable",
+      balance: ethBalance !== null ? `${ethBalance} ETH` : "Loading...",
     },
   };
+
+  /*Wallet UI functions*/
+  // Automatically get wallet + balance if provider is availabl
+  // useEffect(() => {
+  //   const fetchEthWalletAndBalance = async () => {
+  //     if (!providerEth) return;
+  //     const wallet = await deriveBTCWallet(provider);
+  //     if (!wallet) return;
+
+  //     const res = await fetch(
+  //       `https://blockstream.info/testnet/api/address/${wallet.address}`
+  //     );
+  //     const data = await res.json();
+
+  //     const balanceSatoshis =
+  //       data.chain_stats.funded_txo_sum - data.chain_stats.spent_txo_sum;
+  //     const balanceTbtc = balanceSatoshis / 1e8;
+
+  //     setBtcWallet(wallet);
+  //     setBtcBalance(balanceTbtc);
+  //   };
+
+  //   fetchEthWalletAndBalance();
+  // }, [provider, btcWallet]);
 
   /*Wallet UI functions*/
   // Automatically get wallet + balance if provider is availabl
@@ -150,23 +230,43 @@ export default function Web3AuthComponent() {
       if (window.Telegram?.WebApp) {
         const tg = window.Telegram.WebApp;
         tg.ready();
+
         const userData = tg.initDataUnsafe?.user;
-        if (userData) {
-          setTelegramUser(userData);
-          fetch("/api/token", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(userData),
-          })
-            .then((res) => res.json())
-            .then((data) => {
-              setJwtToken(data.token);
-              alert(data.token);
-              alert("JWT data received");
-              console.log("Received JWT Token:", data.token);
-            })
-            .catch((err) => console.error("JWT error:", err));
+
+        // Only use hardcoded user in development
+        const isDev = process.env.NODE_ENV === "development";
+
+        const hardcodedUser = {
+          id: 6843497770,
+          first_name: "Prathamesh",
+          last_name: "B",
+          language_code: "en",
+          allows_write_to_pm: true,
+          photo_url:
+            "https://t.me/i/userpic/320/dc1gn5C51K2CGmfaSE0UFFwsMM1V3-G0B3Z8KTwtLlRauXiRcblZsYg1M7j3NP8m.svg",
+        };
+
+        const userToUse = userData || (isDev ? hardcodedUser : null);
+
+        if (!userToUse) {
+          console.warn("No Telegram user data available.");
+          return;
         }
+
+        setTelegramUser(userToUse);
+
+        fetch("/api/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(userToUse),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            setJwtToken(data.token);
+            alert(data.token); // optional, remove in prod
+            console.log("Received JWT Token:", data.token);
+          })
+          .catch((err) => console.error("JWT error:", err));
       }
     };
     document.body.appendChild(script);
@@ -367,7 +467,12 @@ export default function Web3AuthComponent() {
         return;
       }
 
-      const fee = 1000;
+      // const fee = 1000;
+      const feeRate = await (
+        await fetch("https://blockstream.info/testnet/api/fee-estimates")
+      ).json();
+      const fee = estimatedVBytes * feeRate["1"]; // 1-block target
+
       let total = 0,
         selected = [];
       for (const u of utxos) {
@@ -546,7 +651,7 @@ export default function Web3AuthComponent() {
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>MVP Wallet</h1>
-      <h2 className={styles.subtitle}>Tech: Web3Auth Core + Next.js</h2>
+      <h2 className={styles.subtitle}></h2>
 
       {telegramUser && (
         <div className={styles.telegramContainer}>
@@ -660,6 +765,12 @@ export default function Web3AuthComponent() {
         onClick={() => deriveBTCWallet(provider)}
       >
         Create BTC Wallet Test
+      </button>
+      <button
+        className={styles.button}
+        onClick={() => deriveETHAddress(provider)}
+      >
+        Create Eth Wallet Test
       </button>
 
       {user && (

@@ -81,16 +81,16 @@ const nextConfig = {
   },
 
   // Enable ESM externals for better compatibility
-  experimental: {
-    esmExternals: 'loose',
-    serverComponentsExternalPackages: [
-      'bitcoinjs-lib',
-      '@noble/secp256k1',
-      '@noble/hashes',
-      'buffer',
-      'crypto-browserify'
-    ],
-  },
+  // experimental: {
+  //   esmExternals: 'loose',
+  //   serverComponentsExternalPackages: [
+  //     'bitcoinjs-lib',
+  //     '@noble/secp256k1',
+  //     '@noble/hashes',
+  //     'buffer',
+  //     'crypto-browserify'
+  //   ],
+  // },
 
   // Optional: Configure transpilePackages if needed
   transpilePackages: [
