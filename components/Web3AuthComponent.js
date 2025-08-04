@@ -244,12 +244,10 @@ export default function Web3AuthComponent() {
       const wallet = await deriveETHAddress(provider);
       alert("I'm here " + wallet);
       if (!wallet) return;
-
-      const ethBalance = await getEthBalance(wallet);
-      const usdtBalance = await getUSDTBalance(wallet);
-
       setEthWallet(wallet);
+      const ethBalance = await getEthBalance(wallet);
       setEthBalance(ethBalance);
+      const usdtBalance = await getUSDTBalance(wallet);
       setUsdtBalance(usdtBalance);
     };
 
