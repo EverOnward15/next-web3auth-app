@@ -1,9 +1,12 @@
 // app/api/eth-balance/route.js
 import { ethers } from "ethers";
 
-const providerSepolia = new ethers.JsonRpcProvider(
+const providerEth = new ethers.JsonRpcProvider(
   "https://eth-sepolia.g.alchemy.com/v2/BNWSJyDPIkokUZwitRmnB"
 );
+// const providerEth = new ethers.JsonRpcProvider(
+//   "https://eth-mainnet.g.alchemy.com/v2/BNWSJyDPIkokUZwitRmnB"
+// );
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const address = searchParams.get("address");
