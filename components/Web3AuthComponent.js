@@ -116,8 +116,12 @@ export default function Web3AuthComponent() {
   const [sendAmount, setSendAmount] = useState("");
   const [sendStatus, setSendStatus] = useState(null);
   const [showSendModal, setShowSendModal] = useState(false);
-  const providerEth = new ethers.JsonRpcProvider("https://eth.llamarpc.com"); // Mainnet or testnet
+  
   // For USDT (ERC20)
+  const [ethWallet, setEthWallet] = useState(null); //
+  const [ethBalance, setEthBalance] = useState(null); //
+  const [usdtBalance, setUsdtBalance] = useState(null); //
+  const providerEth = new ethers.JsonRpcProvider("https://eth.llamarpc.com"); // Mainnet or testnet
   const USDT_CONTRACT = "0xdAC17F958D2ee523a2206206994597C13D831ec7"; // Mainnet
   const ERC20_ABI = [
     "function balanceOf(address owner) view returns (uint256)",
@@ -164,12 +168,12 @@ export default function Web3AuthComponent() {
       balance: btcBalance !== null ? `${btcBalance} BTC` : "Loading...",
     },
     USDT: {
-      address: ethAddress || "Unavailable",
+      address: ethWallet || "Unavailable",
       balance: ethBalance !== null ? `${ethBalance} ETH` : "Loading...",
     },
     ETH: {
-      address: ethAddress || "Unavailable",
-      balance: ethBalance !== null ? `${ethBalance} ETH` : "Loading...",
+      address: ethWallet || "Unavailable",
+      balance: usdtBalance !== null ? `${usdtBalance} ETH` : "Loading...",
     },
   };
 
