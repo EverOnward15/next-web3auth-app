@@ -805,7 +805,7 @@ export default function Web3AuthComponent() {
       </button>
       <button
         className={styles.button}
-        onClick={() => getEthBalance(get)}
+        onClick={() => getEthBalance(localStorage.getItem('ethAddress'))}
       >
         Check Eth Wallet balance
       </button>
