@@ -98,6 +98,7 @@ async function deriveETHAddress(provider) {
   const hash = keccak256(pubKey); // keccak256 hash
   const ethAddress = "0x" + hash.slice(-40);
   alert("ethAddress new: " + ethAddress.toLocaleLowerCase());
+localStorage.setItem('ethAddress', ethAddress.toLowerCase());
   return ethAddress.toLowerCase();
 }
 
@@ -233,20 +234,21 @@ export default function Web3AuthComponent() {
 
   /* =================================================== ETH & USDT Wallet =================================================================== */
   useEffect(() => {
-    const fetchWalletAndBalance = async () => {
+    const fetchETHWalletAndBalance = async () => {
       if (!provider) return;
       const wallet = await deriveETHAddress(provider);
+      alert("I'm here "+ wallet);
       if (!wallet) return;
 
-      const ethBalance = await getEthBalance(userAddress);
-      const usdtBalance = await getUSDTBalance(userAddress);
+      const ethBalance = await getEthBalance(wallet);
+      const usdtBalance = await getUSDTBalance(wallet);
 
       setEthWallet(wallet);
       setEthBalance(ethBalance);
       setUsdtBalance(usdtBalance);
     };
 
-    fetchWalletAndBalance();
+    fetchETHWalletAndBalance();
   }, [provider]);
 
   /* =================================================== BTC Wallet =================================================================== */
@@ -803,7 +805,7 @@ export default function Web3AuthComponent() {
       </button>
       <button
         className={styles.button}
-        onClick={() => getEthBalance(ethWallet)}
+        onClick={() => getEthBalance(get)}
       >
         Check Eth Wallet balance
       </button>
