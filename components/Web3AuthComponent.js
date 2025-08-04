@@ -141,7 +141,7 @@ export default function Web3AuthComponent() {
       const data = await res.json();
       if (res.ok) {
         alert("Balance ETH: " + data.balance);
-        setEthBalance(data.Balance);
+        setEthBalance(data.balance);
         return;
       } else throw new Error(data.error);
     } catch (err) {
