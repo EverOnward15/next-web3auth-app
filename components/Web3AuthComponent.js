@@ -135,8 +135,13 @@ export default function Web3AuthComponent() {
   ];
 
   async function getEthBalance(address) {
-    const balanceWei = await providerEth.getBalance(address);
-    return ethers.formatEther(balanceWei); // ETH
+    try {
+      const balanceWei = await providerEth.getBalance(address);
+      return ethers.formatEther(balanceWei);
+    } catch (err) {
+      alert("Error fetching ETH balance: " + err.message);
+      return null;
+    }
   }
 
   async function getUSDTBalance(address) {
@@ -795,6 +800,12 @@ export default function Web3AuthComponent() {
         onClick={() => deriveETHAddress(provider)}
       >
         Create Eth Wallet Test
+      </button>
+      <button
+        className={styles.button}
+        onClick={() => getEthBalance(ethWallet)}
+      >
+        Check Eth Wallet balance
       </button>
 
       {user && (
