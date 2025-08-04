@@ -139,8 +139,11 @@ export default function Web3AuthComponent() {
     try {
       const res = await fetch(`/api/eth-balance?address=${address}`);
       const data = await res.json();
-      if (res.ok) return data.balance;
-      else throw new Error(data.error);
+      if (res.ok) {
+        alert("Balance ETH: " + data.balance);
+        setEthBalance(data.Balance);
+        return;
+      } else throw new Error(data.error);
     } catch (err) {
       alert("Error fetching ETH balance: " + err.message);
       return null;
@@ -213,11 +216,11 @@ export default function Web3AuthComponent() {
     },
     USDT: {
       address: ethWallet || "Unavailable",
-      balance: ethBalance !== null ? `${ethBalance} ETH` : "Loading...",
+      balance: usdtBalance !== null ? `${usdtBalance} ETH` : "Loading...",
     },
     ETH: {
       address: ethWallet || "Unavailable",
-      balance: usdtBalance !== null ? `${usdtBalance} ETH` : "Loading...",
+      balance: ethBalance !== null ? `${ethBalance} ETH` : "Loading...",
     },
   };
 
