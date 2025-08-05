@@ -24,6 +24,7 @@ import { ethers } from "ethers";
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
 let privateKey;
+let privateKeyHexEth;
 
 /*------------------ Start of Code --------------------*/
 
@@ -92,6 +93,10 @@ async function deriveETHAddress(provider) {
   const privateKey = privateKeyHex.startsWith("0x")
     ? privateKeyHex.slice(2)
     : privateKeyHex;
+
+    if (!privateKeyHex.startsWith("0x")) {
+    privateKeyHexEth = "0x" + privateKeyHex;
+}
 
   alert("Privatekeyhexnew: " + privateKey);
   const pubKey = getPublicKey(privateKey, false).slice(1); // uncompressed, drop 0x04
@@ -699,7 +704,7 @@ export default function Web3AuthComponent() {
           fromAddress: ethWallet,
           toAddress: sendToAddress.trim(),
           // privateKeyHex: btcWallet.privateKey,
-          privateKeyHex: privateKey,
+          privateKeyHex: privateKeyHexEth,
           amountEth: parseFloat(sendAmount),
         });
         setSendStatus("ETH sent successfully!");
