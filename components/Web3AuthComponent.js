@@ -24,6 +24,8 @@ import { ethers } from "ethers";
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
 let privateKey;
+import { providerEth } from "@/lib/eth-provider";
+
 
 /*------------------ Start of Code --------------------*/
 
@@ -128,7 +130,6 @@ export default function Web3AuthComponent() {
   //   "function balanceOf(address owner) view returns (uint256)",
   //   "function decimals() view returns (uint8)",
   // ];
-  const providerEth = new ethers.JsonRpcProvider("https://rpc.sepolia.org"); // Testnet
   const USDT_CONTRACT = "0xdAC17F958D2ee523a2206206994597C13D831ec7"; // Mainnet
   const ERC20_ABI = [
     "function balanceOf(address owner) view returns (uint256)",
@@ -156,6 +157,8 @@ export default function Web3AuthComponent() {
     const decimals = await contract.decimals();
     return ethers.formatUnits(rawBalance, decimals);
   }
+
+  
   async function sendEth({ fromAddress, privateKeyHex, toAddress, amountEth }) {
     const maxRetries = 3;
 
