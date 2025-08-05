@@ -156,17 +156,21 @@ export default function Web3AuthComponent() {
     const decimals = await contract.decimals();
     return ethers.formatUnits(rawBalance, decimals);
   }
+  async function sendEth({ fromAddress, privateKeyHex, toAddress, amountEth }) {
+    const maxRetries = 3;
 
-  async function sendEth(
-    fromAddress,
-    privateKeyHex,
-    toAddress,
-    amountEth,
-  ) {
-    let maxRetries = 3;
+    // ✅ Normalize and validate the private key
+    let pk = privateKeyHex.trim();
+    if (!pk.startsWith("0x")) pk = "0x" + pk;
+
+    if (!/^0x[0-9a-fA-F]{64}$/.test(pk)) {
+      alert("❌ Invalid private key format");
+      throw new Error("Invalid private key format");
+    }
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const wallet = new ethers.Wallet(privateKeyHex, providerEth);
+        const wallet = new ethers.Wallet(pk, providerEth);
 
         if (!ethers.isAddress(toAddress)) {
           alert("Invalid destination ETH address.");
@@ -179,7 +183,7 @@ export default function Web3AuthComponent() {
         }
 
         const tx = await wallet.sendTransaction({
-          to: toAddress, // corrected key: 'to' not 'toAddress'
+          to: toAddress,
           value: ethers.parseEther(amountEth.toString()),
         });
 
@@ -188,10 +192,10 @@ export default function Web3AuthComponent() {
       } catch (error) {
         if (attempt < maxRetries) {
           alert(`Attempt ${attempt} failed: ${error.message}. Retrying...`);
-          await new Promise((res) => setTimeout(res, 2000)); // 2 sec wait before retry
+          await new Promise((res) => setTimeout(res, 2000));
         } else {
           alert(`All ${maxRetries} attempts failed: ${error.message}`);
-          throw error; // let the outer try/catch handle this
+          throw error;
         }
       }
     }
@@ -806,7 +810,7 @@ export default function Web3AuthComponent() {
       </button>
       <button
         className={styles.button}
-        onClick={() => getEthBalance(localStorage.getItem('ethAddress'))}
+        onClick={() => getEthBalance(localStorage.getItem("ethAddress"))}
         // onClick={() =>
         //   getEthBalance("0xe0ee822620933b173b56b19321e3a57e60d07fd5")
         // }
