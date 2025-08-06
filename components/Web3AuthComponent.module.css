@@ -534,10 +534,7 @@
   color: #fff;
   font-size: 0.75rem;
   cursor: pointer;
-}
-
-.menuItem:hover {
-  color: #e9d985;
+    color: var(--primary);
 }
 
 .menuIcon {

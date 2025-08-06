@@ -24,7 +24,7 @@ import { ethers } from "ethers";
 const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
 let privateKey;
-import { providerEth } from "@/lib/eth-provider";
+import { providerEth } from "../lib/eth-provider";
 
 /*=============================================== Start Async functions ========================================================================*/
 
@@ -1015,19 +1015,47 @@ export default function Web3AuthComponent() {
       {/* BOTTOM MENU STARTS HERE */}
       <div className={styles.bottomMenu}>
         <button className={styles.menuItem}>
-          <span className={styles.menuIcon}>🏦</span>
+          <span className={styles.menuIcon}>
+            {" "}
+            <img
+              src="/assets/wallet.svg"
+              className={styles.transactIcon}
+              alt="Wallet icon"
+            />{" "}
+          </span>
           <span className={styles.menuLabel}>Wallet</span>
         </button>
         <button className={styles.menuItem}>
-          <span className={styles.menuIcon}>📤</span>
+          <span className={styles.menuIcon}>
+            {" "}
+            <img
+              src="/assets/send2.svg"
+              className={styles.transactIcon}
+              alt="Send icon"
+            />{" "}
+          </span>
           <span className={styles.menuLabel}>Send</span>
         </button>
         <button className={styles.menuItem}>
-          <span className={styles.menuIcon}>📜</span>
+          <span className={styles.menuIcon}>
+            {" "}
+            <img
+              src="/assets/history.svg"
+              className={styles.transactIcon}
+              alt="History icon"
+            />{" "}
+          </span>
           <span className={styles.menuLabel}>History</span>
         </button>
         <button className={styles.menuItem}>
-          <span className={styles.menuIcon}>⚙️</span>
+          <span className={styles.menuIcon}>
+            {" "}
+            <img
+              src="/assets/settings.svg"
+              className={styles.transactIcon}
+              alt="Settings icon"
+            />{" "}
+          </span>
           <span className={styles.menuLabel}>Settings</span>
         </button>
       </div>
