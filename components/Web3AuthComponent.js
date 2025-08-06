@@ -868,9 +868,11 @@ export default function Web3AuthComponent() {
                 <div className={styles.txDetails}>
                   <span className={styles.txAmount}>
                     {tx.amount > 0 ? "+" : ""}
-                    {tx.amount} BTC
+                    {tx.amount}
                   </span>
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                   <span
+                  
                     className={`${styles.txStatus} ${
                       tx.status === "Confirmed"
                         ? styles.txConfirmed
