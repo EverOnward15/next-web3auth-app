@@ -777,191 +777,242 @@ export default function Web3AuthComponent() {
   ];
 
   return (
-    <div className={styles.container}>
-      <div className={styles.networkStatus}>
-        Network:{" "}
-        <span className={networkOnline ? styles.online : styles.offline}>
-          {networkOnline ? "Online" : "Offline"}
-        </span>
-      </div>
-      <br></br>
-      <h1 className={styles.title}>BTC ETH Wallet</h1>
-      <h2 className={styles.subtitle}></h2>
+    <>
+      <div className={styles.container}>
+        <div className={styles.networkStatus}>
+          Network:{" "}
+          <span className={networkOnline ? styles.online : styles.offline}>
+            {networkOnline ? "Online" : "Offline"}
+          </span>
+        </div>
+        <br></br>
+        <h1 className={styles.title}>BTC ETH Wallet</h1>
+        <h2 className={styles.subtitle}></h2>
 
-      {telegramUser && (
-        <>
-          {telegramUser.photo_url && (
+        {telegramUser && (
+          <>
+            {telegramUser.photo_url && (
+              <img
+                src={telegramUser.photo_url}
+                alt={`${telegramUser.first_name}'s profile`}
+                className={styles.avatarTopRight}
+                onClick={() => alert("Account menu coming soon")}
+              />
+            )}
+
+            <div className={styles.cryptoToggle}>
+              {["BTC", "USDT", "ETH"].map((crypto) => (
+                <button
+                  key={crypto}
+                  className={`${styles.cryptoButton} ${
+                    selectedCrypto === crypto ? styles.selectedCrypto : ""
+                  }`}
+                  onClick={() => setSelectedCrypto(crypto)}
+                >
+                  {crypto}
+                </button>
+              ))}
+            </div>
+
+            <div className={styles.telegramContainer}>
+              <div className={styles.walletInfo}>
+                <p className={styles.walletLabel}>
+                  <strong>{selectedCrypto} Address:</strong>
+                </p>
+                <p className={styles.walletValue}>
+                  {balances[selectedCrypto].address}
+                </p>
+
+                <p className={styles.balanceLabel}>Balance</p>
+                <p className={styles.balanceAmount}>
+                  {balances[selectedCrypto].balance}
+                </p>
+              </div>
+            </div>
+          </>
+        )}
+
+        <div className={styles.actionButtons}>
+          <button className={styles.actionButton}>
             <img
-              src={telegramUser.photo_url}
-              alt={`${telegramUser.first_name}'s profile`}
-              className={styles.avatarTopRight}
-              onClick={() => alert("Account menu coming soon")}
-            />
-          )}
+              src="/assets/add.svg"
+              className={styles.transactIcon}
+              alt="Buy icon"
+            />{" "}
+            Buy
+          </button>
+          <button onClick={openSendModal} className={styles.actionButton}>
+            <img
+              src="/assets/send.svg"
+              className={styles.transactIcon}
+              alt="Send icon"
+            />{" "}
+            Send
+          </button>
+          <button className={styles.actionButton}>
+            {" "}
+            <img
+              src="/assets/share.svg"
+              className={styles.transactIcon}
+              alt="Share icon"
+            />{" "}
+            Share
+          </button>
+        </div>
 
-          <div className={styles.cryptoToggle}>
-            {["BTC", "USDT", "ETH"].map((crypto) => (
-              <button
-                key={crypto}
-                className={`${styles.cryptoButton} ${
-                  selectedCrypto === crypto ? styles.selectedCrypto : ""
-                }`}
-                onClick={() => setSelectedCrypto(crypto)}
-              >
-                {crypto}
-              </button>
+        <div className={styles.transactionsSection}>
+          <h3>Recent Transactions</h3>
+          <ul className={styles.txList}>
+            {recentTransactions.map((tx) => (
+              <li key={tx.txid} className={styles.txItem}>
+                <div className={styles.txDetails}>
+                  <span className={styles.txAmount}>
+                    {tx.amount > 0 ? "+" : ""}
+                    {tx.amount} BTC
+                  </span>
+                  <span
+                    className={`${styles.txStatus} ${
+                      tx.status === "Confirmed"
+                        ? styles.txConfirmed
+                        : styles.txPending
+                    }`}
+                  >
+                    {tx.status}
+                  </span>
+                </div>
+                <div className={styles.txMeta}>
+                  <span className={styles.txTime}>{tx.timestamp}</span>
+                  <span className={styles.txId}>{tx.txid.slice(0, 10)}...</span>
+                </div>
+              </li>
             ))}
+          </ul>
+        </div>
+
+        {!provider?.request ? (
+          <div className={styles.loginDiv}>
+            <button
+              className={styles.button}
+              onClick={handleLogin}
+              disabled={isLoggingIn}
+            >
+              {jwtToken
+                ? "Login via Telegram (JWT)"
+                : "Waiting for Telegram Login..."}
+            </button>
           </div>
+        ) : (
+          <div className={styles.loginDiv}>
+            <button className={styles.button} onClick={handleGetAccounts}>
+              Get Address & Balance
+            </button>
+          </div>
+        )}
 
-          <div className={styles.telegramContainer}>
-            <div className={styles.walletInfo}>
-              <p className={styles.walletLabel}>
-                <strong>{selectedCrypto} Address:</strong>
-              </p>
-              <p className={styles.walletValue}>
-                {balances[selectedCrypto].address}
-              </p>
+        <button className={styles.button} onClick={checkPrivateKeyAndAddress}>
+          Check BTC Private Key
+        </button>
+        <button className={styles.button} onClick={checkUserLogin}>
+          Check Web3Auth Login
+        </button>
+        <button className={styles.button} onClick={handleLogout}>
+          Logout from Web3 Auth
+        </button>
+        <button
+          className={styles.button}
+          onClick={() => deriveBTCWallet(provider)}
+        >
+          Create BTC Wallet Test
+        </button>
+        <button
+          className={styles.button}
+          onClick={() => deriveETHAddress(provider)}
+        >
+          Create Eth Wallet Test
+        </button>
+        <button
+          className={styles.button}
+          onClick={() => getEthBalance(localStorage.getItem("ethAddress"))}
+          // onClick={() =>
+          //   getEthBalance("0xe0ee822620933b173b56b19321e3a57e60d07fd5")
+          // }
+        >
+          Check Eth Wallet balance
+        </button>
 
-              <p className={styles.balanceLabel}>Balance</p>
-              <p className={styles.balanceAmount}>
-                {balances[selectedCrypto].balance}
-              </p>
+        {user && (
+          <>
+            <h3 className={styles.sectionTitle}>Web3Auth User Info:</h3>
+            <pre className={styles.debugBox}>
+              {JSON.stringify(user, null, 2)}
+            </pre>
+          </>
+        )}
+
+        {telegramUser && (
+          <>
+            <h3 className={styles.sectionTitle}>Telegram User Info:</h3>
+            <pre className={styles.debugBox}>
+              {JSON.stringify(telegramUser, null, 2)}
+            </pre>
+          </>
+        )}
+
+        {jwtToken && (
+          <>
+            <h3 className={styles.sectionTitle}>JWT Token:</h3>
+            <pre className={styles.debugBox}>{jwtToken}</pre>
+          </>
+        )}
+        {/* Send button opens the modal */}
+        {showSendModal && (
+          <div className={styles.modalOverlay}>
+            <div className={styles.modal}>
+              <h2>Send {selectedCrypto}</h2>
+              <label>
+                Recipient Address:
+                <br></br>
+                <input
+                  type="text"
+                  value={sendToAddress}
+                  onChange={(e) => setSendToAddress(e.target.value)}
+                  placeholder="Enter address"
+                  className={styles.input}
+                />
+              </label>
+              <label>
+                Amount:
+                <br></br>
+                <input
+                  type="number"
+                  value={sendAmount}
+                  onChange={(e) => setSendAmount(e.target.value)}
+                  placeholder="Enter amount"
+                  min="0"
+                  step="any"
+                  className={styles.input}
+                />
+              </label>
+              <div className={styles.buttonRow}>
+                <button
+                  onClick={handleSendCrypto}
+                  className={styles.sendButton}
+                >
+                  Send
+                </button>
+                <button
+                  onClick={closeSendModal}
+                  className={styles.cancelButton}
+                >
+                  Cancel
+                </button>
+              </div>
+              {sendStatus && <p className={styles.sendStatus}>{sendStatus}</p>}
             </div>
           </div>
-        </>
-      )}
-
-      <div className={styles.actionButtons}>
-        <button className={styles.actionButton}>
-          <img
-            src="/assets/add.svg"
-            className={styles.transactIcon}
-            alt="Buy icon"
-          />{" "}
-          Buy
-        </button>
-        <button onClick={openSendModal} className={styles.actionButton}>
-          <img
-            src="/assets/send.svg"
-            className={styles.transactIcon}
-            alt="Send icon"
-          />{" "}
-          Send
-        </button>
-        <button className={styles.actionButton}>
-          {" "}
-          <img
-            src="/assets/share.svg"
-            className={styles.transactIcon}
-            alt="Share icon"
-          />{" "}
-          Share
-        </button>
+        )}
       </div>
-
-      <div className={styles.transactionsSection}>
-        <h3>Recent Transactions</h3>
-        <ul className={styles.txList}>
-          {recentTransactions.map((tx) => (
-            <li key={tx.txid} className={styles.txItem}>
-              <div className={styles.txDetails}>
-                <span className={styles.txAmount}>
-                  {tx.amount > 0 ? "+" : ""}
-                  {tx.amount} BTC
-                </span>
-                <span
-                  className={`${styles.txStatus} ${
-                    tx.status === "Confirmed"
-                      ? styles.txConfirmed
-                      : styles.txPending
-                  }`}
-                >
-                  {tx.status}
-                </span>
-              </div>
-              <div className={styles.txMeta}>
-                <span className={styles.txTime}>{tx.timestamp}</span>
-                <span className={styles.txId}>{tx.txid.slice(0, 10)}...</span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {!provider?.request ? (
-        <div className={styles.loginDiv}>
-          <button
-            className={styles.button}
-            onClick={handleLogin}
-            disabled={isLoggingIn}
-          >
-            {jwtToken
-              ? "Login via Telegram (JWT)"
-              : "Waiting for Telegram Login..."}
-          </button>
-        </div>
-      ) : (
-        <div className={styles.loginDiv}>
-          <button className={styles.button} onClick={handleGetAccounts}>
-            Get Address & Balance
-          </button>
-        </div>
-      )}
-
-      <button className={styles.button} onClick={checkPrivateKeyAndAddress}>
-        Check BTC Private Key
-      </button>
-      <button className={styles.button} onClick={checkUserLogin}>
-        Check Web3Auth Login
-      </button>
-      <button className={styles.button} onClick={handleLogout}>
-        Logout from Web3 Auth
-      </button>
-      <button
-        className={styles.button}
-        onClick={() => deriveBTCWallet(provider)}
-      >
-        Create BTC Wallet Test
-      </button>
-      <button
-        className={styles.button}
-        onClick={() => deriveETHAddress(provider)}
-      >
-        Create Eth Wallet Test
-      </button>
-      <button
-        className={styles.button}
-        onClick={() => getEthBalance(localStorage.getItem("ethAddress"))}
-        // onClick={() =>
-        //   getEthBalance("0xe0ee822620933b173b56b19321e3a57e60d07fd5")
-        // }
-      >
-        Check Eth Wallet balance
-      </button>
-
-      {user && (
-        <>
-          <h3 className={styles.sectionTitle}>Web3Auth User Info:</h3>
-          <pre className={styles.debugBox}>{JSON.stringify(user, null, 2)}</pre>
-        </>
-      )}
-
-      {telegramUser && (
-        <>
-          <h3 className={styles.sectionTitle}>Telegram User Info:</h3>
-          <pre className={styles.debugBox}>
-            {JSON.stringify(telegramUser, null, 2)}
-          </pre>
-        </>
-      )}
-
-      {jwtToken && (
-        <>
-          <h3 className={styles.sectionTitle}>JWT Token:</h3>
-          <pre className={styles.debugBox}>{jwtToken}</pre>
-        </>
-      )}
-
+      {/* BOTTOM MENU STARTS HERE */}
       <div className={styles.bottomMenu}>
         <button className={styles.menuItem}>
           <span className={styles.menuIcon}>🏦</span>
@@ -980,48 +1031,6 @@ export default function Web3AuthComponent() {
           <span className={styles.menuLabel}>Settings</span>
         </button>
       </div>
-
-      {/* Send button opens the modal */}
-      {showSendModal && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <h2>Send {selectedCrypto}</h2>
-            <label>
-              Recipient Address:
-              <br></br>
-              <input
-                type="text"
-                value={sendToAddress}
-                onChange={(e) => setSendToAddress(e.target.value)}
-                placeholder="Enter address"
-                className={styles.input}
-              />
-            </label>
-            <label>
-              Amount:
-              <br></br>
-              <input
-                type="number"
-                value={sendAmount}
-                onChange={(e) => setSendAmount(e.target.value)}
-                placeholder="Enter amount"
-                min="0"
-                step="any"
-                className={styles.input}
-              />
-            </label>
-            <div className={styles.buttonRow}>
-              <button onClick={handleSendCrypto} className={styles.sendButton}>
-                Send
-              </button>
-              <button onClick={closeSendModal} className={styles.cancelButton}>
-                Cancel
-              </button>
-            </div>
-            {sendStatus && <p className={styles.sendStatus}>{sendStatus}</p>}
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 }
