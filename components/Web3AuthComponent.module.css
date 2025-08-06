@@ -542,6 +542,10 @@
   margin-bottom: 0.2rem;
 }
 
+.menuIcon img {
+  height: 27px;
+}
+
 .menuLabel {
-  font-size: 0.75rem;
+  font-size: 1rem;
 }
