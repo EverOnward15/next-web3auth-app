@@ -5,7 +5,6 @@
   padding: 24px 16px;
   /* background: linear-gradient(160deg, #ffffff 0%, #f1f5f9 100%); */
   background: #f8f9fb; /* Soft off-white */
-;
   border-radius: 16px;
   font-family: "Inter", "Helvetica Neue", sans-serif;
   min-height: 100vh;
@@ -413,9 +412,8 @@
 
 .txAmount {
   font-weight: 600;
-      /* color: #1cb36c; */
-      color: var(--text-muted);
-
+  /* color: #1cb36c; */
+  color: var(--text-muted);
 }
 
 .txStatus {
@@ -447,7 +445,6 @@
   color: var(--text-muted);
 }
 
-
 /* === Layered depth for wallet cards === */
 .walletInfo {
   background: linear-gradient(145deg, #ffffff, #f1f5f9);
@@ -466,7 +463,6 @@
 .sectionTitle {
   position: relative;
   padding-bottom: 0.4rem;
-  
 }
 
 /* === Emphasize wallet value section === */
@@ -511,4 +507,44 @@
 .actionButton:hover {
   transform: translateY(-2px);
   box-shadow: 0 0 12px rgba(46, 125, 209, 0.2);
+}
+
+
+/* ========================================= Wallet bottom floating menu ======================================== */
+
+.bottomMenu {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #1e1e1e;
+  display: flex;
+  justify-content: space-around;
+  padding: 0.6rem 0;
+  border-top: 1px solid #333;
+  z-index: 100;
+}
+
+.menuItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.menuItem:hover {
+  color: #e9d985;
+}
+
+.menuIcon {
+  font-size: 1.3rem;
+  margin-bottom: 0.2rem;
+}
+
+.menuLabel {
+  font-size: 0.75rem;
 }

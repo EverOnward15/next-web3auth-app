@@ -864,9 +864,25 @@ export default function Web3AuthComponent() {
         <ul className={styles.txList}>
           {recentTransactions.map((tx) => (
             <li key={tx.txid} className={styles.txItem}>
-              <span className={styles.txAmount}>{tx.amount}</span>
-              <span className={styles.txStatus}>{tx.status}</span>
-              <span className={styles.txTime}>{tx.timestamp}</span>
+              <div className={styles.txDetails}>
+                <span className={styles.txAmount}>
+                  {tx.amount > 0 ? "+" : ""}
+                  {tx.amount} BTC
+                </span>
+                <span
+                  className={`${styles.txStatus} ${
+                    tx.status === "Confirmed"
+                      ? styles.txConfirmed
+                      : styles.txPending
+                  }`}
+                >
+                  {tx.status}
+                </span>
+              </div>
+              <div className={styles.txMeta}>
+                <span className={styles.txTime}>{tx.timestamp}</span>
+                <span className={styles.txId}>{tx.txid.slice(0, 10)}...</span>
+              </div>
             </li>
           ))}
         </ul>
@@ -945,6 +961,25 @@ export default function Web3AuthComponent() {
           <pre className={styles.debugBox}>{jwtToken}</pre>
         </>
       )}
+
+      <div className={styles.bottomMenu}>
+        <button className={styles.menuItem}>
+          <span className={styles.menuIcon}>🏦</span>
+          <span className={styles.menuLabel}>Wallet</span>
+        </button>
+        <button className={styles.menuItem}>
+          <span className={styles.menuIcon}>📤</span>
+          <span className={styles.menuLabel}>Send</span>
+        </button>
+        <button className={styles.menuItem}>
+          <span className={styles.menuIcon}>📜</span>
+          <span className={styles.menuLabel}>History</span>
+        </button>
+        <button className={styles.menuItem}>
+          <span className={styles.menuIcon}>⚙️</span>
+          <span className={styles.menuLabel}>Settings</span>
+        </button>
+      </div>
 
       {/* Send button opens the modal */}
       {showSendModal && (
