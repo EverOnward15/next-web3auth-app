@@ -17,7 +17,7 @@
 
 .title {
   font-size: 32px;
-  margin-bottom: 6px;
+  /* margin-bottom: 6px; */
   font-weight: 800;
   text-align: center;
   color: var(--primary);
@@ -28,7 +28,7 @@
 .subtitle {
   font-size: 14px;
   color: var(--accent);
-  margin-bottom: 24px;
+  /* margin-bottom: 24px; */
   text-align: center;
   letter-spacing: 0.5px;
 }
