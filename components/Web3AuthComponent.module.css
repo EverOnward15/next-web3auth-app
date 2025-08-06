@@ -3,7 +3,9 @@
   flex-direction: column;
   margin: 0 auto;
   padding: 24px 16px;
-  background: linear-gradient(160deg, #ffffff 0%, #f1f5f9 100%);
+  /* background: linear-gradient(160deg, #ffffff 0%, #f1f5f9 100%); */
+  background: #f8f9fb; /* Soft off-white */
+;
   border-radius: 16px;
   font-family: "Inter", "Helvetica Neue", sans-serif;
   min-height: 100vh;
@@ -443,4 +445,70 @@
 .txId {
   font-family: monospace;
   color: var(--text-muted);
+}
+
+
+/* === Layered depth for wallet cards === */
+.walletInfo {
+  background: linear-gradient(145deg, #ffffff, #f1f5f9);
+  border: 1px solid rgba(46, 125, 209, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.walletInfo:hover {
+  box-shadow: 0 8px 16px rgba(46, 125, 209, 0.08);
+  transform: translateY(-2px);
+}
+
+/* === Enhanced heading separation === */
+.transactionsSection h3,
+.sectionTitle {
+  position: relative;
+  padding-bottom: 0.4rem;
+  
+}
+
+/* === Emphasize wallet value section === */
+.walletValue {
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background-color: rgba(46, 125, 209, 0.08);
+  color: var(--primary);
+  word-break: break-all;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+/* === Improved Telegram avatar shadow === */
+.telegramImage {
+  box-shadow: 0 0 0 3px rgba(46, 125, 209, 0.15), 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* === Highlight selected crypto button more softly === */
+.selectedCrypto {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 0 12px rgba(46, 125, 209, 0.4);
+  transform: scale(1.05);
+}
+
+/* === Inputs and buttons subtle glow on focus === */
+.input:focus,
+.button:focus,
+.cryptoButton:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(46, 125, 209, 0.2);
+}
+
+/* === Minor lift on action buttons === */
+.actionButton {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.actionButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 12px rgba(46, 125, 209, 0.2);
 }
