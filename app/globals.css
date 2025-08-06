@@ -1,20 +1,21 @@
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111111;
 
-  --bg: #0a0a0a;              /* Background */
-  --card-bg: #121212;         /* Panels/cards */
-  --highlight: #3d9df6;       /* Cool electric blue for accent glow */
-  --primary: #3d9df6;         /* Main accent */
-  --secondary: #1e88e5;       /* For hover & active */
-  --accent: #90caf9;          /* Subtle light accent (used sparingly) */
+  --bg: #f9f9f9;
+  --card-bg: #ffffff;
+  --highlight: #2e7dd1;
+  --primary: #2e7dd1;
+  --secondary: #1b5fab;
+  --accent: #4dabf7;
 
-  --text-main: #e0e0e0;       /* Primary text */
-  --text-light: #bbb;         /* Slightly muted */
-  --text-muted: #777;         /* Subtext or less important content */
+  --text-main: #111111;
+  --text-light: #555555;
+  --text-muted: #888888;
 
-  --glass: rgba(255, 255, 255, 0.05); /* Slight glass blur background */
+  --glass: rgba(255, 255, 255, 0.8);
 }
+
 
 @media (prefers-color-scheme: dark) {
   :root {

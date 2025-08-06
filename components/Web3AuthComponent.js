@@ -26,8 +26,7 @@ const CLIENT_ID =
 let privateKey;
 import { providerEth } from "@/lib/eth-provider";
 
-
-/*------------------ Start of Code --------------------*/
+/*=============================================== Start Async functions ========================================================================*/
 
 //Function to derive BTC Address
 async function deriveBTCAddress(privateKeyHex) {
@@ -104,6 +103,8 @@ async function deriveETHAddress(provider) {
   return ethAddress.toLowerCase();
 }
 
+/*=============================================== Start default component ========================================================================*/
+
 export default function Web3AuthComponent() {
   const [web3auth, setWeb3auth] = useState(null);
   const [provider, setProvider] = useState(null);
@@ -120,6 +121,7 @@ export default function Web3AuthComponent() {
   const [sendStatus, setSendStatus] = useState(null);
   const [showSendModal, setShowSendModal] = useState(false);
 
+  /* =================================================== ETH & USDT Wallet =================================================================== */
   // For USDT (ERC20)
   const [ethWallet, setEthWallet] = useState(null); //
   const [ethBalance, setEthBalance] = useState(null); //
@@ -158,7 +160,6 @@ export default function Web3AuthComponent() {
     return ethers.formatUnits(rawBalance, decimals);
   }
 
-  
   async function sendEth({ fromAddress, privateKeyHex, toAddress, amountEth }) {
     const maxRetries = 3;
 
@@ -191,6 +192,9 @@ export default function Web3AuthComponent() {
         });
 
         await tx.wait();
+        alert(`✅ Transaction sent successfully! Hash:\n ${tx.hash} \n
+          View on Etherscan: https://sepolia.etherscan.io/tx/${tx.hash}`);
+
         return tx.hash;
       } catch (error) {
         if (attempt < maxRetries) {
@@ -244,7 +248,6 @@ export default function Web3AuthComponent() {
     fetchKey();
   }, [provider]);
 
-  /* =================================================== ETH & USDT Wallet =================================================================== */
   useEffect(() => {
     const fetchETHWalletAndBalance = async () => {
       if (!provider) return;
@@ -718,76 +721,175 @@ export default function Web3AuthComponent() {
     }
   };
 
+  /*========================================================= Wallet UI ============================================================ */
+
+  const [isBalanceLoading, setIsBalanceLoading] = useState(true);
+  const [networkOnline, setNetworkOnline] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  // Simulate network check
+  useEffect(() => {
+    const checkNetwork = () => {
+      setNetworkOnline(navigator.onLine);
+    };
+    checkNetwork();
+    window.addEventListener("online", checkNetwork);
+    window.addEventListener("offline", checkNetwork);
+    return () => {
+      window.removeEventListener("online", checkNetwork);
+      window.removeEventListener("offline", checkNetwork);
+    };
+  }, []);
+
+  // Simulate balance loading
+  useEffect(() => {
+    setTimeout(() => {
+      setIsBalanceLoading(false);
+    }, 1200); // simulate API call delay
+  }, []);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(balances[selectedCrypto].address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  // Fake transaction list (replace with real ones if available)
+  const recentTransactions = [
+    {
+      txid: "abc123",
+      amount: "-0.002 BTC",
+      status: "Confirmed",
+      timestamp: "Aug 04, 10:30",
+    },
+    {
+      txid: "def456",
+      amount: "+0.01 BTC",
+      status: "Pending",
+      timestamp: "Aug 03, 14:05",
+    },
+    {
+      txid: "ghi789",
+      amount: "-0.005 BTC",
+      status: "Confirmed",
+      timestamp: "Aug 02, 19:45",
+    },
+  ];
+
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>MVP Wallet</h1>
+      <div className={styles.networkStatus}>
+        Network:{" "}
+        <span className={networkOnline ? styles.online : styles.offline}>
+          {networkOnline ? "Online" : "Offline"}
+        </span>
+      </div>
+      <br></br>
+      <h1 className={styles.title}>BTC ETH Wallet</h1>
       <h2 className={styles.subtitle}></h2>
 
       {telegramUser && (
-        <div className={styles.telegramContainer}>
-          <p className={styles.welcomeText}>
-            Welcome, <strong>{telegramUser.first_name}</strong>!
-          </p>
+        <>
           {telegramUser.photo_url && (
             <img
               src={telegramUser.photo_url}
               alt={`${telegramUser.first_name}'s profile`}
-              className={styles.telegramImage}
+              className={styles.avatarTopRight}
+              onClick={() => alert("Account menu coming soon")}
             />
           )}
 
-          <div className={styles.walletInfo}>
-            <p className={styles.walletLabel}>
-              <strong>{selectedCrypto} Address:</strong>
-            </p>
-            <p className={styles.walletValue}>
-              {balances[selectedCrypto].address}
-            </p>
-
-            <p className={styles.balanceLabel}>Balance</p>
-            <p className={styles.balanceAmount}>
-              {balances[selectedCrypto].balance}
-            </p>
+          <div className={styles.cryptoToggle}>
+            {["BTC", "USDT", "ETH"].map((crypto) => (
+              <button
+                key={crypto}
+                className={`${styles.cryptoButton} ${
+                  selectedCrypto === crypto ? styles.selectedCrypto : ""
+                }`}
+                onClick={() => setSelectedCrypto(crypto)}
+              >
+                {crypto}
+              </button>
+            ))}
           </div>
-        </div>
+
+          <div className={styles.telegramContainer}>
+            <div className={styles.walletInfo}>
+              <p className={styles.walletLabel}>
+                <strong>{selectedCrypto} Address:</strong>
+              </p>
+              <p className={styles.walletValue}>
+                {balances[selectedCrypto].address}
+              </p>
+
+              <p className={styles.balanceLabel}>Balance</p>
+              <p className={styles.balanceAmount}>
+                {balances[selectedCrypto].balance}
+              </p>
+            </div>
+          </div>
+        </>
       )}
 
-      <div className={styles.cryptoToggle}>
-        {["BTC", "USDT", "ETH"].map((crypto) => (
-          <button
-            key={crypto}
-            className={`${styles.cryptoButton} ${
-              selectedCrypto === crypto ? styles.selectedCrypto : ""
-            }`}
-            onClick={() => setSelectedCrypto(crypto)}
-          >
-            {crypto}
-          </button>
-        ))}
-      </div>
-
       <div className={styles.actionButtons}>
-        <button className={styles.actionButton}>Buy</button>
+        <button className={styles.actionButton}>
+          <img
+            src="/assets/add.svg"
+            className={styles.transactIcon}
+            alt="Buy icon"
+          />{" "}
+          Buy
+        </button>
         <button onClick={openSendModal} className={styles.actionButton}>
+          <img
+            src="/assets/send.svg"
+            className={styles.transactIcon}
+            alt="Send icon"
+          />{" "}
           Send
         </button>
-        <button className={styles.actionButton}>Receive</button>
+        <button className={styles.actionButton}>
+          {" "}
+          <img
+            src="/assets/share.svg"
+            className={styles.transactIcon}
+            alt="Share icon"
+          />{" "}
+          Share
+        </button>
+      </div>
+
+      <div className={styles.transactionsSection}>
+        <h3>Recent Transactions</h3>
+        <ul className={styles.txList}>
+          {recentTransactions.map((tx) => (
+            <li key={tx.txid} className={styles.txItem}>
+              <span className={styles.txAmount}>{tx.amount}</span>
+              <span className={styles.txStatus}>{tx.status}</span>
+              <span className={styles.txTime}>{tx.timestamp}</span>
+            </li>
+          ))}
+        </ul>
       </div>
 
       {!provider?.request ? (
-        <button
-          className={styles.button}
-          onClick={handleLogin}
-          disabled={isLoggingIn}
-        >
-          {jwtToken
-            ? "Login via Telegram (JWT)"
-            : "Waiting for Telegram Login..."}
-        </button>
+        <div className={styles.loginDiv}>
+          <button
+            className={styles.button}
+            onClick={handleLogin}
+            disabled={isLoggingIn}
+          >
+            {jwtToken
+              ? "Login via Telegram (JWT)"
+              : "Waiting for Telegram Login..."}
+          </button>
+        </div>
       ) : (
-        <button className={styles.button} onClick={handleGetAccounts}>
-          Get Address & Balance
-        </button>
+        <div className={styles.loginDiv}>
+          <button className={styles.button} onClick={handleGetAccounts}>
+            Get Address & Balance
+          </button>
+        </div>
       )}
 
       <button className={styles.button} onClick={checkPrivateKeyAndAddress}>

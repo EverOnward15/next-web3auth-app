@@ -1,18 +1,18 @@
+
 .container {
   display: flex;
   flex-direction: column;
   margin: 0 auto;
   padding: 24px 16px;
-  background: linear-gradient(160deg, #ffffff 0%, #f1f5f9 100%);
+  background: linear-gradient(160deg, #0a0a0a 0%, #000000 100%);
   border-radius: 16px;
-  font-family: "Inter", "Helvetica Neue", sans-serif;
+  font-family: 'Inter', 'Helvetica Neue', sans-serif;
   min-height: 100vh;
   max-width: 420px;
   justify-content: flex-start;
   align-items: center;
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.08);
   backdrop-filter: blur(10px);
-  position: relative;
 }
 
 .title {
@@ -21,7 +21,7 @@
   font-weight: 800;
   text-align: center;
   color: var(--primary);
-  /* text-shadow: 0 0 6px var(--accent); */
+  text-shadow: 0 0 8px var(--primary);
   letter-spacing: 0.8px;
 }
 
@@ -53,25 +53,6 @@
   box-shadow: 0 0 6px var(--primary);
 }
 
-.avatarTopRight {
-  position: absolute;
-  top: 24px;
-  right: 24px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-  box-shadow: 0 0 6px var(--primary);
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  z-index: 10;
-}
-
-.avatarTopRight:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 10px var(--accent);
-}
-
 .walletInfo {
   margin-top: 20px;
   color: var(--text-main);
@@ -84,7 +65,7 @@
   width: 100%;
   min-width: 300px;
   max-width: 340px;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.1);
   backdrop-filter: blur(6px);
 }
 
@@ -99,7 +80,7 @@
   color: var(--primary);
   word-break: break-all;
   margin-bottom: 16px;
-  /* text-shadow: 0 0 6px var(--accent); */
+  text-shadow: 0 0 6px var(--primary);
 }
 
 .balanceLabel {
@@ -113,8 +94,8 @@
 .balanceAmount {
   font-size: 28px;
   font-weight: 700;
-  color: #1cb36c;
-  text-shadow: 0 0 1px #aef1d3;
+  color: #00ff99;
+  text-shadow: 0 0 10px #00ff99;
 }
 
 .cryptoToggle {
@@ -123,31 +104,31 @@
   gap: 10px;
   margin: 28px 0 16px;
 }
-
 .cryptoButton {
-  background: #e9f1fb;
-  color: var(--primary);
-  border: 1px solid #bdd8f1;
+  background: #1e1e1e;
+  color: white;
+  border: 1px solid #333;
   padding: 8px 16px;
   border-radius: 20px;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.25s ease;
+  box-shadow: 0 0 6px transparent;
   font-weight: 500;
 }
 
 .cryptoButton:hover {
-  background-color: var(--secondary);
-  color: white;
-  box-shadow: 0 0 10px var(--secondary);
+  background-color: #103565;
+  box-shadow: 0 0 10px #3d9df6;
+  color: #fff;
 }
 
 .selectedCrypto {
-  background-color: var(--primary);
-  border-color: var(--primary);
-  color: white;
+  background-color: #103565;
+  border-color: #3d9df6;
+  color: #3d9df6;
   font-weight: bold;
-  box-shadow: 0 0 8px var(--primary);
+  box-shadow: 0 0 10px #3d9df6;
 }
 
 .actionButtons {
@@ -159,34 +140,28 @@
 }
 
 .actionButton {
-  background: linear-gradient(145deg, #f0f4f8, #ffffff);
+  background: linear-gradient(145deg, #0b0b0b, #1a1a1a);
   color: var(--primary);
   border: 1px solid var(--primary);
   border-radius: 12px;
+  padding: 10px 18px;
   font-size: 14px;
   font-weight: 600;
   min-width: 90px;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 0 6px rgba(46, 125, 209, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 3px;
-  padding: 5px 30px;
-  margin-top: 20px;
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.25);
 }
 
 .actionButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 12px var(--primary);
+  box-shadow: 0 0 12px var(--primary), 0 0 16px var(--primary);
 }
 
 .button {
   width: 100%;
   padding: 12px;
-  background-color: #e9f1fb;
+  background-color: #111;
   color: var(--primary);
   border: 1px solid var(--primary);
   border-radius: 10px;
@@ -194,18 +169,18 @@
   margin-bottom: 14px;
   cursor: pointer;
   transition: all 0.25s ease;
-  box-shadow: 0 0 6px rgba(46, 125, 209, 0.2);
+  box-shadow: 0 0 8px var(--primary);
 }
 
 .button:hover {
   background-color: var(--secondary);
-  box-shadow: 0 0 10px var(--secondary);
+  box-shadow: 0 0 14px var(--secondary);
   color: white;
 }
 
 .transactIcon {
-  height: 22px;
-  fill: gold;
+  height: 16px;
+  /* background-color: white; */
 }
 
 .sectionTitle {
@@ -219,46 +194,46 @@
 
 .debugBox {
   width: 100%;
-  background-color: #f0f0f0;
-  color: #007755;
+  background-color: #0f0f0f;
+  color: #00ff99;
   padding: 12px;
   border-radius: 8px;
   overflow-x: auto;
   font-size: 12px;
   white-space: pre-wrap;
   word-break: break-word;
-  box-shadow: 0 0 8px #90ee90;
+  box-shadow: 0 0 8px #00ff99;
 }
 
-.loginDiv {
-  margin-top: 80px;
-}
 
-/*=================Modal overlay=================*/
+/*=================Modal overlay*===============/
+/* Modal overlay covers whole screen */
 .modalOverlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center !important;
-  align-items: center !important;
+  align-items: center !important; 
   z-index: 9999;
   backdrop-filter: blur(6px);
 }
 
 .modal {
-  background: #ffffff;
+  background: linear-gradient(160deg, #0a0a0a 0%, #000000 100%);
   border-radius: 16px;
   padding: 24px 20px;
   max-width: 90%;
   width: 360px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
-  font-family: "Inter", "Helvetica Neue", sans-serif;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  font-family: 'Inter', 'Helvetica Neue', sans-serif;
   color: var(--text-main);
   border: 1px solid var(--primary);
+  /* margin-right: auto; */
 }
 
 .modal h2 {
@@ -267,26 +242,26 @@
   font-weight: 700;
   margin-bottom: 16px;
   text-align: center;
-  text-shadow: 0 0 6px var(--accent);
+  text-shadow: 0 0 8px var(--primary);
 }
 
 .input {
   width: 100%;
   padding: 10px 14px;
   margin-bottom: 16px;
-  background: #ffffff;
-  color: var(--text-main);
-  border: 1px solid #ccc;
+  background: #111;
+  color: var(--primary);
+  border: 1px solid var(--primary);
   border-radius: 10px;
   font-size: 14px;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.1);
   outline: none;
   transition: all 0.25s ease;
 }
 
 .input:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 6px var(--primary);
+  border-color: #3d9df6;
+  box-shadow: 0 0 10px #3d9df6;
 }
 
 .buttonRow {
@@ -297,8 +272,7 @@
   margin-top: 12px;
 }
 
-.sendButton,
-.cancelButton {
+.sendButton, .cancelButton {
   padding: 10px 18px;
   border-radius: 10px;
   font-size: 14px;
@@ -309,29 +283,29 @@
 }
 
 .sendButton {
-  background: linear-gradient(145deg, #f0f4f8, #ffffff);
+  background: linear-gradient(145deg, #0b0b0b, #1a1a1a);
   color: var(--primary);
   border: 1px solid var(--primary);
-  box-shadow: 0 0 6px rgba(46, 125, 209, 0.2);
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.25);
 }
 
 .sendButton:hover {
   transform: translateY(-2px);
+  box-shadow: 0 0 12px var(--primary), 0 0 16px var(--primary);
   background-color: var(--secondary);
   color: white;
-  box-shadow: 0 0 10px var(--secondary);
 }
 
 .cancelButton {
-  background-color: #f3f3f3;
+  background-color: #222;
   color: var(--text-muted);
-  border: 1px solid #ccc;
+  border: 1px solid #333;
 }
 
 .cancelButton:hover {
-  background-color: #e0e0e0;
-  color: #000;
-  border-color: #bbb;
+  background-color: #444;
+  color: white;
+  border-color: #555;
 }
 
 .sendStatus {
@@ -341,106 +315,22 @@
   text-align: center;
 }
 
-.networkStatus {
-  margin: 1rem 0;
-  font-size: 0.9rem;
-  color: var(--text-muted);
-}
 
-.online {
-  color: green;
-  font-weight: bold;
-}
 
-.offline {
-  color: red;
-  font-weight: bold;
-}
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
 
-.transactionsSection {
-  margin-top: 2rem;
-}
+  --bg: #0a0a0a;              /* Background */
+  --card-bg: #121212;         /* Panels/cards */
+  --highlight: #3d9df6;       /* Cool electric blue for accent glow */
+  --primary: #3d9df6;         /* Main accent */
+  --secondary: #1e88e5;       /* For hover & active */
+  --accent: #90caf9;          /* Subtle light accent (used sparingly) */
 
-.transactionsSection h3 {
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
-  color: var(--primary);
-  border-bottom: 2px solid var(--primary);
-  display: inline-block;
-  padding-bottom: 0.25rem;
-}
+  --text-main: #e0e0e0;       /* Primary text */
+  --text-light: #bbb;         /* Slightly muted */
+  --text-muted: #777;         /* Subtext or less important content */
 
-.txList {
-  list-style: none;
-  padding-left: 0;
-  margin: 0;
-  border-radius: 0.5rem;
-  background-color: var(--bg);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-}
-
-.txItem {
-  padding: 1rem;
-  border-bottom: 1px solid #ddd;
-  font-size: 0.95rem;
-  transition: background 0.3s ease;
-  color: black;
-}
-
-.txItem:last-child {
-  border-bottom: none;
-}
-
-.txItem:hover {
-  background-color: rgba(0, 0, 0, 0.02);
-}
-
-.txDetails {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.txMeta {
-  margin-top: 0.25rem;
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.8rem;
-  color: var(--text-light);
-}
-
-.txAmount {
-  font-weight: 600;
-      /* color: #1cb36c; */
-      color: var(--text-muted);
-
-}
-
-.txStatus {
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.txConfirmed {
-  background-color: #d1e7dd;
-  color: #0f5132;
-}
-
-.txPending {
-  background-color: #fff3cd;
-  color: #856404;
-}
-
-.txTime {
-  font-style: italic;
-  font-size: smaller;
-}
-
-.txId {
-  font-family: monospace;
-  color: var(--text-muted);
+  --glass: rgba(255, 255, 255, 0.05); /* Slight glass blur background */
 }
