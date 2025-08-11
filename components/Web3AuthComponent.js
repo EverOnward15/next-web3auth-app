@@ -402,7 +402,7 @@ export default function Web3AuthComponent() {
 
   useEffect(() => {
     handleLogin();
-  }, []);
+  }, [web3auth]);
 
   useEffect(() => {
     const tryRestoreSession = async () => {
@@ -421,7 +421,6 @@ export default function Web3AuthComponent() {
       }
     };
     tryRestoreSession();
-    setTryRestore(false);
   }, [web3auth]);
 
   const handleLogout = async () => {
