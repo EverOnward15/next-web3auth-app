@@ -1,8 +1,9 @@
 ///Users/prathameshbhoite/Code/lotus-app/next-web3auth-app/components/Web3AuthComponent.js
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { payments, networks } from "bitcoinjs-lib";
 import { Buffer } from "buffer";
+import AccountMenu from "../components/AccountMenu"; // adjust path
 
 // 1) polyfill Buffer
 if (typeof window !== "undefined" && !window.Buffer) {
@@ -728,15 +729,16 @@ export default function Web3AuthComponent() {
 
   const [isBalanceLoading, setIsBalanceLoading] = useState(true);
   const [networkOnline, setNetworkOnline] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+
   const [copied, setCopied] = useState(false);
 
   // Simulate network check
   useEffect(() => {
     const checkNetwork = () => {
       if (btcBalance !== null && ethBalance !== null) {
-      setNetworkOnline(true);
-      }
-      else setNetworkOnline(false);
+        setNetworkOnline(true);
+      } else setNetworkOnline(false);
     };
     checkNetwork();
     window.addEventListener("online", checkNetwork);
@@ -782,6 +784,22 @@ export default function Web3AuthComponent() {
     },
   ];
 
+  // handlers in parent
+  const handleOpenSettings = useCallback(() => {
+    // open your settings modal / navigate
+    setShowSettings(true);
+  }, [setShowSettings]);
+
+  // const handleOpenWallet = useCallback(() => {
+  //   // maybe switch UI to wallet tab or scroll to wallet card
+  //   // setSelectedTab("wallet");
+  // }, [setSelectedTab]);
+
+  const menuRef = useRef();
+  const profileName = telegramUser
+    ? `${telegramUser.first_name || ""} ${telegramUser.last_name || ""}`.trim()
+    : "Account";
+
   return (
     <>
       <div className={styles.container}>
@@ -798,12 +816,26 @@ export default function Web3AuthComponent() {
         {telegramUser && (
           <>
             {telegramUser.photo_url && (
-              <img
-                src={telegramUser.photo_url}
-                alt={`${telegramUser.first_name}'s profile`}
-                className={styles.avatarTopRight}
-                onClick={() => alert("Account menu coming soon")}
-              />
+              <>
+                <img
+                  src={telegramUser?.photo_url || "/assets/default-avatar.png"}
+                  alt={profileName}
+                  onClick={() => menuRef.current?.toggle()}
+                  className={styles.avatarTopRight}
+                  aria-haspopup="true"
+                  style={{ cursor: "pointer" }}
+                />
+
+                <AccountMenu
+                  ref={menuRef}
+                  telegramUser={telegramUser}
+                  balances={balances}
+                  selectedCrypto={selectedCrypto}
+                  onOpenSettings={() => console.log("Settings")}
+                  onOpenWallet={() => console.log("Wallet")}
+                  onLogout={() => console.log("Logout")}
+                />
+              </>
             )}
 
             <div className={styles.cryptoToggle}>
@@ -1019,6 +1051,7 @@ export default function Web3AuthComponent() {
           </div>
         )}
       </div>
+
       {/* BOTTOM MENU STARTS HERE */}
       <div className={styles.bottomMenu}>
         <button className={styles.menuItem}>
