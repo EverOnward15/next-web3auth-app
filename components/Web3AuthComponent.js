@@ -266,7 +266,7 @@ export default function Web3AuthComponent() {
   // Automatically get wallet + balance if provider is availabl
   useEffect(() => {
     const fetchWalletAndBalance = async () => {
-      if (!provider || btcWallet) return;
+      if (!provider) return;
       const wallet = await deriveBTCWallet(provider);
       if (!wallet) return;
 
@@ -284,7 +284,7 @@ export default function Web3AuthComponent() {
     };
 
     fetchWalletAndBalance();
-  }, [provider, btcWallet]);
+  }, [provider]);
 
   //Initialise Telegram
   useEffect(() => {
