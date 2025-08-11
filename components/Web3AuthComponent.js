@@ -371,7 +371,6 @@ export default function Web3AuthComponent() {
       }
     };
     init();
-      handleLogin();
   }, []);
 
   const handleLogin = async () => {
@@ -399,6 +398,12 @@ export default function Web3AuthComponent() {
       setIsLoggingIn(false);
     }
   };
+
+  useEffect(() => {
+  if (web3auth && jwtToken) {
+    handleLogin();
+  }
+}, [web3auth, jwtToken]);
 
   useEffect(() => {
     const tryRestoreSession = async () => {
