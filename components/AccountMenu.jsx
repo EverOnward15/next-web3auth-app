@@ -291,6 +291,7 @@ const AccountMenu = forwardRef(function AccountMenu(
             left: 8px;
             width: auto;
             top: 8px;
+            bottom: 32px;
           }
         }
       `}</style>
