@@ -727,13 +727,16 @@ export default function Web3AuthComponent() {
   /*========================================================= Wallet UI ============================================================ */
 
   const [isBalanceLoading, setIsBalanceLoading] = useState(true);
-  const [networkOnline, setNetworkOnline] = useState(true);
+  const [networkOnline, setNetworkOnline] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // Simulate network check
   useEffect(() => {
     const checkNetwork = () => {
-      setNetworkOnline(navigator.onLine);
+      if (provider) {
+      setNetworkOnline(true);
+      }
+      else setNetworkOnline(false);
     };
     checkNetwork();
     window.addEventListener("online", checkNetwork);
