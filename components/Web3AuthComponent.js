@@ -375,6 +375,7 @@ export default function Web3AuthComponent() {
 
   const handleLogin = async () => {
     if (!web3auth || !jwtToken) return;
+    if(web3auth.connected) return;
     setIsLoggingIn(true);
     setTryRestore(false);
     try {
