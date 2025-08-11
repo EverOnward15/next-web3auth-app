@@ -371,9 +371,7 @@ export default function Web3AuthComponent() {
       }
     };
     init();
-    if (!web3auth.connected) {
       handleLogin();
-    }
   }, []);
 
   const handleLogin = async () => {
