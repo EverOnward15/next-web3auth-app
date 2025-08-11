@@ -112,7 +112,7 @@ export default function Web3AuthComponent() {
   const [telegramUser, setTelegramUser] = useState(null);
   const [jwtToken, setJwtToken] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [tryRestore, setTryRestore] = useState(false);
+  const [tryRestore, setTryRestore] = useState(true);
   const [btcWallet, setBtcWallet] = useState(null); //
   const [btcBalance, setBtcBalance] = useState(null); //
   const [selectedCrypto, setSelectedCrypto] = useState("BTC");
@@ -376,7 +376,7 @@ export default function Web3AuthComponent() {
   const handleLogin = async () => {
     if (!web3auth || !jwtToken) return;
     setIsLoggingIn(true);
-    setTryRestore(true);
+    setTryRestore(false);
     try {
       // 1) connect() will prompt login and internally wire up the key provider
       await web3auth.connect({
@@ -407,8 +407,9 @@ export default function Web3AuthComponent() {
 
   useEffect(() => {
     const tryRestoreSession = async () => {
-
-      if (web3auth.connected && !tryRestore) {
+      if (!tryRestore)
+        return;
+      if (web3auth.connected) {
         try {
           const pkProvider = web3auth.provider;
           alert(pkProvider);
