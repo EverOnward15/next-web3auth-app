@@ -178,20 +178,18 @@ const AccountMenu = forwardRef(function AccountMenu(
       <style jsx>{`
         .accountDropdown {
           position: absolute;
-          left: 0px;
-          top: 0px;
+          left: -60px;
+          top: -60px;
           width: 320px;
           background: #ffffff;
-          border-radius: 12px;
           box-shadow: 0 10px 30px rgba(16, 37, 73, 0.12);
-          border: 1px solid rgba(16, 37, 73, 0.06);
+          border-radius: 10px;
         }
 
         .accountSheet {
           position: fixed;
           left: 0;
           right: 0;
-          bottom: 0;
           background: #ffffff;
           border-top-left-radius: 16px;
           border-top-right-radius: 16px;
