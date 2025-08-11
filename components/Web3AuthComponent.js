@@ -250,13 +250,11 @@ export default function Web3AuthComponent() {
 
   useEffect(() => {
     const fetchETHWalletAndBalance = async () => {
-      if (!provider) return;
       const wallet = await deriveETHAddress(provider);
       alert("I'm here " + wallet);
       if (!wallet) return;
       setEthWallet(wallet);
-      const usdtBalance = await getUSDTBalance(wallet);
-      setUsdtBalance(usdtBalance);
+      getEthBalance(wallet);
     };
 
     fetchETHWalletAndBalance();
