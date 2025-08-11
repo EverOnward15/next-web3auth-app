@@ -733,7 +733,7 @@ export default function Web3AuthComponent() {
   // Simulate network check
   useEffect(() => {
     const checkNetwork = () => {
-      if (provider) {
+      if (btcBalance !== null && ethBalance !== null) {
       setNetworkOnline(true);
       }
       else setNetworkOnline(false);
@@ -745,7 +745,7 @@ export default function Web3AuthComponent() {
       window.removeEventListener("online", checkNetwork);
       window.removeEventListener("offline", checkNetwork);
     };
-  }, []);
+  }, [btcBalance, ethBalance]);
 
   // Simulate balance loading
   // useEffect(() => {
