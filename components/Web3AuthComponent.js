@@ -223,15 +223,15 @@ export default function Web3AuthComponent() {
   const balances = {
     BTC: {
       address: btcWallet?.address || "Unavailable",
-      balance: btcBalance !== null ? `${btcBalance} BTC` : "Loading...",
+      balance: `${btcBalance} BTC`,
     },
     USDT: {
       address: ethWallet || "Unavailable",
-      balance: usdtBalance !== null ? `${usdtBalance} ETH` : "Loading...",
+      balance: `${usdtBalance} USDT`,
     },
     ETH: {
       address: ethWallet || "Unavailable",
-      balance: ethBalance !== null ? `${ethBalance} ETH` : "Loading...",
+      balance: `${ethBalance} ETH`,
     },
   };
 
@@ -831,14 +831,7 @@ export default function Web3AuthComponent() {
 
                 <p className={styles.balanceLabel}>Balance</p>
                 <p className={styles.balanceAmount}>
-                  {selectedCrypto === "BTC" &&
-                    (btcBalance !== null ? `${btcBalance} BTC` : "Loading...")}
-                  {selectedCrypto === "ETH" &&
-                    (ethBalance !== null ? `${ethBalance} ETH` : "Loading...")}
-                  {selectedCrypto === "USDT" &&
-                    (usdtBalance !== null
-                      ? `${usdtBalance} USDT`
-                      : "Loading...")}
+                  {balances[selectedCrypto].balance}
                 </p>
               </div>
             </div>
