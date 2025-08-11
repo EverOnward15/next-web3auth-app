@@ -220,20 +220,23 @@ export default function Web3AuthComponent() {
   }
 
   // You can later plug in USDT or ETH balances like this:
-  const balances = {
-    BTC: {
-      address: btcWallet?.address || "Unavailable",
-      balance: btcBalance !== null ? `${btcBalance} BTC` : "Loading...",
-    },
-    USDT: {
-      address: ethWallet || "Unavailable",
-      balance: usdtBalance !== null ? `${usdtBalance} ETH` : "Loading...",
-    },
-    ETH: {
-      address: ethWallet || "Unavailable",
-      balance: ethBalance !== null ? `${ethBalance} ETH` : "Loading...",
-    },
-  };
+  const isBalancesReady = btcBalance !== null && ethBalance !== null;
+  const balances = isBalancesReady
+    ? {
+        BTC: {
+          address: btcWallet?.address || "Unavailable",
+          balance: `${btcBalance} BTC`,
+        },
+        USDT: {
+          address: ethWallet || "Unavailable",
+          balance: `${usdtBalance} ETH`,
+        },
+        ETH: {
+          address: ethWallet || "Unavailable",
+          balance: `${ethBalance} ETH`,
+        },
+      }
+    : null; // Or keep as undefined
 
   // Automatically get wallet + balance if provider is availabl
   useEffect(() => {
