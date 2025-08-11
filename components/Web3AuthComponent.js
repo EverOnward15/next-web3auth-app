@@ -112,7 +112,7 @@ export default function Web3AuthComponent() {
   const [telegramUser, setTelegramUser] = useState(null);
   const [jwtToken, setJwtToken] = useState(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [skipRestore, setSkipRestore] = useState(false);
+  const [tryRestore, setTryRestore] = useState(false);
   const [btcWallet, setBtcWallet] = useState(null); //
   const [btcBalance, setBtcBalance] = useState(null); //
   const [selectedCrypto, setSelectedCrypto] = useState("BTC");
@@ -371,12 +371,15 @@ export default function Web3AuthComponent() {
       }
     };
     init();
+    if (!web3auth.connected) {
+      handleLogin();
+    }
   }, []);
 
   const handleLogin = async () => {
     if (!web3auth || !jwtToken) return;
-
     setIsLoggingIn(true);
+    setTryRestore(true);
     try {
       // 1) connect() will prompt login and internally wire up the key provider
       await web3auth.connect({
@@ -401,12 +404,12 @@ export default function Web3AuthComponent() {
 
   useEffect(() => {
     const tryRestoreSession = async () => {
-      if (web3auth.connected) {
+
+      if (web3auth.connected && !tryRestore) {
         try {
           const pkProvider = web3auth.provider;
           alert(pkProvider);
           setProvider(pkProvider);
-
           const userInfo = await web3auth.getUserInfo();
           setUser(userInfo);
         } catch (err) {
@@ -416,6 +419,7 @@ export default function Web3AuthComponent() {
       }
     };
     tryRestoreSession();
+    setTryRestore(false);
   }, [web3auth]);
 
   const handleLogout = async () => {
@@ -424,7 +428,7 @@ export default function Web3AuthComponent() {
     // Optional force cleanup
     try {
       localStorage.clear(); // Clear session
-      setSkipRestore(true);
+      setTryRestore(true);
       setUser(null);
       setProvider(null);
       // setIsLoggingIn(null);
@@ -529,7 +533,7 @@ export default function Web3AuthComponent() {
       const feeRate = await (
         await fetch("https://blockstream.info/testnet/api/fee-estimates")
       ).json();
-      const fee = estimatedVBytes * feeRate["1"]; // 1-block target
+      const fee = estimatedVBytes * feeRate["1"]; // ---------------------------------- CHECK THIS PART
 
       let total = 0,
         selected = [];
@@ -742,11 +746,11 @@ export default function Web3AuthComponent() {
   }, []);
 
   // Simulate balance loading
-  useEffect(() => {
-    setTimeout(() => {
-      setIsBalanceLoading(false);
-    }, 1200); // simulate API call delay
-  }, []);
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     setIsBalanceLoading(false);
+  //   }, 1200);
+  // }, []);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(balances[selectedCrypto].address);
@@ -872,7 +876,6 @@ export default function Web3AuthComponent() {
                   </span>
                   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                   <span
-                  
                     className={`${styles.txStatus} ${
                       tx.status === "Confirmed"
                         ? styles.txConfirmed
