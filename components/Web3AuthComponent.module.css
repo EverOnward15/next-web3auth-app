@@ -103,6 +103,38 @@
   /* text-shadow: 0 0 6px var(--accent); */
 }
 
+.copyIcon {
+  cursor: pointer;
+  font-size: 12px;
+  margin-left: 6px;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.copyIcon:hover {
+  color: var(--primary);
+}
+
+.copyIcon img {
+  height: 24px;
+}
+
+.copiedText {
+  position: absolute;
+  top: -1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+
+
 .balanceLabel {
   font-size: 13px;
   color: var(--text-muted);
@@ -509,7 +541,6 @@
   box-shadow: 0 0 12px rgba(46, 125, 209, 0.2);
 }
 
-
 /* ========================================= Wallet bottom floating menu ======================================== */
 
 .bottomMenu {
@@ -534,7 +565,7 @@
   color: #fff;
   font-size: 0.75rem;
   cursor: pointer;
-    color: var(--primary);
+  color: var(--primary);
 }
 
 .menuIcon {
@@ -548,4 +579,31 @@
 
 .menuLabel {
   font-size: 0.95rem;
+}
+
+/*===================================== Wallet Address QR Code=======================================================*/
+.qrOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.qrModal {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.walletText {
+  margin-top: 10px;
+  font-size: 14px;
+  word-break: break-all;
 }

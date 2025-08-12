@@ -26,6 +26,7 @@ const CLIENT_ID =
   "BJMWhIYvMib6oGOh5c5MdFNV-53sCsE-e1X7yXYz_jpk2b8ZwOSS2zi3p57UQpLuLtoE0xJAgP0OCsCaNJLBJqY";
 let privateKey;
 import { providerEth } from "../lib/eth-provider";
+import { QRCodeSVG } from "qrcode.react";
 
 /*=============================================== Start Async functions ========================================================================*/
 
@@ -730,8 +731,9 @@ export default function Web3AuthComponent() {
   const [isBalanceLoading, setIsBalanceLoading] = useState(true);
   const [networkOnline, setNetworkOnline] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-
   const [copied, setCopied] = useState(false);
+  const [showQR, setShowQR] = useState(false);
+  const walletAddress = balances[selectedCrypto]?.address || "";
 
   // Simulate network check
   useEffect(() => {
@@ -856,6 +858,10 @@ export default function Web3AuthComponent() {
               <div className={styles.walletInfo}>
                 <p className={styles.walletLabel}>
                   <strong>{selectedCrypto} Address:</strong>
+                  <span className={styles.copyIcon} onClick={handleCopy}>
+                    <img src="/assets/copy.svg" />
+                  </span>
+                  {copied && <span className={styles.copiedText}>Copied!</span>}
                 </p>
                 <p className={styles.walletValue}>
                   {balances[selectedCrypto].address}
@@ -887,7 +893,10 @@ export default function Web3AuthComponent() {
             />{" "}
             Send
           </button>
-          <button className={styles.actionButton}>
+          <button
+            onClick={() => setShowQR(true)}
+            className={styles.actionButton}
+          >
             {" "}
             <img
               src="/assets/share.svg"
@@ -1051,6 +1060,32 @@ export default function Web3AuthComponent() {
           </div>
         )}
       </div>
+
+      {/*QR Code*/}
+      {showQR && (
+        <div className={styles.qrOverlay} onClick={() => setShowQR(false)}>
+          <div
+            className={styles.qrModal}
+            onClick={(e) => e.stopPropagation()} // Prevent closing on inner click
+          >
+            <h3 className={styles.balanceLabel}>
+              Scan to get {selectedCrypto} address
+            </h3>
+            <br></br>
+            <QRCodeSVG value={walletAddress} size={200} />
+            <br></br>
+            <br></br>
+            <p className={styles.subtitle}>{walletAddress}</p>
+            <br></br>
+            <button
+              className={styles.cancelButton}
+              onClick={() => setShowQR(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* BOTTOM MENU STARTS HERE */}
       <div className={styles.bottomMenu}>
