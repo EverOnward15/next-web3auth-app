@@ -1,21 +1,20 @@
 :root {
-  --background: #ffffff;
-  --foreground: #111111;
+  --background: #140d0d;   /* Dark brand background */
+  --foreground: #ec7210;   /* Orange brand accent */
 
-  --bg: #f9f9f9;
-  --card-bg: #ffffff;
-  --highlight: #2e7dd1;
-  --primary: #2e7dd1;
-  --secondary: #1b5fab;
-  --accent: #4dabf7;
+  --bg: #1c1212;           /* Slightly lighter dark */
+  --card-bg: #1a1a1a;
+  --highlight: #ec7210;
+  --primary: #ec7210;
+  --secondary: #d9650e;
+  --accent: #ff8f40;
 
-  --text-main: #111111;
-  --text-light: #555555;
-  --text-muted: #888888;
+  --text-main: #ffffff;
+  --text-light: #d6d6d6;
+  --text-muted: #aaaaaa;
 
-  --glass: rgba(255, 255, 255, 0.8);
+  --glass: rgba(20, 13, 13, 0.8);
 }
-
 
 @media (prefers-color-scheme: dark) {
   :root {
