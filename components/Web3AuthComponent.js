@@ -694,15 +694,24 @@ export default function Web3AuthComponent() {
           setSendStatus(null);
           return;
         }
-        // Call your send BTC function here
-        // You'll need to implement or call your sendTestnetBTC function
-        await sendTestnetBTC({
+        const txid = await sendTestnetBTC({
           fromAddress: btcWallet.address,
           toAddress: sendToAddress.trim(),
-          // privateKeyHex: btcWallet.privateKey,
           privateKeyHex: privateKey,
           amountInBTC: parseFloat(sendAmount),
         });
+
+        // Log transaction
+        setTransactions((prev) => [
+          {
+            txid: txid || `btc-${Date.now()}`,
+            amount: `-${sendAmount} BTC`,
+            status: "Pending",
+            timestamp: new Date().toLocaleString(),
+          },
+          ...prev,
+        ]);
+
         setSendStatus("BTC sent successfully!");
       } else if (selectedCrypto === "ETH") {
         if (!ethWallet) {
@@ -710,13 +719,23 @@ export default function Web3AuthComponent() {
           setSendStatus(null);
           return;
         }
-        await sendEth({
+        const txid = await sendEth({
           fromAddress: ethWallet,
           toAddress: sendToAddress.trim(),
-          // privateKeyHex: btcWallet.privateKey,
           privateKeyHex: privateKey,
           amountEth: parseFloat(sendAmount),
         });
+
+        setTransactions((prev) => [
+          {
+            txid: txid || `eth-${Date.now()}`,
+            amount: `-${sendAmount} ETH`,
+            status: "Pending",
+            timestamp: new Date().toLocaleString(),
+          },
+          ...prev,
+        ]);
+
         setSendStatus("ETH sent successfully!");
       } else {
         setSendStatus(`Sending ${selectedCrypto} is not implemented yet.`);
@@ -734,6 +753,16 @@ export default function Web3AuthComponent() {
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const walletAddress = balances[selectedCrypto]?.address || "";
+  const [showHistory, setShowHistory] = useState(false);
+  const [transactions, setTransactions] = useState([
+    // initial demo data if you like
+    {
+      txid: "abc123",
+      amount: "-0.002 BTC",
+      status: "Confirmed",
+      timestamp: "Aug 04, 10:30",
+    },
+  ]);
 
   // Simulate network check
   useEffect(() => {
@@ -910,7 +939,7 @@ export default function Web3AuthComponent() {
         <div className={styles.transactionsSection}>
           <h3>Recent Transactions</h3>
           <ul className={styles.txList}>
-            {recentTransactions.map((tx) => (
+            {transactions.map((tx) => (
               <li key={tx.txid} className={styles.txItem}>
                 <div className={styles.txDetails}>
                   <span className={styles.txAmount}>
@@ -1087,6 +1116,47 @@ export default function Web3AuthComponent() {
         </div>
       )}
 
+      {showHistory && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setShowHistory(false)}
+        >
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h2>Transaction History</h2>
+            <ul className={styles.txList}>
+              {transactions.map((tx) => (
+                <li key={tx.txid} className={styles.txItem}>
+                  <div className={styles.txDetails}>
+                    <span className={styles.txAmount}>{tx.amount}</span>
+                    <span
+                      className={`${styles.txStatus} ${
+                        tx.status === "Confirmed"
+                          ? styles.txConfirmed
+                          : styles.txPending
+                      }`}
+                    >
+                      {tx.status}
+                    </span>
+                  </div>
+                  <div className={styles.txMeta}>
+                    <span className={styles.txTime}>{tx.timestamp}</span>
+                    <span className={styles.txId}>
+                      {tx.txid.slice(0, 10)}...
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <button
+              className={styles.cancelButton}
+              onClick={() => setShowHistory(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* BOTTOM MENU STARTS HERE */}
       <div className={styles.bottomMenu}>
         <button className={styles.menuItem}>
@@ -1111,18 +1181,24 @@ export default function Web3AuthComponent() {
           </span>
           <span className={styles.menuLabel}>Send</span>
         </button>
-        <button className={styles.menuItem}>
+        <button
+          className={styles.menuItem}
+          onClick={() => setShowHistory(true)}
+        >
           <span className={styles.menuIcon}>
-            {" "}
             <img
               src="/assets/history.svg"
               className={styles.transactIcon}
               alt="History icon"
-            />{" "}
+            />
           </span>
           <span className={styles.menuLabel}>History</span>
         </button>
-        <button onClick={() => menuRef.current?.toggle()} className={styles.menuItem}>
+
+        <button
+          onClick={() => menuRef.current?.toggle()}
+          className={styles.menuItem}
+        >
           <span className={styles.menuIcon}>
             {" "}
             <img
