@@ -401,8 +401,30 @@ export default function Web3AuthComponent() {
   };
 
   useEffect(() => {
-    handleLogin();
-  }, [web3auth]);
+    if (!web3auth || !jwtToken) return;
+
+    let retriesRef = { current: 0 };
+    let timeoutId;
+
+    const tryLogin = async () => {
+      try {
+        await handleLogin();
+      } catch (err) {
+        if (retriesRef.current < 5) {
+          retriesRef.current++;
+          timeoutId = setTimeout(tryLogin, retriesRef.current * 2000); // retry with backoff
+        } else {
+          console.error("Login failed after 3 retries:", err);
+        }
+      }
+    };
+
+    tryLogin();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [web3auth, jwtToken]);
 
   useEffect(() => {
     const tryRestoreSession = async () => {
