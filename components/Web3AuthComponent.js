@@ -1100,7 +1100,7 @@ export default function Web3AuthComponent() {
           </span>
           <span className={styles.menuLabel}>Wallet</span>
         </button>
-        <button className={styles.menuItem}>
+        <button onClick={openSendModal} className={styles.menuItem}>
           <span className={styles.menuIcon}>
             {" "}
             <img
@@ -1122,7 +1122,7 @@ export default function Web3AuthComponent() {
           </span>
           <span className={styles.menuLabel}>History</span>
         </button>
-        <button className={styles.menuItem}>
+        <button onClick={() => menuRef.current?.toggle()} className={styles.menuItem}>
           <span className={styles.menuIcon}>
             {" "}
             <img
