@@ -498,6 +498,12 @@ export default function Web3AuthComponent() {
     }
   };
 
+  function estimateTxVBytes(inputsCount, outputsCount) {
+    // Rough but safe estimate for P2WPKH:
+    // overhead ~10 bytes, each input ~68 vbytes, each output ~31 vbytes
+    return 10 + inputsCount * 68 + outputsCount * 31;
+  }
+
   async function sendTestnetBTC({
     fromAddress,
     toAddress,
@@ -508,7 +514,7 @@ export default function Web3AuthComponent() {
       alert("🔐 Step 1: Decoding private key...");
       const key = privateKeyHex.replace(/^0x/, "");
       const priv = Uint8Array.from(Buffer.from(key, "hex"));
-      const pub = await getPublicKey(priv, true); // already a Uint8Array
+      const pub = await getPublicKey(priv, true);
 
       alert(`🧪 pub: ${hex.encode(pub)}, length: ${pub.length}`);
       if (!(pub instanceof Uint8Array) || pub.length !== 33) {
@@ -518,7 +524,6 @@ export default function Web3AuthComponent() {
       }
 
       alert("🏗️ Step 2: Building sender address...");
-      // ✅ derive exactly as you do elsewhere for testnet
       const { address: fromAddrDerived, output: fromScriptBuffer } =
         payments.p2wpkh({
           pubkey: Buffer.from(pub),
@@ -546,31 +551,36 @@ export default function Web3AuthComponent() {
       const valueSat = Math.floor(amountInBTC * 1e8);
       const dustLimit = toAddress.startsWith("1") ? 546 : 294;
       if (valueSat < dustLimit) {
-        alert(
-          `❌ Cannot send ${valueSat} sats. It is below the dust threshold (${dustLimit} sats). Send a larger amount.`
-        );
+        alert(`❌ Cannot send ${valueSat} sats. Below dust limit.`);
         return;
       }
 
-      // const fee = 1000;
-      const feeRate = await (
-        await fetch("https://blockstream.info/testnet/api/fee-estimates")
-      ).json();
-      const fee = estimatedVBytes * feeRate["1"]; // ---------------------------------- CHECK THIS PART
-
+      // Step 3.5: Select all UTXOs first
       let total = 0,
         selected = [];
       for (const u of utxos) {
         selected.push(u);
         total += u.value;
-        if (total >= valueSat + fee) break;
       }
+
+      // Step 3.6: Estimate fee
+      const feeRates = await (
+        await fetch("https://blockstream.info/testnet/api/fee-estimates")
+      ).json();
+      const satsPerVByte = feeRates["1"] || 10; // fallback if API fails
+
+      // assume 2 outputs (recipient + change), will adjust later
+      const estimatedVBytes = estimateTxVBytes(selected.length, 2);
+      let fee = Math.ceil(estimatedVBytes * satsPerVByte);
 
       if (total < valueSat + fee) {
         alert("❌ Insufficient balance.");
         return;
       }
 
+      alert(`⚖️ Estimated fee: ${fee} sats (at ${satsPerVByte} sat/vB)`);
+
+      // Step 4: Create transaction
       alert("🧱 Step 4: Creating transaction...");
       const tx = new Transaction({ version: 2 });
 
@@ -585,9 +595,9 @@ export default function Web3AuthComponent() {
         });
       }
 
+      // recipient output
       let toScript;
       try {
-        // Try Bech32 (P2WPKH)
         toScript = payments.p2wpkh({
           address: toAddress,
           network: networks.testnet,
@@ -595,7 +605,6 @@ export default function Web3AuthComponent() {
         alert("📮 Recipient address detected as P2WPKH (Bech32)");
       } catch (e1) {
         try {
-          // Fallback to Legacy (P2PKH)
           toScript = payments.p2pkh({
             address: toAddress,
             network: networks.testnet,
@@ -606,9 +615,9 @@ export default function Web3AuthComponent() {
           return;
         }
       }
-
       tx.addOutput({ script: toScript, amount: BigInt(valueSat) });
 
+      // change output (if any)
       const change = total - valueSat - fee;
       if (change > 0) {
         const { output: changeScript } = payments.p2wpkh({
@@ -619,14 +628,16 @@ export default function Web3AuthComponent() {
         alert(`💰 Adding change back to sender: ${change} sats`);
       }
 
+      // Step 5: Sign & finalize
       alert("✍️ Step 5: Signing transaction...");
       tx.sign(priv);
       tx.finalize();
 
       const rawHex = tx.hex;
       alert("📤 Raw TX HEX: " + rawHex);
-      alert("📤 Step 6: Broadcasting transaction...");
 
+      // Step 6: Broadcast
+      alert("📤 Step 6: Broadcasting transaction...");
       const broadcast = await fetch("https://blockstream.info/testnet/api/tx", {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
