@@ -796,13 +796,13 @@ export default function Web3AuthComponent() {
     getPendingTransactions,
   } = usePersistentTransactions([
     // optional initial seed
-    {
-      txid: "abc123",
-      amount: "-0.002 BTC",
-      status: "Confirmed",
-      timestamp: Date.now() - 1000 * 60 * 60,
-      crypto: "BTC",
-    },
+    // {
+    //   txid: "abc123",
+    //   amount: "-0.002 BTC",
+    //   status: "Confirmed",
+    //   timestamp: Date.now() - 1000 * 60 * 60,
+    //   crypto: "BTC",
+    // },
   ]);
 
   // Simulate network check
