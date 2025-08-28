@@ -740,7 +740,7 @@ export default function Web3AuthComponent() {
         await addTransaction({
           txid: txid || `btc-${Date.now()}`,
           amount: `-${sendAmount} BTC`,
-          status: "Pending",
+          status: "Confirmed",
           timestamp: Date.now(), // store epoch (easier to sort); you can display a formatted string in UI
           crypto: "BTC",
           meta: { from: btcWallet.address, to: sendToAddress },
@@ -763,7 +763,7 @@ export default function Web3AuthComponent() {
         await addTransaction({
           txid: txid || `eth-${Date.now()}`,
           amount: `-${sendAmount} ETH`,
-          status: "Pending",
+          status: "Confirmed",
           timestamp: Date.now(), // store epoch (easier to sort); you can display a formatted string in UI
           crypto: "ETH",
           meta: { from: ethWallet, to: sendToAddress },
