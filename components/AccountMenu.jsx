@@ -195,7 +195,6 @@ const AccountMenu = forwardRef(function AccountMenu(
           border-top-left-radius: 16px;
           border-top-right-radius: 16px;
           box-shadow: 0 -8px 30px rgba(16, 37, 73, 0.12);
-          border: 1px solid rgba(16, 37, 73, 0.06);
           padding-bottom: env(safe-area-inset-bottom);
         }
 
@@ -204,7 +203,6 @@ const AccountMenu = forwardRef(function AccountMenu(
           gap: 12px;
           padding: 16px;
           align-items: center;
-          border-bottom: 1px solid rgba(0, 0, 0, 0.04);
           background: #1c1212;
         }
 
@@ -241,11 +239,11 @@ const AccountMenu = forwardRef(function AccountMenu(
           width: 100%;
           padding: 12px;
           border-radius: 10px;
-          border: 1px solid rgba(16, 37, 73, 0.04);
           text-align: left;
           cursor: pointer;
           transition: transform 0.12s ease, box-shadow 0.12s ease;
           background: var(--card-bg);
+          
 
         }
         .menuItem:active {
@@ -274,7 +272,6 @@ const AccountMenu = forwardRef(function AccountMenu(
           {/* background: #fff6f6; */}
           border-radius: 10px;
           color: #a12a2a;
-          border: 1px solid rgba(161, 42, 42, 0.06);
           font-weight: 700;
                     background: var(--card-bg);
         }
