@@ -231,6 +231,7 @@ const AccountMenu = forwardRef(function AccountMenu(
           flex-direction: column;
           gap: 8px;
           background: #1c1212;
+          border-radius: 10px;
         }
 
         .menuItem {
