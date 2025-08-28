@@ -27,6 +27,8 @@ const CLIENT_ID =
 let privateKey;
 import { providerEth } from "../lib/eth-provider";
 import { QRCodeSVG } from "qrcode.react";
+import Dexie from "dexie";
+import { usePersistentTransactions } from "../utils/transaction";
 
 /*=============================================== Start Async functions ========================================================================*/
 
@@ -65,7 +67,7 @@ async function deriveBTCWallet(provider) {
     : privateKeyHex;
 
   if (!/^[a-fA-F0-9]{64}$/.test(hex)) {
-    alert("❌ Invalid private key. Must be 64-character hex.");
+    // alert("❌ Invalid private key. Must be 64-character hex.");
     return;
   }
   privateKey = hex; // Added new
@@ -73,7 +75,7 @@ async function deriveBTCWallet(provider) {
 
   if (existingWallet) {
     const wallet = JSON.parse(existingWallet);
-    alert("Wallet already exists:\n" + wallet.address);
+    // alert("Wallet already exists:\n" + wallet.address);
     return wallet;
   }
 
@@ -82,10 +84,10 @@ async function deriveBTCWallet(provider) {
     const wallet = { address };
     localStorage.setItem("btc_wallet", JSON.stringify(wallet));
 
-    alert("✅ BTC Testnet Wallet Created:\n" + address);
+    // alert("✅ BTC Testnet Wallet Created:\n" + address);
     return wallet;
   } catch (err) {
-    alert("❌ Error deriving address: " + err.message);
+    // alert("❌ Error deriving address: " + err.message);
     return null;
   }
 }
@@ -96,11 +98,11 @@ async function deriveETHAddress(provider) {
     ? privateKeyHex.slice(2)
     : privateKeyHex;
 
-  alert("Privatekeyhexnew: " + privateKey);
+  // alert("Privatekeyhexnew: " + privateKey);
   const pubKey = getPublicKey(privateKey, false).slice(1); // uncompressed, drop 0x04
   const hash = keccak256(pubKey); // keccak256 hash
   const ethAddress = "0x" + hash.slice(-40);
-  alert("ethAddress new: " + ethAddress.toLocaleLowerCase());
+  // alert("ethAddress new: " + ethAddress.toLocaleLowerCase());
   localStorage.setItem("ethAddress", ethAddress.toLowerCase());
   return ethAddress.toLowerCase();
 }
@@ -145,12 +147,12 @@ export default function Web3AuthComponent() {
       const res = await fetch(`/api/eth-balance?address=${address}`);
       const data = await res.json();
       if (res.ok) {
-        alert("Balance ETH: " + data.balance);
+        // alert("Balance ETH: " + data.balance);
         setEthBalance(data.balance);
         return;
       } else throw new Error(data.error);
     } catch (err) {
-      alert("Error fetching ETH balance: " + err.message);
+      // alert("Error fetching ETH balance: " + err.message);
       return null;
     }
   }
@@ -170,7 +172,7 @@ export default function Web3AuthComponent() {
     if (!pk.startsWith("0x")) pk = "0x" + pk;
 
     if (!/^0x[0-9a-fA-F]{64}$/.test(pk)) {
-      alert("❌ Invalid private key format");
+      // alert("❌ Invalid private key format");
       throw new Error("Invalid private key format");
     }
 
@@ -179,12 +181,12 @@ export default function Web3AuthComponent() {
         const wallet = new ethers.Wallet(pk, providerEth);
 
         if (!ethers.isAddress(toAddress)) {
-          alert("Invalid destination ETH address.");
+          // alert("Invalid destination ETH address.");
           throw new Error("Invalid address");
         }
 
         if (isNaN(amountEth) || amountEth <= 0) {
-          alert("Invalid amount. Please enter a valid number.");
+          // alert("Invalid amount. Please enter a valid number.");
           throw new Error("Invalid amount");
         }
 
@@ -253,7 +255,7 @@ export default function Web3AuthComponent() {
   useEffect(() => {
     const fetchETHWalletAndBalance = async () => {
       const wallet = await deriveETHAddress(provider);
-      alert("I'm here " + wallet);
+      // alert("I'm here " + wallet);
       if (!wallet) return;
       setEthWallet(wallet);
       getEthBalance(wallet);
@@ -328,7 +330,7 @@ export default function Web3AuthComponent() {
           .then((res) => res.json())
           .then((data) => {
             setJwtToken(data.token);
-            alert(data.token); // optional, remove in prod
+            // alert(data.token); 
             console.log("Received JWT Token:", data.token);
           })
           .catch((err) => console.error("JWT error:", err));
@@ -367,7 +369,7 @@ export default function Web3AuthComponent() {
         // setProvider(web3authInstance.provider);
       } catch (err) {
         console.error("Web3Auth init error:", err);
-        alert("Web3 Auth init error: " + err.message);
+        // alert("Web3 Auth init error: " + err.message);
       }
     };
     init();
@@ -394,7 +396,7 @@ export default function Web3AuthComponent() {
       setUser(userInfo);
     } catch (err) {
       console.error("Login error:", err);
-      alert("Login failed: " + err.message);
+      // alert("Login failed: " + err.message);
     } finally {
       setIsLoggingIn(false);
     }
@@ -432,7 +434,7 @@ export default function Web3AuthComponent() {
       if (web3auth.connected) {
         try {
           const pkProvider = web3auth.provider;
-          alert(pkProvider);
+          // alert(pkProvider);
           setProvider(pkProvider);
           const userInfo = await web3auth.getUserInfo();
           setUser(userInfo);
@@ -471,7 +473,7 @@ export default function Web3AuthComponent() {
       const wallet = await deriveBTCWallet(provider);
 
       if (!wallet) {
-        alert("Failed to get BTC wallet.");
+        // alert("Failed to get BTC wallet.");
         return;
       }
 
@@ -480,7 +482,7 @@ export default function Web3AuthComponent() {
         `https://blockstream.info/testnet/api/address/${wallet.address}`
       );
       if (!res.ok) {
-        alert("Failed to fetch address info");
+        // alert("Failed to fetch address info");
         return;
       }
       const data = await res.json();
@@ -494,7 +496,7 @@ export default function Web3AuthComponent() {
       setBtcWallet(wallet);
       setBtcBalance(balanceTbtc);
     } catch (err) {
-      alert("Error fetching BTC info: " + err.message);
+      // alert("Error fetching BTC info: " + err.message);
     }
   };
 
@@ -511,47 +513,47 @@ export default function Web3AuthComponent() {
     amountInBTC,
   }) {
     try {
-      alert("🔐 Step 1: Decoding private key...");
+      // alert("🔐 Step 1: Decoding private key...");
       const key = privateKeyHex.replace(/^0x/, "");
       const priv = Uint8Array.from(Buffer.from(key, "hex"));
       const pub = await getPublicKey(priv, true);
 
-      alert(`🧪 pub: ${hex.encode(pub)}, length: ${pub.length}`);
+      // alert(`🧪 pub: ${hex.encode(pub)}, length: ${pub.length}`);
       if (!(pub instanceof Uint8Array) || pub.length !== 33) {
         throw new Error(
           `Invalid public key format. Expected 33-byte Uint8Array, got: ${pub}`
         );
       }
 
-      alert("🏗️ Step 2: Building sender address...");
+      // alert("🏗️ Step 2: Building sender address...");
       const { address: fromAddrDerived, output: fromScriptBuffer } =
         payments.p2wpkh({
           pubkey: Buffer.from(pub),
           network: networks.testnet,
         });
       if (fromAddrDerived !== fromAddress) {
-        alert(
-          `⚠️ Warning: Derived address ${fromAddrDerived} doesn't match input ${fromAddress}`
-        );
+        // alert(
+        //   `⚠️ Warning: Derived address ${fromAddrDerived} doesn't match input ${fromAddress}`
+        // );
       } else {
-        alert(`✅ Sender address confirmed: ${fromAddrDerived}`);
+        // alert(`✅ Sender address confirmed: ${fromAddrDerived}`);
       }
 
-      alert("🌐 Step 3: Fetching UTXOs...");
+      // alert("🌐 Step 3: Fetching UTXOs...");
       const res = await fetch(
         `https://blockstream.info/testnet/api/address/${fromAddress}/utxo`
       );
       const utxos = await res.json();
 
       if (!utxos.length) {
-        alert("❌ No UTXOs found. Cannot proceed.");
+        // alert("❌ No UTXOs found. Cannot proceed.");
         return;
       }
 
       const valueSat = Math.floor(amountInBTC * 1e8);
       const dustLimit = toAddress.startsWith("1") ? 546 : 294;
       if (valueSat < dustLimit) {
-        alert(`❌ Cannot send ${valueSat} sats. Below dust limit.`);
+        // alert(`❌ Cannot send ${valueSat} sats. Below dust limit.`);
         return;
       }
 
@@ -574,14 +576,14 @@ export default function Web3AuthComponent() {
       let fee = Math.ceil(estimatedVBytes * satsPerVByte);
 
       if (total < valueSat + fee) {
-        alert("❌ Insufficient balance.");
+        // alert("❌ Insufficient balance.");
         return;
       }
 
       alert(`⚖️ Estimated fee: ${fee} sats (at ${satsPerVByte} sat/vB)`);
 
       // Step 4: Create transaction
-      alert("🧱 Step 4: Creating transaction...");
+      // alert("🧱 Step 4: Creating transaction...");
       const tx = new Transaction({ version: 2 });
 
       for (const u of selected) {
@@ -602,14 +604,14 @@ export default function Web3AuthComponent() {
           address: toAddress,
           network: networks.testnet,
         }).output;
-        alert("📮 Recipient address detected as P2WPKH (Bech32)");
+        // alert("📮 Recipient address detected as P2WPKH (Bech32)");
       } catch (e1) {
         try {
           toScript = payments.p2pkh({
             address: toAddress,
             network: networks.testnet,
           }).output;
-          alert("📮 Recipient address detected as P2PKH (Legacy/Base58)");
+          // alert("📮 Recipient address detected as P2PKH (Legacy/Base58)");
         } catch (e2) {
           alert("❌ Invalid recipient address: " + toAddress);
           return;
@@ -629,15 +631,15 @@ export default function Web3AuthComponent() {
       }
 
       // Step 5: Sign & finalize
-      alert("✍️ Step 5: Signing transaction...");
+      // alert("✍️ Step 5: Signing transaction...");
       tx.sign(priv);
       tx.finalize();
 
       const rawHex = tx.hex;
-      alert("📤 Raw TX HEX: " + rawHex);
+      // alert("📤 Raw TX HEX: " + rawHex);
 
       // Step 6: Broadcast
-      alert("📤 Step 6: Broadcasting transaction...");
+      // alert("📤 Step 6: Broadcasting transaction...");
       const broadcast = await fetch("https://blockstream.info/testnet/api/tx", {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
@@ -660,7 +662,7 @@ export default function Web3AuthComponent() {
 
     try {
       const privateKeyHex = await provider.request({ method: "private_key" });
-      alert("✅ Raw privateKeyHex:\n" + privateKeyHex);
+      // alert("✅ Raw privateKeyHex:\n" + privateKeyHex);
 
       if (!privateKeyHex || typeof privateKeyHex !== "string") {
         throw new Error("Invalid private key returned.");
@@ -670,21 +672,21 @@ export default function Web3AuthComponent() {
         ? privateKeyHex.slice(2)
         : privateKeyHex;
 
-      alert("🧪 Cleaned hex (after removing 0x if present):\n" + hex);
+      // alert("🧪 Cleaned hex (after removing 0x if present):\n" + hex);
 
       if (!/^[a-fA-F0-9]+$/.test(hex)) {
-        alert("❌ Invalid hex string received.");
+        // alert("❌ Invalid hex string received.");
         return;
       }
 
       if (hex.length !== 64) {
-        alert(
-          "⚠️ Expected 64-character hex, got " + hex.length + " characters."
-        );
+        // alert(
+        //   "⚠️ Expected 64-character hex, got " + hex.length + " characters."
+        // );
       }
 
       const address = await deriveBTCAddress(hex);
-      alert("✅ BTC Testnet Address:\n" + address);
+      // alert("✅ BTC Testnet Address:\n" + address);
     } catch (err) {
       const errorMessage =
         err?.message ||
@@ -699,13 +701,13 @@ export default function Web3AuthComponent() {
     try {
       if (web3auth.connected) {
         const userInfo = await web3auth.getUserInfo();
-        console.log("User Info:", userInfo);
-        alert("User is logged in:\n");
+        // console.log("User Info:", userInfo);
+        // alert("User is logged in:\n");
       } else {
         alert("User is NOT logged in.");
       }
     } catch (error) {
-      console.error("User info error:", error);
+      // console.error("User info error:", error);
       alert("Error getting user info.");
     }
   };
@@ -723,7 +725,7 @@ export default function Web3AuthComponent() {
     try {
       if (selectedCrypto === "BTC") {
         if (!btcWallet) {
-          alert("No BTC wallet available");
+          // alert("No BTC wallet available");
           setSendStatus(null);
           return;
         }
@@ -735,20 +737,19 @@ export default function Web3AuthComponent() {
         });
 
         // Log transaction
-        setTransactions((prev) => [
-          {
-            txid: txid || `btc-${Date.now()}`,
-            amount: `-${sendAmount} BTC`,
-            status: "Pending",
-            timestamp: new Date().toLocaleString(),
-          },
-          ...prev,
-        ]);
+        await addTransaction({
+          txid: txid || `btc-${Date.now()}`,
+          amount: `-${sendAmount} BTC`,
+          status: "Pending",
+          timestamp: Date.now(), // store epoch (easier to sort); you can display a formatted string in UI
+          crypto: "BTC",
+          meta: { from: btcWallet.address, to: sendToAddress },
+        });
 
         setSendStatus("BTC sent successfully!");
       } else if (selectedCrypto === "ETH") {
         if (!ethWallet) {
-          alert("No ETH wallet available");
+          // alert("No ETH wallet available");
           setSendStatus(null);
           return;
         }
@@ -759,15 +760,14 @@ export default function Web3AuthComponent() {
           amountEth: parseFloat(sendAmount),
         });
 
-        setTransactions((prev) => [
-          {
-            txid: txid || `eth-${Date.now()}`,
-            amount: `-${sendAmount} ETH`,
-            status: "Pending",
-            timestamp: new Date().toLocaleString(),
-          },
-          ...prev,
-        ]);
+        await addTransaction({
+          txid: txid || `eth-${Date.now()}`,
+          amount: `-${sendAmount} ETH`,
+          status: "Pending",
+          timestamp: Date.now(), // store epoch (easier to sort); you can display a formatted string in UI
+          crypto: "ETH",
+          meta: { from: ethWallet, to: sendToAddress },
+        });
 
         setSendStatus("ETH sent successfully!");
       } else {
@@ -787,13 +787,21 @@ export default function Web3AuthComponent() {
   const [showQR, setShowQR] = useState(false);
   const walletAddress = balances[selectedCrypto]?.address || "";
   const [showHistory, setShowHistory] = useState(false);
-  const [transactions, setTransactions] = useState([
-    // initial demo data if you like
+
+  const {
+    transactions,
+    addTransaction,
+    updateTransactionStatus,
+    clearTransactions,
+    getPendingTransactions,
+  } = usePersistentTransactions([
+    // optional initial seed
     {
       txid: "abc123",
       amount: "-0.002 BTC",
       status: "Confirmed",
-      timestamp: "Aug 04, 10:30",
+      timestamp: Date.now() - 1000 * 60 * 60,
+      crypto: "BTC",
     },
   ]);
 
@@ -825,28 +833,6 @@ export default function Web3AuthComponent() {
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
-
-  // Fake transaction list (replace with real ones if available)
-  const recentTransactions = [
-    {
-      txid: "abc123",
-      amount: "-0.002 BTC",
-      status: "Confirmed",
-      timestamp: "Aug 04, 10:30",
-    },
-    {
-      txid: "def456",
-      amount: "+0.01 BTC",
-      status: "Pending",
-      timestamp: "Aug 03, 14:05",
-    },
-    {
-      txid: "ghi789",
-      amount: "-0.005 BTC",
-      status: "Confirmed",
-      timestamp: "Aug 02, 19:45",
-    },
-  ];
 
   // handlers in parent
   const handleOpenSettings = useCallback(() => {
@@ -975,10 +961,7 @@ export default function Web3AuthComponent() {
             {transactions.map((tx) => (
               <li key={tx.txid} className={styles.txItem}>
                 <div className={styles.txDetails}>
-                  <span className={styles.txAmount}>
-                    {tx.amount > 0 ? "+" : ""}
-                    {tx.amount}
-                  </span>
+                  <span className={styles.txAmount}>{tx.amount}</span>
                   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                   <span
                     className={`${styles.txStatus} ${
@@ -991,7 +974,7 @@ export default function Web3AuthComponent() {
                   </span>
                 </div>
                 <div className={styles.txMeta}>
-                  <span className={styles.txTime}>{tx.timestamp}</span>
+                  <span className={styles.txTime}>  {new Date(tx.timestamp).toLocaleString()}</span>
                   <span className={styles.txId}>{tx.txid.slice(0, 10)}...</span>
                 </div>
               </li>
