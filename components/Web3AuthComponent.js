@@ -330,7 +330,7 @@ export default function Web3AuthComponent() {
           .then((res) => res.json())
           .then((data) => {
             setJwtToken(data.token);
-            // alert(data.token); 
+            // alert(data.token);
             console.log("Received JWT Token:", data.token);
           })
           .catch((err) => console.error("JWT error:", err));
@@ -974,8 +974,13 @@ export default function Web3AuthComponent() {
                   </span>
                 </div>
                 <div className={styles.txMeta}>
-                  <span className={styles.txTime}>  {new Date(tx.timestamp).toLocaleString()}</span>
-                  <span className={styles.txId}>{tx.txid.slice(0, 10)}...</span>
+                  <span className={styles.txTime}>
+                    {" "}
+                    {new Date(tx.timestamp).toLocaleString()}
+                  </span>
+                  <span className={styles.txId} title={tx.txid}>
+                    {tx.txid}
+                  </span>{" "}
                 </div>
               </li>
             ))}

@@ -474,6 +474,12 @@
 .txId {
   font-family: monospace;
   color: var(--text-muted);
+  max-width: 180px; /* adjust to fit */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 /* === Bottom floating menu === */
