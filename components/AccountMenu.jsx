@@ -205,7 +205,7 @@ const AccountMenu = forwardRef(function AccountMenu(
           padding: 16px;
           align-items: center;
           border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-          
+          background: #1c1212;
         }
 
         .menuAvatar img {
@@ -230,6 +230,7 @@ const AccountMenu = forwardRef(function AccountMenu(
           display: flex;
           flex-direction: column;
           gap: 8px;
+          background: #1c1212;
         }
 
         .menuItem {
