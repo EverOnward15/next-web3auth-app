@@ -276,8 +276,9 @@ const AccountMenu = forwardRef(function AccountMenu(
           background: var(--card-bg);
           border: 2px solid var(--accent);
           width: 120px;
-          height: 50px;
+          height: 20px;
           margin: 0 auto;
+          margin-top: -20px;
         }
 
         .menuClose {
